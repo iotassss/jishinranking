@@ -6,5 +6,6 @@ crash.log
 *.tfvars
 
 build/
+minio-data/
 
 TODO.md

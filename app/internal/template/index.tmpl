@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>地震ランキング</title>
+    <style>
+        table { border-collapse: collapse; width: 80%; margin: 2em auto; }
+        th, td { border: 1px solid #ccc; padding: 0.5em 1em; text-align: center; }
+        th { background: #f2f2f2; }
+        tr:nth-child(even) { background: #fafafa; }
+    </style>
+</head>
+<body>
+    <h1 style="text-align:center;">地震ランキング</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>順位</th>
+                <th>都道府県</th>
+                <th>回数</th>
+                <th>割合</th>
+                <th>最大震度</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range $i, $r := .Ranking}}
+            <tr>
+                <td>{{add $i 1}}</td>
+                <td>{{$r.PrefName}}</td>
+                <td>{{$r.Count}}</td>
+                <td>{{printf "%.2f%%" (mul $r.Ratio 100)}}</td>
+                <td>{{$r.Intensity}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</body>
+</html>
