@@ -18,23 +18,22 @@ import (
 	"github.com/iotassss/jishinranking/internal/jma"
 )
 
-const (
-	dataBucketID = "jishinranking-data"
-	htmlBucketID = "jishinranking-html"
-)
-
 func main() {
 	// Debugレベルで標準出力に出す
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	slog.SetDefault(logger)
 
 	// 環境変数
+	dataBucketID := "jishinranking-data"
+	htmlBucketID := "jishinranking-html"
+	region := "ap-northeast-1"
 
 	ctx := context.Background()
 
 	// datarepo初期化
-	datarepoCfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion("ap-northeast-1"),
+	datarepoCfg, err := config.LoadDefaultConfig(
+		ctx,
+		config.WithRegion(region),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("minioadmin", "minioadmin", "")),
 	)
 	if err != nil {
@@ -43,13 +42,14 @@ func main() {
 	datarepoS3Client := s3.NewFromConfig(datarepoCfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String("http://localhost:9000")
 		o.UsePathStyle = true
-		o.Region = "ap-northeast-1"
+		o.Region = region
 	})
 	datarepo := datarepo.NewS3DataRepo(datarepoS3Client, dataBucketID)
 
 	// htmlrepo初期化
-	htmlrepoCfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion("ap-northeast-1"),
+	htmlrepoCfg, err := config.LoadDefaultConfig(
+		ctx,
+		config.WithRegion(region),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("minioadmin", "minioadmin", "")),
 	)
 	if err != nil {
@@ -58,7 +58,7 @@ func main() {
 	s3Client := s3.NewFromConfig(htmlrepoCfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String("http://localhost:9000")
 		o.UsePathStyle = true
-		o.Region = "ap-northeast-1"
+		o.Region = region
 	})
 	htmlrepo := htmlrepo.NewS3HTMLRepo(s3Client, htmlBucketID)
 

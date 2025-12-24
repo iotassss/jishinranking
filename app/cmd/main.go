@@ -19,7 +19,7 @@ func main() {
 	// 環境変数
 	dataBucketID := os.Getenv("DATA_BUCKET")
 	htmlBucketID := os.Getenv("HTML_BUCKET")
-	region := os.Getenv("AWS_REGION")
+	region := os.Getenv("AWS_REGION_ID")
 
 	ctx := context.Background()
 
