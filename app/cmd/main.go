@@ -20,6 +20,7 @@ func main() {
 	dataBucketID := os.Getenv("DATA_BUCKET")
 	htmlBucketID := os.Getenv("HTML_BUCKET")
 	region := os.Getenv("AWS_REGION_ID")
+	templatePath := os.Getenv("TEMPLATE_PATH")
 
 	ctx := context.Background()
 
@@ -40,7 +41,7 @@ func main() {
 	htmlrepo := htmlrepo.NewS3HTMLRepo(s3Client, htmlBucketID)
 
 	// htmlgen初期化
-	htmlgen := htmlgen.NewSimpleHTMLGenerator()
+	htmlgen := htmlgen.NewSimpleHTMLGenerator(templatePath)
 
 	// handler初期化
 	h := handler.NewHandler(

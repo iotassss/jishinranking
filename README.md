@@ -4,10 +4,11 @@
 
 Lambda の Go runtime (`go1.x`) は非推奨のため、**カスタムランタイム（provided.al2）** としてデプロイする。
 
-### build（Lambda 用バイナリ）
+### build（Lambda 用バイナリ & テンプレートファイル）
 
-Lambda の実行環境は Amazon Linux2（linux/amd64）のため、
-以下のコマンドでビルドし、zip 化する。
+Lambda の実行環境は Amazon Linux2（linux/amd64）のため、以下のコマンドでビルドし、zip 化する。
+
+**テンプレートファイル（例: `app/internal/template/index.tmpl`）をGoバイナリにembedせず外部ファイルとして参照している場合、Lambdaデプロイ用zip（app.zip）に必ず含めてください。**
 
 ```sh
 # プロジェクトルートで実行
@@ -15,7 +16,18 @@ cd app
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o build/linux/bootstrap cmd/main.go
 
 # Lambda は "bootstrap" という名前の実行ファイルを要求する
-zip -j build/linux/app.zip build/linux/bootstrap
+# テンプレートファイルも一緒にzipに含める
+zip -j build/linux/app.zip build/linux/bootstrap internal/template/index.tmpl
+```
+
+#### Goスクリプトでのテンプレートファイル指定例
+Lambda実行時はzip内のルートがカレントディレクトリとなるため、Goコードではzip内のパス構成に合わせてファイルパスを指定してください。
+
+```go
+tmpl, err := template.ParseFiles("internal/template/index.tmpl")
+```
+
+テンプレートファイルをembedしている場合はこの手順は不要です。
 
 ## terraform
 

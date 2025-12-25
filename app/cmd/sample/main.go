@@ -63,7 +63,7 @@ func main() {
 	htmlrepo := htmlrepo.NewS3HTMLRepo(s3Client, htmlBucketID)
 
 	// htmlgen初期化
-	htmlgen := htmlgen.NewSimpleHTMLGenerator()
+	htmlgen := htmlgen.NewSimpleHTMLGenerator("internal/template")
 
 	// handler初期化
 	h := handler.NewHandler(

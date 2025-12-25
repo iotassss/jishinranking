@@ -21,6 +21,7 @@ resource "aws_lambda_function" "batch" {
       JMA_FEED_URL = "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml"
       DAYS_RANGE   = "7"
       AWS_REGION_ID   = var.aws_region
+      TEMPLATE_PATH = ""
     }
   }
 }

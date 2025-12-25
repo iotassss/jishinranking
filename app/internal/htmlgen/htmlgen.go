@@ -18,9 +18,9 @@ type SimpleHTMLGenerator struct {
 	tmpl *template.Template
 }
 
-func NewSimpleHTMLGenerator() *SimpleHTMLGenerator {
+func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 	// テンプレートファイルのパス
-	tmplPath := filepath.Join("/Users/iota/Workspace/jishinranking/app/internal/template", "index.tmpl")
+	tmplPath := filepath.Join(templatePath, "index.tmpl")
 	// 関数マップ（順位表示用）
 	funcMap := template.FuncMap{
 		"add": func(a, b int) int { return a + b },
