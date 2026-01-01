@@ -1,6 +1,13 @@
 package domain
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+	"strings"
+)
+
+var EarthquakeFilterWords = []string{
+	"地震", "震度", "揺れ", "マグニチュード",
+}
 
 // Atom feed (JMA eqvol.xml)
 type Feed struct {
@@ -44,4 +51,17 @@ type Rights struct {
 type Content struct {
 	Type string `xml:"type,attr,omitempty"` // text / html etc
 	Text string `xml:",chardata"`
+}
+
+func (f *Feed) FilterEarthquakeEntries() []Entry {
+	var earthquakeEntries []Entry
+	for _, entry := range f.Entries {
+		for _, word := range EarthquakeFilterWords {
+			if strings.Contains(entry.Title, word) || strings.Contains(entry.Content.Text, word) {
+				earthquakeEntries = append(earthquakeEntries, entry)
+				break
+			}
+		}
+	}
+	return earthquakeEntries
 }

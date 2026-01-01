@@ -11,7 +11,8 @@ import (
 
 // JMAからデータを取得する
 type JMAFetcher interface {
-	FetchEarthquakeReport(ctx context.Context) (domain.ReportList, error)
+	FetchEQVOLFeed(ctx context.Context) (domain.Feed, error)
+	FetchEarthquakeReport(ctx context.Context, urls []string) (domain.ReportList, error)
 }
 
 // 地震データを保存・取得する
@@ -53,18 +54,36 @@ func (h *Handler) Process(
 	dataKey,
 	htmlKey string,
 ) error {
-	reports, err := h.jmaFetcher.FetchEarthquakeReport(ctx)
+	// 1週間分のデータを取得するための期間を設定
+	from := time.Now().Add(-7 * 24 * time.Hour)
+	to := time.Now()
+
+	// JMAからフィードを取得する
+	feed, err := h.jmaFetcher.FetchEQVOLFeed(ctx)
 	if err != nil {
 		return err
 	}
-	if len(reports) == 0 {
-		slog.Info("最新の地震レポートがありません。処理を終了します。")
+
+	// フィードから地震エントリーを抽出する
+	earthquakeEntries := feed.FilterEarthquakeEntries()
+	if len(earthquakeEntries) == 0 {
+		slog.Info("最新の地震エントリーがありません。処理を終了します。")
 		return nil
 	}
 
+	// TODO: この処理はdomainに移す
+	urls := make([]string, 0, len(earthquakeEntries))
+	for _, entry := range earthquakeEntries {
+		urls = append(urls, entry.Link.Href)
+	}
+
+	// JMAから最新の地震レポートを取得
+	reports, err := h.jmaFetcher.FetchEarthquakeReport(ctx, urls)
+	if err != nil {
+		return err
+	}
+
 	// 過去7日間の保存済みデータ取得
-	from := time.Now().Add(-7 * 24 * time.Hour)
-	to := time.Now()
 	oldReports, err := h.dataRepo.Get(ctx, &from, &to)
 	if err != nil {
 		return err
@@ -73,17 +92,33 @@ func (h *Handler) Process(
 	// 直近の保存済みレポートを取得
 	latestOldReport := oldReports.Latest()
 	// jmaから取得したreportsの中には過去のレポートも含まれるため、latestOldReport以降のものだけを抽出
-	primaryReports := reports.After(latestOldReport)
+	primaryReports := reports.NewerThan(latestOldReport)
+	if len(primaryReports) == 0 {
+		slog.Info("新しい地震レポートがありません。処理を終了します。")
+		return nil
+	}
 
 	// 今回のレポートを保存
 	if err := h.dataRepo.Save(ctx, primaryReports); err != nil {
 		return err
 	}
 
-	// HTML生成・保存
+	// 既存データと今回のデータをmerge
 	mergedReports := primaryReports.Merge(oldReports)
-	rankingRecordList := domain.ConvertReportListToRankingRecordList(mergedReports)
-	html, err := h.htmlGenerator.Generate(rankingRecordList)
+
+	// 7日前から現在時刻までのデータを抽出
+	thisWeekReports := mergedReports.Between(from, to)
+
+	// 都道府県ごとの集計データを作成
+	prefectureJishinDataMap := domain.MakePrefectureMapFromReportList(thisWeekReports)
+
+	// HTML出力テーブル用に整形
+	tableRows := domain.ConvertPrefectureJishinDataMapToRankingRecordList(prefectureJishinDataMap)
+	tableRows.SortByCountDesc()
+	tableRows.AssignRanks()
+
+	// HTML生成・保存
+	html, err := h.htmlGenerator.Generate(tableRows)
 	if err != nil {
 		return err
 	}

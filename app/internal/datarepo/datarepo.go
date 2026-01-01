@@ -46,6 +46,7 @@ func (r *S3DataRepo) Save(ctx context.Context, reports domain.ReportList) error 
 	return nil
 }
 
+// TODO: 処理を分割する？
 func (r *S3DataRepo) Get(ctx context.Context, from, to *time.Time) (domain.ReportList, error) {
 	if from != nil && to != nil && from.After(*to) {
 		return nil, fmt.Errorf("invalid time range: from is after to")
@@ -65,6 +66,7 @@ func (r *S3DataRepo) Get(ctx context.Context, from, to *time.Time) (domain.Repor
 	var keys []string
 	for _, obj := range resp.Contents {
 		key := *obj.Key
+		// TODO: ファイル名が不正な場合はスキップするようにする
 		fileName := domain.DataFileName(key)
 		fileTime, err := fileName.ToTime()
 		if err != nil {
@@ -81,6 +83,7 @@ func (r *S3DataRepo) Get(ctx context.Context, from, to *time.Time) (domain.Repor
 		keys = append(keys, key)
 	}
 
+	// TODO: データに被りがある場合の対応を考える -> mapにして重複排除するなど
 	// 取得したファイル名一覧からデータを取得してパース
 	var allReports domain.ReportList
 	for _, key := range keys {

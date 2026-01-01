@@ -153,6 +153,13 @@ type Area struct {
 	MaxInt string `xml:"MaxInt" json:"maxInt"`
 }
 
+type ReportKey struct {
+	EventID string // 無い場合は空文字
+	Title   string
+	Office  string
+	Status  string
+}
+
 type ReportList []Report
 
 func (rl ReportList) Latest() Report {
@@ -168,10 +175,24 @@ func (rl ReportList) Latest() Report {
 	return latest
 }
 
+func (rl ReportList) ToMap() map[ReportKey]Report {
+	m := make(map[ReportKey]Report)
+	for _, r := range rl {
+		key := ReportKey{
+			EventID: r.Head.EventID,
+			Title:   r.Control.Title,
+			Office:  r.Control.PublishingOffice,
+			Status:  r.Control.Status,
+		}
+		m[key] = r
+	}
+	return m
+}
+
 // Reportに記載されるに日時は、ReportedDatetime, TargetDatetime, OriginTimeなど複数ある
 // ここではReportedDatetimeを基準にしてフィルタリングする
 // 理由: TargetDatetime, OriginTimeは非必須の可能性があるため。本来はOriginTimeを基準にしたい
-func (rl ReportList) After(targetReport Report) ReportList {
+func (rl ReportList) NewerThan(targetReport Report) ReportList {
 	var filtered ReportList
 	for _, r := range rl {
 		if r.Head.ReportDateTime.Time.After(targetReport.Head.ReportDateTime.Time) {
@@ -188,6 +209,39 @@ func (rl ReportList) After(targetReport Report) ReportList {
 	return filtered
 }
 
+// 重複を排除してマージする
+// 順番は保証しない
 func (rl ReportList) Merge(other ReportList) ReportList {
-	return append(rl, other...)
+	merged := rl.ToMap()
+	for _, r := range other {
+		key := ReportKey{
+			EventID: r.Head.EventID,
+			Title:   r.Control.Title,
+			Office:  r.Control.PublishingOffice,
+			Status:  r.Control.Status,
+		}
+		if existing, exists := merged[key]; exists {
+			// より新しいReportDateTimeのものを採用する
+			if r.Head.ReportDateTime.Time.After(existing.Head.ReportDateTime.Time) {
+				merged[key] = r
+			}
+		}
+	}
+
+	var result ReportList
+	for _, r := range merged {
+		result = append(result, r)
+	}
+
+	return result
+}
+
+func (rl ReportList) Between(from, to time.Time) ReportList {
+	var filtered ReportList
+	for _, r := range rl {
+		if r.Head.ReportDateTime.Time.After(from) && r.Head.ReportDateTime.Time.Before(to) {
+			filtered = append(filtered, r)
+		}
+	}
+	return filtered
 }

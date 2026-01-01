@@ -117,3 +117,50 @@ func MakePrefectureMap() map[string]PrefectureJishinData {
 	}
 	return newMap
 }
+
+func MakePrefectureMapFromReportList(reports ReportList) map[string]PrefectureJishinData {
+	prefMap := MakePrefectureMap()
+
+	for _, report := range reports {
+		if report.Body.Intensity == nil {
+			continue
+		}
+		// reportsひとつずつ見て、都道府県の登場回数をカウントする
+		for _, pref := range report.Body.Intensity.Observation.Prefs {
+			if data, exists := prefMap[pref.Code]; exists {
+				data.Count++
+				// 都道府県ごとに最大震度を記録する
+				if pref.MaxInt > data.Intensity {
+					data.Intensity = pref.MaxInt
+				}
+				prefMap[pref.Code] = data
+			}
+		}
+	}
+
+	return prefMap
+}
+
+// ランキングは未設定のまま返す
+func ConvertPrefectureJishinDataMapToRankingRecordList(prefMap map[string]PrefectureJishinData) RankingRecordList {
+	totalCount := 0
+	for _, data := range prefMap {
+		totalCount += data.Count
+	}
+	var rankingList RankingRecordList
+	for code, data := range prefMap {
+		ratio := 0.0
+		if totalCount > 0 {
+			ratio = float64(data.Count) / float64(totalCount)
+		}
+		rankingList = append(rankingList, RankingRecord{
+			Rank:      0, // ランキングは後で設定する
+			PrefCode:  code,
+			PrefName:  data.Name,
+			Count:     data.Count,
+			Ratio:     ratio,
+			Intensity: data.Intensity,
+		})
+	}
+	return rankingList
+}

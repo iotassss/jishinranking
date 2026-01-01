@@ -38,9 +38,6 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 // Generate: 地震イベントJSONからHTMLランキング表を生成
 // func (g *SimpleHTMLGenerator) Generate(data []byte) ([]byte, error) {
 func (g *SimpleHTMLGenerator) Generate(records domain.RankingRecordList) (string, error) {
-
-	// recordsを降順ソート（Count）
-	records.SortByCountDesc()
 	// テンプレート描画
 	var buf bytes.Buffer
 	dataMap := map[string]interface{}{

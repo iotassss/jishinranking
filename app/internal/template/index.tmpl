@@ -25,7 +25,7 @@
         <tbody>
             {{range $i, $r := .Ranking}}
             <tr>
-                <td>{{add $i 1}}</td>
+                <td>{{$r.Rank}}</td>
                 <td>{{$r.PrefName}}</td>
                 <td>{{$r.Count}}</td>
                 <td>{{printf "%.2f%%" (mul $r.Ratio 100)}}</td>
