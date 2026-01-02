@@ -12,10 +12,10 @@ import (
 	"github.com/iotassss/jishinranking/internal/domain"
 )
 
-// const eqvolFeedURL = "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml"
+const eqvolFeedURL = "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml"
 
 // 長期観測用フィード
-const eqvolFeedURL = "https://www.data.jma.go.jp/developer/xml/feed/eqvol_l.xml"
+// const eqvolFeedURL = "https://www.data.jma.go.jp/developer/xml/feed/eqvol_l.xml"
 
 type JMAClient struct{}
 
