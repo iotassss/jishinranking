@@ -113,12 +113,13 @@ func (h *Handler) Process(
 	prefectureJishinDataMap := domain.MakePrefectureMapFromReportList(thisWeekReports)
 
 	// HTML出力テーブル用に整形
-	tableRows := domain.ConvertPrefectureJishinDataMapToRankingRecordList(prefectureJishinDataMap)
-	tableRows.SortByCountDesc()
-	tableRows.AssignRanks()
+	rankingRecords := domain.ConvertPrefectureJishinDataMapToRankingRecordList(prefectureJishinDataMap)
+	rankingRecords.SortByCountDesc()
+	rankingRecords.AssignRanks()
+rankingRecords.AssignTiers()
 
 	// HTML生成・保存
-	html, err := h.htmlGenerator.Generate(tableRows)
+	html, err := h.htmlGenerator.Generate(rankingRecords)
 	if err != nil {
 		return err
 	}
