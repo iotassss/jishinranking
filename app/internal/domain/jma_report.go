@@ -225,6 +225,8 @@ func (rl ReportList) Merge(other ReportList) ReportList {
 			if r.Head.ReportDateTime.Time.After(existing.Head.ReportDateTime.Time) {
 				merged[key] = r
 			}
+		} else {
+			merged[key] = r
 		}
 	}
 
