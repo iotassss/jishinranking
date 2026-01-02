@@ -3,40 +3,208 @@
 <head>
   <meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>地震ランキング</title>
+	<title>地震ランキング｜過去1週間の都道府県別 地震発生回数</title>
+
+	<meta name="description" content="気象庁の防災情報XMLをもとに、過去1週間の地震発生回数を都道府県別に集計した地震ランキング。日本地図のヒートマップと順位表で確認できます。">
+	<meta name="robots" content="index,follow,max-image-preview:large">
+
+	<link rel="canonical" href="https://YOUR_DOMAIN.example/">
+
+	<!-- OGP（SNS表示） -->
+	<meta property="og:type" content="website">
+	<meta property="og:title" content="地震ランキング｜過去1週間の都道府県別 地震発生回数">
+	<meta property="og:description" content="気象庁防災情報XMLをもとに集計。都道府県別の発生回数をランキングと地図で可視化。">
+	<meta property="og:url" content="https://YOUR_DOMAIN.example/">
+	<meta property="og:site_name" content="地震ランキング">
+	<meta property="og:locale" content="ja_JP">
+	<meta property="og:image" content="https://YOUR_DOMAIN.example/ogp.png">
+	<meta name="twitter:card" content="summary_large_image">
+
+	<!-- パフォ改善（unpkgの接続） -->
+	<link rel="preconnect" href="https://unpkg.com" crossorigin>
+
   <style>
-		table { border-collapse: collapse; width: 80%; margin: 2em auto; }
-		th, td { border: 1px solid #ccc; padding: 0.5em 1em; text-align: center; }
-		th { background: #f2f2f2; }
-		tr:nth-child(even) { background: #fafafa; }
-	</style>
+    body {
+      padding: 0;
+      margin: 0;
+      font-family: 'Segoe UI', 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: #fffafa;
+    }
+    header {
+      background: linear-gradient(90deg, #ffe5e5 0%, #fff5f5 100%);
+      padding: 2em 1em 1.5em 1em;
+      box-shadow: 0 2px 8px rgba(200,0,0,0.08);
+      text-align: center;
+    }
+    header h1 {
+      margin: 0 0 0.5em 0;
+      font-size: 2.2em;
+      color: #b30000;
+      letter-spacing: 0.1em;
+      font-weight: bold;
+    }
+    .header-area p {
+      margin: 0.3em 0;
+      font-size: 1.1em;
+      color: #333;
+    }
+    header .report-period {
+      font-size: 1em;
+      color: #666;
+      margin-top: 0.7em;
+    }
+		main h2 {
+			max-width: 800px;
+			margin: 2.2em auto 0.8em auto;
+			padding-left: 0.6em;
+			font-size: 1.4em;
+			font-weight: 700;
+			color: #8b0000;
+			border-left: 5px solid #ff6666;
+			letter-spacing: 0.04em;
+		}
+    .legend-area {
+      max-width: 800px;
+      margin: 1em auto 0.5em auto;
+      font-size: 0.85em;
+      color: #444;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7em;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 1.5em;
+    }
+    .legend-color {
+      display: inline-block;
+      width: 1.5em;
+      height: 1.2em;
+      margin-right: 0.3em;
+      border: 1px solid #ccc;
+      vertical-align: middle;
+    }
+    .legend-label {
+      font-size: 0.85em;
+      color: #666;
+      margin: 0 0.2em;
+    }
+    #my-map {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      min-height: 320px;
+    }
+    .table-area {
+      max-width: 800px;
+      margin: 2em auto;
+      width: 90%;
+      overflow-x: auto;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(200,0,0,0.04);
+      padding: 1em 0.5em 0.5em 0.5em;
+    }
+    .table-area p {
+      font-size: 0.9em;
+      color: #666;
+      text-align: right;
+    }
+    table { border-collapse: collapse;  font-size: 0.97em; width: 100%; min-width: 480px; }
+    th, td { border: 1px solid #ccc; padding: 0.5em 1em; text-align: center; font-size: 0.97em; }
+    th { background: #f2f2f2; }
+    tr:nth-child(even) { background: #fafafa; }
+    .rank-1 td { background: #ffe066 !important; font-weight: bold; }
+    .rank-2 td { background: #e0e0e0 !important; font-weight: bold; }
+    .rank-3 td { background: #ffd6a0 !important; font-weight: bold; }
+    .rankmark {
+      font-size: 1.1em;
+      margin-right: 0.2em;
+      vertical-align: middle;
+      color: #b30000;
+    }
+
+    /* モバイル時に割合・最大震度を非表示 */
+		@media (max-width: 600px) {
+			main h2 {
+				font-size: 1.15em;
+				margin: 1.6em auto 0.6em auto;
+			}
+      .col-ratio, .col-intensity {
+        display: none;
+      }
+      .table-area { padding: 0.5em 0.1em; }
+      table { font-size: 0.93em; }
+		}
+  </style>
 	<script defer src="https://unpkg.com/japan-map-js@1.0.1/dist/jpmap.min.js"></script>
+	<script type="application/ld+json">
+	{
+		"@context":"https://schema.org",
+		"@type":"Dataset",
+		"name":"地震ランキング（都道府県別・過去1週間）",
+		"description":"気象庁 防災情報XMLをもとに、都道府県ごとの地震発生回数を集計したランキング。",
+		"license":"https://www.jma.go.jp/jma/kishou/info/coment.html",
+		"creator":{"@type":"Organization","name":"地震ランキング（非公式）"},
+		"isBasedOn":{"@type":"WebPage","name":"気象庁防災情報XML","url":"https://xml.kishou.go.jp/xmlpull.html"},
+		"temporalCoverage":"{{.ReportPeriod}}"
+	}
+	</script>
 </head>
 <body>
-	<h1 style="text-align:center;">地震ランキング</h1>
-  <div id="my-map"></div>
-	<table>
-		<thead>
-			<tr>
-				<th>順位</th>
-				<th>都道府県</th>
-				<th>回数</th>
-				<th>割合</th>
-				<th>最大震度</th>
-			</tr>
-		</thead>
-		<tbody>
-			{{range $i, $r := .Ranking}}
-			<tr>
-				<td>{{$r.Rank}}</td>
-				<td>{{$r.PrefName}}</td>
-				<td>{{$r.Count}}</td>
-				<td>{{printf "%.2f%%" (mul $r.Ratio 100)}}</td>
-				<td>{{$r.Intensity}}</td>
-			</tr>
-			{{end}}
-		</tbody>
-	</table>
+  <header class="header-area">
+    <h1>地震ランキング</h1>
+    <p>過去1週間の地震発生回数を都道府県ごとに集計してランキング形式で公開しています。気象庁が公開するデータをもとにしています。</p>
+    <p class="report-period">集計期間: {{.ReportPeriod}}</p>
+  </header>
+	<main>
+		<section aria-labelledby="sec-map">
+			<h2 id="sec-map">都道府県別 地震発生回数（ヒートマップ）</h2>
+			<div class="legend-area">
+				<span class="legend-label">発生回数少</span><span class="legend-color" style="background:#fff5f5;"></span>
+				<span class="legend-color" style="background:#ffcccc;"></span>
+				<span class="legend-color" style="background:#ff9999;"></span>
+				<span class="legend-color" style="background:#ff6666;"></span>
+				<span class="legend-color" style="background:#ff3333;"></span>
+				<span class="legend-color" style="background:#cc0000;"></span><span class="legend-label">発生回数多</span>
+			</div>
+			<div id="my-map"></div>
+		</section>
+
+		<section class="table-area" aria-labelledby="sec-ranking">
+			<h2 id="sec-ranking">都道府県別 地震ランキング（過去1週間）</h2>
+			<table>
+				<thead>
+					<tr>
+						<th>順位</th>
+						<th>都道府県</th>
+						<th>発生回数</th>
+						<th class="col-ratio">割合</th>
+						<th class="col-intensity">最大震度</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{range $i, $r := .Ranking}}
+					<tr class="rank-{{if le $r.Rank 3}}{{$r.Rank}}{{end}}">
+						<td>
+							{{if eq $r.Rank 1}}<span class="rankmark">▲</span>{{else if eq $r.Rank 2}}<span class="rankmark">▲</span>{{else if eq $r.Rank 3}}<span class="rankmark">▲</span>{{end}}
+							{{$r.Rank}}
+						</td>
+						<td>{{$r.PrefName}}</td>
+						<td>{{$r.Count}}</td>
+						<td class="col-ratio">{{printf "%.2f%%" (mul $r.Ratio 100)}}</td>
+						<td class="col-intensity">{{$r.Intensity}}</td>
+					</tr>
+					{{end}}
+				</tbody>
+			</table>
+			<p>出典: <a href="https://xml.kishou.go.jp/xmlpull.html">気象庁防災情報XMLフォーマット形式電文</a></p>
+		</section>
+	</main>
+	<footer class="site-footer">
+		<p>※本サイトは気象庁の公式サイトではありません。公開データ（気象庁 防災情報XML）を取得し、期間別に集計して表示しています。</p>
+		<p>出典：<a href="https://xml.kishou.go.jp/xmlpull.html">気象庁防災情報XML</a> ／ 掲載遅延・欠損が生じる場合があります。</p>
+		<p>編集・表示内容の責任：サイト運営者（連絡先）</p>
+	</footer>
 
   <script>
     window.addEventListener("DOMContentLoaded", () => {
@@ -121,7 +289,7 @@
       new jpmap.japanMap(el, {
         areas,
         showsPrefectureName: true,
-        width: el.clientWidth || 1000,
+        width: el.offsetWidth || 1000,
         movesIslands: true,
         borderLineColor: "#000000",
         lang: "ja",

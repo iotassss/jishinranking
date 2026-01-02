@@ -30,7 +30,7 @@ type HTMLRepo interface {
 
 // 配信用HTMLを生成する
 type HTMLGenerator interface {
-	Generate(data domain.RankingRecordList) (string, error)
+	Generate(data domain.RankingRecordList, reportPeriod domain.ReportPeriod) (string, error)
 }
 
 type Handler struct {
@@ -119,7 +119,7 @@ func (h *Handler) Process(
 rankingRecords.AssignTiers()
 
 	// HTML生成・保存
-	html, err := h.htmlGenerator.Generate(rankingRecords)
+	html, err := h.htmlGenerator.Generate(rankingRecords, domain.ReportPeriod{Start: from, End: to})
 	if err != nil {
 		return err
 	}

@@ -37,11 +37,15 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 // TODO: 回数のランキングと最大震度のランキングを含むHTMLを生成できるように変更する
 // Generate: 地震イベントJSONからHTMLランキング表を生成
 // func (g *SimpleHTMLGenerator) Generate(data []byte) ([]byte, error) {
-func (g *SimpleHTMLGenerator) Generate(records domain.RankingRecordList) (string, error) {
+func (g *SimpleHTMLGenerator) Generate(
+	records domain.RankingRecordList,
+	reportPeriod domain.ReportPeriod,
+) (string, error) {
 	// テンプレート描画
 	var buf bytes.Buffer
 	dataMap := map[string]interface{}{
-		"Ranking": records,
+		"Ranking":      records,
+		"ReportPeriod": reportPeriod.String(),
 	}
 	if err := g.tmpl.Execute(&buf, dataMap); err != nil {
 		return "", fmt.Errorf("template execute failed: %w", err)
