@@ -30,7 +30,7 @@ type HTMLRepo interface {
 
 // 配信用HTMLを生成する
 type HTMLGenerator interface {
-	Generate(data domain.RankingRecordList, reportPeriod domain.ReportPeriod) (string, error)
+	Generate(data domain.RankingRecordList, from, to, now time.Time) (string, error)
 }
 
 type Handler struct {
@@ -55,8 +55,9 @@ func (h *Handler) Process(
 	htmlKey string,
 ) error {
 	// 1週間分のデータを取得するための期間を設定
-	from := time.Now().Add(-7 * 24 * time.Hour)
-	to := time.Now()
+	now := time.Now()
+	from := now.Add(-7 * 24 * time.Hour)
+	to := now
 
 	// JMAからフィードを取得する
 	feed, err := h.jmaFetcher.FetchEQVOLFeed(ctx)
@@ -119,7 +120,7 @@ func (h *Handler) Process(
 rankingRecords.AssignTiers()
 
 	// HTML生成・保存
-	html, err := h.htmlGenerator.Generate(rankingRecords, domain.ReportPeriod{Start: from, End: to})
+	html, err := h.htmlGenerator.Generate(rankingRecords, from, to, now)
 	if err != nil {
 		return err
 	}

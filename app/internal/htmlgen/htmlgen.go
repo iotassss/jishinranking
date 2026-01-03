@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"path/filepath"
+	"time"
 
 	"github.com/iotassss/jishinranking/internal/domain"
 )
@@ -20,13 +21,13 @@ type SimpleHTMLGenerator struct {
 
 func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 	// テンプレートファイルのパス
-	tmplPath := filepath.Join(templatePath, "index.tmpl")
+	tmplPath := filepath.Join(templatePath, "index.html")
 	// 関数マップ（順位表示用）
 	funcMap := template.FuncMap{
 		"add": func(a, b int) int { return a + b },
 		"mul": func(a, b float64) float64 { return a * b },
 	}
-	tmpl, err := template.New("index.tmpl").Funcs(funcMap).ParseFiles(tmplPath)
+	tmpl, err := template.New("index.html").Funcs(funcMap).ParseFiles(tmplPath)
 	if err != nil {
 		// 開発時はpanic、運用時はエラー返却推奨
 		panic(fmt.Sprintf("template parse error: %v", err))
@@ -39,13 +40,14 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 // func (g *SimpleHTMLGenerator) Generate(data []byte) ([]byte, error) {
 func (g *SimpleHTMLGenerator) Generate(
 	records domain.RankingRecordList,
-	reportPeriod domain.ReportPeriod,
+	from, to, now time.Time,
 ) (string, error) {
 	// テンプレート描画
 	var buf bytes.Buffer
 	dataMap := map[string]interface{}{
 		"Ranking":      records,
-		"ReportPeriod": reportPeriod.String(),
+		"ReportPeriod": from.Format("2006-01-02") + " ～ " + to.Format("2006-01-02"),
+		"Now":          now.Format(time.RFC3339),
 	}
 	if err := g.tmpl.Execute(&buf, dataMap); err != nil {
 		return "", fmt.Errorf("template execute failed: %w", err)
