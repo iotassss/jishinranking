@@ -11,20 +11,20 @@ variable "aws_region" {
 ###############################################################################
 # Cloudflare identifiers
 ###############################################################################
-variable "cloudflare_account_id" {
-  type        = string
-  description = "Cloudflare Account ID"
-}
+# variable "cloudflare_account_id" {
+#   type        = string
+#   description = "Cloudflare Account ID"
+# }
 
-variable "cloudflare_zone_id" {
-  type        = string
-  description = "Cloudflare Zone ID"
-}
+# variable "cloudflare_zone_id" {
+#   type        = string
+#   description = "Cloudflare Zone ID"
+# }
 
 variable "domain" {
   type        = string
   description = "Zone apex domain (e.g. example.com)"
-  default     = "oninnoran.com"
+  default     = "jishinranking.com"
 }
 
 ###############################################################################
@@ -52,14 +52,14 @@ variable "s3_prefix" {
 # AWS creds for Worker (SigV4)
 # NOTE: これを TF_VAR_* で渡すと state に残り得るので運用注意
 ###############################################################################
-variable "worker_aws_access_key_id" {
-  type        = string
-  description = "AWS access key id used by Cloudflare Worker to sign S3 requests"
-  sensitive   = true
-}
+# variable "worker_aws_access_key_id" {
+#   type        = string
+#   description = "AWS access key id used by Cloudflare Worker to sign S3 requests"
+#   sensitive   = true
+# }
 
-variable "worker_aws_secret_access_key" {
-  type        = string
-  description = "AWS secret access key used by Cloudflare Worker to sign S3 requests"
-  sensitive   = true
-}
+# variable "worker_aws_secret_access_key" {
+#   type        = string
+#   description = "AWS secret access key used by Cloudflare Worker to sign S3 requests"
+#   sensitive   = true
+# }

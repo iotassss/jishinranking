@@ -52,21 +52,9 @@ read -s ACCESS_KEY
 echo "AWS_SECRET_ACCESS_KEY:"
 read -s SECRET_KEY
 
-echo "CLOUDFLARE_API_TOKEN:"
-read -s CLOUDFLARE_API_TOKEN
-
-echo "TF_VAR_cloudflare_account_id:"
-read -s TF_VAR_cloudflare_account_id
-
-echo "TF_VAR_cloudflare_zone_id:"
-read -s TF_VAR_cloudflare_zone_id
-
 export AWS_ACCESS_KEY_ID=$ACCESS_KEY
 export AWS_SECRET_ACCESS_KEY=$SECRET_KEY
 export AWS_REGION=ap-northeast-1
-export CLOUDFLARE_API_TOKEN=$CLOUDFLARE_API_TOKEN
-export TF_VAR_cloudflare_account_id=$TF_VAR_cloudflare_account_id
-export TF_VAR_cloudflare_zone_id=$TF_VAR_cloudflare_zone_id
 export TF_VAR_worker_aws_access_key_id="$AWS_ACCESS_KEY_ID"
 export TF_VAR_worker_aws_secret_access_key="$AWS_SECRET_ACCESS_KEY"
 ```
