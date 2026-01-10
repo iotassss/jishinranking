@@ -80,6 +80,10 @@ func (h *Handler) Process(
 	// フィードから地震エントリーを抽出する
 	earthquakeEntries := feed.FilterEarthquakeEntries()
 	if len(earthquakeEntries) == 0 {
+		// TODO: HTMLの更新日時と集計期間だけ更新する処理を入れる
+		// if err := h.updateHTMLDatetime(ctx, htmlKey, now, from, to); err != nil {
+		// 	return err
+		// }
 		slog.Info("最新の地震エントリーがありません。処理を終了します。")
 		return nil
 	}
@@ -107,6 +111,10 @@ func (h *Handler) Process(
 	// jmaから取得したreportsの中には過去のレポートも含まれるため、latestOldReport以降のものだけを抽出
 	primaryReports := reports.NewerThan(latestOldReport)
 	if len(primaryReports) == 0 {
+		// TODO: HTMLの更新日時と集計期間だけ更新する処理を入れる
+		// if err := h.updateHTMLDatetime(ctx, htmlKey, now, from, to); err != nil {
+		// 	return err
+		// }
 		slog.Info("新しい地震レポートがありません。処理を終了します。")
 		return nil
 	}
@@ -142,3 +150,14 @@ rankingRecords.AssignTiers()
 
 	return nil
 }
+
+// func (h *Handler) updateHTMLDatetime(ctx context.Context, htmlKey string, now time.Time, from, to time.Time) error {
+// 	publishedHTML, err := h.htmlRepo.Get(ctx, htmlKey)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	updatedPublishedHTML := publishedHTML.UpdateUpdatedAt(now).UpdatePeriod(from, to)
+// 	h.htmlRepo.Save(ctx, htmlKey, updatedPublishedHTML)
+
+// 	return nil
+// }
