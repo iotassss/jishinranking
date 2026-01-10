@@ -3,7 +3,6 @@ package handler
 // 原則依存するパッケージは標準ライブラリとdomainのみとする
 import (
 	"context"
-	"net/url"
 	"os"
 	"time"
 
@@ -37,11 +36,7 @@ func (h *InitializeHandler) Process(
 	to := now
 
 	// JMAからフィードを取得する
-	url, err := url.Parse(EqvolLongFeedURL)
-	if err != nil {
-		return err
-	}
-	feed, err := h.jmaFetcher.FetchEQVOLFeed(ctx, *url)
+	feed, err := h.jmaFetcher.FetchEQVOLFeed(ctx, true)
 	if err != nil {
 		return err
 	}

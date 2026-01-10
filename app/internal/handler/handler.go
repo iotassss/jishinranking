@@ -10,15 +10,9 @@ import (
 	"github.com/iotassss/jishinranking/internal/domain"
 )
 
-// TODO: フィードURLはmainで設定してHandlerかJMAに渡すようにする
-const EqvolFeedURL = "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml"
-
-// 長期観測用フィード
-const EqvolLongFeedURL = "https://www.data.jma.go.jp/developer/xml/feed/eqvol_l.xml"
-
 // JMAからデータを取得する
 type JMAFetcher interface {
-	FetchEQVOLFeed(ctx context.Context, url url.URL) (domain.Feed, error)
+	FetchEQVOLFeed(ctx context.Context, long bool) (domain.Feed, error)
 	FetchEarthquakeReport(ctx context.Context, urls []string) (domain.ReportList, error)
 }
 
@@ -68,11 +62,7 @@ func (h *Handler) Process(
 	to := now
 
 	// JMAからフィードを取得する
-	url, err := url.Parse(EqvolFeedURL)
-	if err != nil {
-		return err
-	}
-	feed, err := h.jmaFetcher.FetchEQVOLFeed(ctx, *url)
+	feed, err := h.jmaFetcher.FetchEQVOLFeed(ctx, false)
 	if err != nil {
 		return err
 	}
