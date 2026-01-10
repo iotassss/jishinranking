@@ -41,7 +41,7 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 func (g *SimpleHTMLGenerator) Generate(
 	records domain.RankingRecordList,
 	from, to, now time.Time,
-) (string, error) {
+) (domain.PublishedHTML, error) {
 	// テンプレート描画
 	var buf bytes.Buffer
 	dataMap := map[string]interface{}{
@@ -52,5 +52,5 @@ func (g *SimpleHTMLGenerator) Generate(
 	if err := g.tmpl.Execute(&buf, dataMap); err != nil {
 		return "", fmt.Errorf("template execute failed: %w", err)
 	}
-	return buf.String(), nil
+	return domain.PublishedHTML(buf.String()), nil
 }

@@ -7,20 +7,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/iotassss/jishinranking/internal/domain"
 )
 
-const eqvolFeedURL = "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml"
-
-// 長期観測用フィード
-// const eqvolFeedURL = "https://www.data.jma.go.jp/developer/xml/feed/eqvol_l.xml"
-
 type JMAClient struct{}
 
-func (c *JMAClient) FetchEQVOLFeed(ctx context.Context) (domain.Feed, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, eqvolFeedURL, nil)
+func (c *JMAClient) FetchEQVOLFeed(ctx context.Context, url url.URL) (domain.Feed, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
 	if err != nil {
 		return domain.Feed{}, fmt.Errorf("new request: %w", err)
 	}

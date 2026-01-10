@@ -4,14 +4,21 @@ package handler
 import (
 	"context"
 	"log/slog"
+	"net/url"
 	"time"
 
 	"github.com/iotassss/jishinranking/internal/domain"
 )
 
+// TODO: フィードURLはmainで設定してHandlerかJMAに渡すようにする
+const EqvolFeedURL = "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml"
+
+// 長期観測用フィード
+const EqvolLongFeedURL = "https://www.data.jma.go.jp/developer/xml/feed/eqvol_l.xml"
+
 // JMAからデータを取得する
 type JMAFetcher interface {
-	FetchEQVOLFeed(ctx context.Context) (domain.Feed, error)
+	FetchEQVOLFeed(ctx context.Context, url url.URL) (domain.Feed, error)
 	FetchEarthquakeReport(ctx context.Context, urls []string) (domain.ReportList, error)
 }
 
@@ -25,12 +32,13 @@ type DataRepo interface {
 
 // 配信用HTMLを保存する
 type HTMLRepo interface {
-	Save(ctx context.Context, key string, html string) error
+	Save(ctx context.Context, key string, html domain.PublishedHTML) error
+	Get(ctx context.Context, key string) (domain.PublishedHTML, error)
 }
 
 // 配信用HTMLを生成する
 type HTMLGenerator interface {
-	Generate(data domain.RankingRecordList, from, to, now time.Time) (string, error)
+	Generate(data domain.RankingRecordList, from, to, now time.Time) (domain.PublishedHTML, error)
 }
 
 type Handler struct {
@@ -60,7 +68,11 @@ func (h *Handler) Process(
 	to := now
 
 	// JMAからフィードを取得する
-	feed, err := h.jmaFetcher.FetchEQVOLFeed(ctx)
+	url, err := url.Parse(EqvolFeedURL)
+	if err != nil {
+		return err
+	}
+	feed, err := h.jmaFetcher.FetchEQVOLFeed(ctx, *url)
 	if err != nil {
 		return err
 	}
