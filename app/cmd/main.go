@@ -4,9 +4,12 @@ import (
 	"context"
 	"log"
 	"os"
+	"time"
 
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+
 	"github.com/iotassss/jishinranking/internal/datarepo"
 	"github.com/iotassss/jishinranking/internal/handler"
 	"github.com/iotassss/jishinranking/internal/htmlgen"
@@ -14,53 +17,43 @@ import (
 	"github.com/iotassss/jishinranking/internal/jma"
 )
 
+func getenv(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
 func main() {
-	// 環境変数
+	// env
 	dataBucketID := os.Getenv("DATA_BUCKET")
 	htmlBucketID := os.Getenv("HTML_BUCKET")
-	region := os.Getenv("AWS_REGION_ID")
 	templatePath := os.Getenv("TEMPLATE_PATH")
-	var init bool
-	if os.Getenv("INIT") == "true" {
-		init = true
-	} else if os.Getenv("INIT") == "false" || os.Getenv("INIT") == "" {
-		init = false
-	} else {
-		panic("ENV INIT must be 'true' or 'false'")
-	}
 
-	ctx := context.Background()
+	// Lambda標準: AWS_REGION が確実。あなたのAWS_REGION_IDはフォールバック扱いに。
+	region := getenv("AWS_REGION", getenv("AWS_DEFAULT_REGION", os.Getenv("AWS_REGION_ID")))
 
-	// datarepo初期化
-	datarepoCfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
+	initMode := os.Getenv("INIT") == "true"
+
+	// SDK初期化だけ短めタイムアウト（ハンドラ実行には使わない）
+	initCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	cfg, err := config.LoadDefaultConfig(initCtx, config.WithRegion(region))
 	if err != nil {
-		panic("unable to load SDK config, " + err.Error())
+		log.Fatalf("unable to load SDK config: %v", err)
 	}
-	datarepoS3Client := s3.NewFromConfig(datarepoCfg)
-	datarepo := datarepo.NewS3DataRepo(datarepoS3Client, dataBucketID)
 
-	// htmlrepo初期化
-	htmlrepoCfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
-	if err != nil {
-		panic("unable to load SDK config, " + err.Error())
-	}
-	s3Client := s3.NewFromConfig(htmlrepoCfg)
-	htmlrepo := htmlrepo.NewS3HTMLRepo(s3Client, htmlBucketID)
+	s3c := s3.NewFromConfig(cfg)
 
-	// htmlgen初期化
-	htmlgen := htmlgen.NewSimpleHTMLGenerator(templatePath)
+	dataRepo := datarepo.NewS3DataRepo(s3c, dataBucketID)
+	htmlRepo := htmlrepo.NewS3HTMLRepo(s3c, htmlBucketID)
+	htmlGen := htmlgen.NewSimpleHTMLGenerator(templatePath)
 
-	// handler初期化
-	h := handler.NewHandler(
-		&jma.JMAClient{},
-		datarepo,
-		htmlrepo,
-		htmlgen,
-	)
+	h := handler.NewHandler(&jma.JMAClient{}, dataRepo, htmlRepo, htmlGen)
 
-	err = h.Process(ctx, init)
-	if err != nil {
-		log.Fatalf("handler.Process error: %v", err)
-	}
-	log.Println("handler.Process finished successfully")
+	// 1 invoke = 1 Process（これで Runtime.ExitError を潰せる）
+	lambda.Start(func(ctx context.Context) error {
+		return h.Process(ctx, initMode)
+	})
 }

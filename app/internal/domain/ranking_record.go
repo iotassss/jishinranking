@@ -60,9 +60,8 @@ func (r RankingRecordList) AssignRanks() {
 func (r RankingRecordList) AssignTiers() {
 	const zero = 0.0
 
-	// ratio のユニーク集合（0除外）
 	keyOf := func(x float64) string {
-		return strconv.FormatFloat(x, 'g', -1, 64) // ratioは事前に丸め済み想定
+		return strconv.FormatFloat(x, 'g', -1, 64)
 	}
 
 	uniq := make(map[string]float64, len(r))
@@ -73,7 +72,6 @@ func (r RankingRecordList) AssignTiers() {
 		uniq[keyOf(r[i].Ratio)] = r[i].Ratio
 	}
 
-	// ユニーク ratio を昇順に並べる
 	ratios := make([]float64, 0, len(uniq))
 	for _, v := range uniq {
 		ratios = append(ratios, v)
@@ -88,7 +86,6 @@ func (r RankingRecordList) AssignTiers() {
 		return
 	}
 
-	// ratio(昇順) -> tier
 	tierByKey := make(map[string]int, k)
 	assignByBuckets := func(bucketSizes [5]int) {
 		idx := 0
@@ -124,27 +121,33 @@ func (r RankingRecordList) AssignTiers() {
 	case 7:
 		assignByBuckets([5]int{2, 2, 1, 1, 1})
 	case 8:
-		// 変更後: 1(2),2(2),3(2),4,5
 		assignByBuckets([5]int{2, 2, 2, 1, 1})
 	case 9:
 		assignByBuckets([5]int{2, 2, 2, 2, 1})
 	default:
-		// k>=10: 以降は「1から順に3個まで増やしつつ」埋めていく（例: 10=3,2,2,2,1 / 11=3,3,2,2,1 / 12=3,3,3,2,1 ...）
-		// 基本形: [2,2,2,2,1] (k=9) から、余りを tier1 -> tier2 -> tier3 -> tier4 の順に加算（各tier最大+1=3個まで）
+		// コメントの例を維持する一般化：
+		// k=9 の基本形 [2,2,2,2,1] から始めて、
+		// 余り(need=k-9)を tier1 -> tier2 -> tier3 -> tier4 の順で +1 していく。
+		// これで
+		// 10=3,2,2,2,1 / 11=3,3,2,2,1 / 12=3,3,3,2,1 / 13=3,3,3,3,1 ...
+		// さらに大きいkでも 1周ごとに[+1,+1,+1,+1,0]が積み上がるので必ず配り切れる。
 		b := [5]int{2, 2, 2, 2, 1}
 		need := k - 9
-		for need > 0 {
-			for i := 0; i < 4 && need > 0; i++ { // tier1..tier4
-				if b[i] < 3 {
-					b[i]++
-					need--
-				}
+
+		// 4つずつ（tier1..tier4）配れるだけ配る
+		q := need / 4
+		r := need % 4
+
+		for i := 0; i < 4; i++ {
+			b[i] += q
+			if i < r {
+				b[i]++
 			}
 		}
+		// tier5 は常に 1（コメント仕様どおり）
 		assignByBuckets(b)
 	}
 
-	// レコードへ反映（0は tier0）
 	for i := range r {
 		if r[i].Ratio == zero {
 			r[i].Tier = 0
