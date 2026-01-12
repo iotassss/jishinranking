@@ -4,11 +4,12 @@ package handler
 import (
 	"context"
 	"log/slog"
-	"net/url"
 	"time"
 
 	"github.com/iotassss/jishinranking/internal/domain"
 )
+
+const htmlKey = "index.html"
 
 // JMAからデータを取得する
 type JMAFetcher interface {
@@ -53,8 +54,7 @@ func NewHandler(jmaFetcher JMAFetcher, dataRepo DataRepo, htmlRepo HTMLRepo, htm
 
 func (h *Handler) Process(
 	ctx context.Context,
-	dataKey,
-	htmlKey string,
+	FetchLongFeed bool,
 ) error {
 	// 1週間分のデータを取得するための期間を設定
 	now := time.Now()
@@ -62,7 +62,7 @@ func (h *Handler) Process(
 	to := now
 
 	// JMAからフィードを取得する
-	feed, err := h.jmaFetcher.FetchEQVOLFeed(ctx, false)
+	feed, err := h.jmaFetcher.FetchEQVOLFeed(ctx, FetchLongFeed)
 	if err != nil {
 		return err
 	}
@@ -127,13 +127,18 @@ func (h *Handler) Process(
 	rankingRecords := domain.ConvertPrefectureJishinDataMapToRankingRecordList(prefectureJishinDataMap)
 	rankingRecords.SortByCountDesc()
 	rankingRecords.AssignRanks()
-rankingRecords.AssignTiers()
+	rankingRecords.AssignTiers()
 
 	// HTML生成・保存
 	html, err := h.htmlGenerator.Generate(rankingRecords, from, to, now)
 	if err != nil {
 		return err
 	}
+
+	// // （ローカル）HTMLをファイルとしてここに保存する
+	// filename := "index.html"
+	// os.WriteFile(filename, []byte(html), 0o644)
+
 	if err := h.htmlRepo.Save(ctx, htmlKey, html); err != nil {
 		return err
 	}

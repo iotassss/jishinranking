@@ -346,12 +346,12 @@
 		(() => {
 			const timeEl = document.getElementById("updated-at");
 			const relEl = document.getElementById("relative-time");
-			const now = new Date(timeEl.getAttribute("data-now"));
 			if (!timeEl || !relEl) return;
 
-			const updated = new Date(timeEl.getAttribute("datetime"));
+			const updated = new Date(timeEl.getAttribute("data-now"));
 
 			const render = () => {
+				const now = new Date();
 				const diffSec = Math.max(0, Math.floor((now - updated) / 1000));
 
 				if (diffSec < 60) relEl.textContent = "（たった今）";

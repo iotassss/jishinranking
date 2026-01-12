@@ -22,6 +22,7 @@ resource "aws_lambda_function" "batch" {
       DAYS_RANGE   = "7"
       AWS_REGION_ID   = var.aws_region
       TEMPLATE_PATH = ""
+      INIT = "false"
     }
   }
 }
@@ -51,6 +52,7 @@ resource "aws_lambda_function" "initialize" {
       DAYS_RANGE   = "7"
       AWS_REGION_ID   = var.aws_region
       TEMPLATE_PATH = ""
+      INIT = "true"
     }
   }
 }

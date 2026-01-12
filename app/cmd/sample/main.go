@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"log/slog"
 	"os"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -19,6 +19,12 @@ import (
 )
 
 func main() {
+	// 引数取得
+	var (
+		init = flag.Bool("init", false, "Initialize the database")
+	)
+	flag.Parse()
+
 	// Debugレベルで標準出力に出す
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	slog.SetDefault(logger)
@@ -73,11 +79,8 @@ func main() {
 		htmlgen,
 	)
 
-	dataKey := time.Now().UTC().Format("20060102T150405Z.json")
-	htmlKey := "index.html"
-
 	// TODO: これは引数で渡す必要があるか検討
-	err = h.Process(ctx, dataKey, htmlKey)
+	err = h.Process(ctx, *init)
 	if err != nil {
 		log.Fatalf("handler.Process error: %v", err)
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"os"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -21,6 +20,14 @@ func main() {
 	htmlBucketID := os.Getenv("HTML_BUCKET")
 	region := os.Getenv("AWS_REGION_ID")
 	templatePath := os.Getenv("TEMPLATE_PATH")
+	var init bool
+	if os.Getenv("INIT") == "true" {
+		init = true
+	} else if os.Getenv("INIT") == "false" || os.Getenv("INIT") == "" {
+		init = false
+	} else {
+		panic("ENV INIT must be 'true' or 'false'")
+	}
 
 	ctx := context.Background()
 
@@ -51,11 +58,7 @@ func main() {
 		htmlgen,
 	)
 
-	dataKey := time.Now().UTC().Format("20060102T150405Z.json")
-	htmlKey := "index.html"
-
-	// TODO: これは引数で渡す必要があるか検討
-	err = h.Process(ctx, dataKey, htmlKey)
+	err = h.Process(ctx, init)
 	if err != nil {
 		log.Fatalf("handler.Process error: %v", err)
 	}
