@@ -19,25 +19,36 @@ import (
 )
 
 func main() {
+	// ==============================
+	// 環境変数
+	// ==============================
+	dataBucketID := "jishinranking-data"
+	htmlBucketID := "jishinranking-html"
+	region := "ap-northeast-1"
+
+	// ==============================
 	// 引数取得
+	// ==============================
 	var (
 		init = flag.Bool("init", false, "Initialize the database")
 	)
 	flag.Parse()
 
-	// Debugレベルで標準出力に出す
+	// ==============================
+	// log設定
+	// ==============================
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	slog.SetDefault(logger)
 
-	// 環境変数
-	dataBucketID := "jishinranking-data"
-	htmlBucketID := "jishinranking-html"
-	region := "ap-northeast-1"
-
+	// ==============================
+	// context設定
+	// ==============================
 	ctx := context.Background()
 
-	// datarepo初期化
-	datarepoCfg, err := config.LoadDefaultConfig(
+	// ==============================
+	// AWS SDK等の初期
+	// ==============================
+	awsCfg, err := config.LoadDefaultConfig(
 		ctx,
 		config.WithRegion(region),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("minioadmin", "minioadmin", "")),
@@ -45,33 +56,18 @@ func main() {
 	if err != nil {
 		panic("unable to load SDK config, " + err.Error())
 	}
-	datarepoS3Client := s3.NewFromConfig(datarepoCfg, func(o *s3.Options) {
+	s3Client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String("http://localhost:9000")
 		o.UsePathStyle = true
-		o.Region = region
+		o.Region = "ap-northeast-1"
 	})
-	datarepo := datarepo.NewS3DataRepo(datarepoS3Client, dataBucketID)
 
-	// htmlrepo初期化
-	htmlrepoCfg, err := config.LoadDefaultConfig(
-		ctx,
-		config.WithRegion(region),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("minioadmin", "minioadmin", "")),
-	)
-	if err != nil {
-		panic("unable to load SDK config, " + err.Error())
-	}
-	s3Client := s3.NewFromConfig(htmlrepoCfg, func(o *s3.Options) {
-		o.BaseEndpoint = aws.String("http://localhost:9000")
-		o.UsePathStyle = true
-		o.Region = region
-	})
+	// ==============================
+	// DI
+	// ==============================
+	datarepo := datarepo.NewS3DataRepo(s3Client, dataBucketID)
 	htmlrepo := htmlrepo.NewS3HTMLRepo(s3Client, htmlBucketID)
-
-	// htmlgen初期化
 	htmlgen := htmlgen.NewSimpleHTMLGenerator("internal/template")
-
-	// handler初期化
 	h := handler.NewHandler(
 		&jma.JMAClient{},
 		datarepo,
@@ -79,6 +75,9 @@ func main() {
 		htmlgen,
 	)
 
+	// ==============================
+	// メイン処理
+	// ==============================
 	// TODO: これは引数で渡す必要があるか検討
 	err = h.Process(ctx, *init)
 	if err != nil {
