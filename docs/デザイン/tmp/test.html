@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>地震ランキング｜過去7日間の都道府県別 地震発生回数</title>
+
+  <meta name="description" content="気象庁の防災情報XMLをもとに、過去7日間の地震を都道府県別に集計。日本地図のヒートマップとランキング表で、最近地震が多い地域を確認できます。" />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <link rel="canonical" href="https://jishinranking.com/" />
+
+  <!-- OGP -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="地震ランキング｜過去7日間の都道府県別 地震発生回数" />
+  <meta property="og:description" content="気象庁の防災情報XMLをもとに、過去7日間の地震を都道府県別に集計。ヒートマップとランキングで確認。" />
+  <meta property="og:url" content="https://jishinranking.com/" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Map library (例: japan-map-js) -->
+  <script defer src="https://unpkg.com/japan-map-js@1.0.1/dist/jpmap.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #111a33;
+      --text: #e8ecff;
+      --muted: #b9c2ffcc;
+      --line: #233057;
+      --accent: #7aa2ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      background: linear-gradient(180deg, #070a14, var(--bg));
+      color: var(--text);
+    }
+
+    a {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      background: rgba(7, 10, 20, .75);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+      z-index: 10;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .nav {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+
+    .pill {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill a {
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .pill a:hover {
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    main {
+      padding: 18px 0 44px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 51, .65);
+      border-radius: 16px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.25;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .badge {
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 51, .65);
+      border-radius: 16px;
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+
+    .card p,
+    .card li {
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .kpi {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 600px) {
+      .kpi {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .kpi .box {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(11, 16, 32, .35);
+    }
+
+    .kpi .num {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .kpi .lbl {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Map + Table */
+    #map {
+      width: 100%;
+      height: 420px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(11, 16, 32, .35);
+    }
+
+    @media (max-width: 900px) {
+      #map {
+        height: 360px;
+      }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 14px;
+    }
+
+    th,
+    td {
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(35, 48, 87, .7);
+      text-align: left;
+    }
+
+    th {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    td {
+      font-size: 14px;
+    }
+
+    .rank {
+      width: 56px;
+      color: var(--muted);
+    }
+
+    .right {
+      text-align: right;
+    }
+
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Ad placeholder */
+    .ad {
+      padding: 14px;
+      border: 1px dashed rgba(122, 162, 255, .6);
+      border-radius: 16px;
+      background: rgba(11, 16, 32, .25);
+      color: var(--muted);
+    }
+
+    .ad strong {
+      color: var(--text);
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      margin-top: 24px;
+    }
+
+    footer .links {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap nav">
+      <div class="brand">
+        <span aria-hidden="true">🗾</span>
+        <a href="/">地震ランキング</a>
+      </div>
+      <nav class="pill" aria-label="サイト内リンク">
+        <a href="/about">このサイトについて</a>
+        <a href="/method">集計方法</a>
+        <a href="/contact">お問い合わせ</a>
+        <a href="/privacy">プライバシー</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- ここが「パブリッシャーのコンテンツ」本体 -->
+    <section class="hero">
+      <h1>日本の地震活動レポート（過去7日間）</h1>
+      <p>
+        気象庁の防災情報XMLをもとに、過去7日間に発生した地震を都道府県別に集計しています。
+        「最近地震が多い地域」を、ヒートマップとランキングで確認できます。
+      </p>
+      <div class="meta">
+        <span class="badge">集計期間: <span id="period">2026-01-04 ～ 2026-01-11</span></span>
+        <span class="badge">最終更新: <time id="updatedAt" datetime="2026-01-11T16:00:00+09:00">2026-01-11
+            16:00</time></span>
+        <span class="badge">データ元: 気象庁</span>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>今週のポイント</h2>
+
+        <!-- 自動生成の「要約」：これがあるだけで“記事感”が出て審査に効く -->
+        <div class="kpi" style="margin-bottom:10px;">
+          <div class="box">
+            <div class="num" id="topPref">東京都</div>
+            <div class="lbl">最多（過去7日）</div>
+          </div>
+          <div class="box">
+            <div class="num"><span id="totalCount">142</span> 回</div>
+            <div class="lbl">全国合計</div>
+          </div>
+          <div class="box">
+            <div class="num"><span id="wow">+12</span>%</div>
+            <div class="lbl">先週比（参考）</div>
+          </div>
+        </div>
+
+        <ul>
+          <li>最多は <strong id="topPref2">東京都</strong>（<strong id="topCount">23</strong>回）。次点は <strong
+              id="secondPref">神奈川県</strong>（<strong id="secondCount">18</strong>回）。</li>
+          <li>地震活動は地域差が大きく、短期の増減が出やすいです（長期傾向は別ページで補足予定）。</li>
+          <li class="small">※ 本サイトは防災情報の参考用であり、緊急時は気象庁・自治体の情報をご確認ください。</li>
+        </ul>
+
+        <h2 style="margin-top:14px;">都道府県別ヒートマップ</h2>
+        <div id="map" aria-label="日本地図ヒートマップ"></div>
+        <p class="small" style="margin-top:8px;">
+          地図をクリックすると都道府県ページ（例: /pref/13）へ遷移できます。
+        </p>
+
+        <h2 style="margin-top:14px;">ランキング（過去7日）</h2>
+        <div style="overflow:auto;">
+          <table aria-label="都道府県別ランキング">
+            <thead>
+              <tr>
+                <th class="rank">順位</th>
+                <th>都道府県</th>
+                <th class="right">回数</th>
+                <th class="right">割合</th>
+              </tr>
+            </thead>
+            <tbody id="rankingBody">
+              <!-- サーバー側で埋める or JSで注入 -->
+              <tr>
+                <td class="rank">1</td>
+                <td>東京都</td>
+                <td class="right">23</td>
+                <td class="right">16.2%</td>
+              </tr>
+              <tr>
+                <td class="rank">2</td>
+                <td>神奈川県</td>
+                <td class="right">18</td>
+                <td class="right">12.7%</td>
+              </tr>
+              <tr>
+                <td class="rank">3</td>
+                <td>静岡県</td>
+                <td class="right">12</td>
+                <td class="right">8.5%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ★AdSense的に安全な位置：コンテンツ（解説+表）の直後 -->
+        <div class="ad" style="margin-top:14px;">
+          <strong>広告枠（例）</strong><br />
+          ここに AdSense を配置（コンテンツの直後 / パブリッシャーの本文がある状態）。
+          <!--
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
+             data-ad-slot="yyyyyyyyyy"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>
+        -->
+        </div>
+      </section>
+
+      <aside class="card">
+        <h2>防災のヒント</h2>
+        <p>
+          地震が多い週は、最低限の備え（電源・水・トイレ）だけでも再点検すると安心です。
+        </p>
+        <ul>
+          <li>モバイルバッテリー（停電対策）</li>
+          <li>飲料水（3日分の目安）</li>
+          <li>簡易トイレ（断水時）</li>
+          <li>非常食（調理不要なもの）</li>
+        </ul>
+
+        <h2 style="margin-top:14px;">このページの見方</h2>
+        <ul>
+          <li>ヒートマップ：色が濃いほど回数が多い</li>
+          <li>ランキング：都道府県別の回数と割合</li>
+          <li>都道府県ページ：過去の推移や詳細（将来拡張）</li>
+        </ul>
+
+        <h2 style="margin-top:14px;">更新頻度</h2>
+        <p class="small">
+          データは概ね10分ごとに取得・集計しています（サーバメンテ等で遅延する場合があります）。
+        </p>
+      </aside>
+    </div>
+
+    <footer class="wrap">
+      <div style="padding:16px 0;">
+        <div class="links">
+          <a href="/about">このサイトについて</a>
+          <a href="/method">集計方法</a>
+          <a href="/contact">お問い合わせ</a>
+          <a href="/privacy">プライバシー</a>
+        </div>
+        <p class="small" style="margin:10px 0 0;">
+          データ出典: 気象庁（防災情報XML）｜本サイトは公式機関ではありません。
+        </p>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    // ====== デモ用: 実際は S3/HTML 生成時に埋め込むのが最強（クローラにも確実に見える） ======
+
+    // 例: 都道府県コード -> URL
+    const areaLinks = {
+      1: "/pref/01", 13: "/pref/13", 14: "/pref/14", 22: "/pref/22"
+    };
+
+    // 例: 地図の色 (code, name, color, hoverColor)  ※ここはサーバー側で生成して埋め込む想定
+    const areas = [
+      { code: 1, name: "北海道", color: "#2a3b78", hoverColor: "#3a4b98" },
+      { code: 13, name: "東京都", color: "#7aa2ff", hoverColor: "#9ab8ff" },
+      { code: 14, name: "神奈川", color: "#587fe0", hoverColor: "#7a9bff" },
+      { code: 22, name: "静岡", color: "#3f62c2", hoverColor: "#5f82e2" },
+    ];
+
+    const mapEl = document.getElementById("map");
+    if (mapEl && window.jpmap?.japanMap) {
+      new jpmap.japanMap(mapEl, {
+        width: mapEl.clientWidth,
+        movesIslands: true,
+        showsAreaName: true,
+        borderLineColor: "#233057",
+        areas,
+        onSelect: (area) => {
+          const url = areaLinks[area.code];
+          if (url) location.href = url;
+        },
+      });
+    }
+  </script>
+</body>
+
+</html>

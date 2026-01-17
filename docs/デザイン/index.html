@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>地震ランキング｜今週の都道府県別 地震発生密度</title>
+  <meta name="description" content="気象庁の防災情報XMLをもとに、今週の都道府県別の地震発生密度（回数/10,000km²）を可視化します。" />
+  <link rel="icon" type="image/png" href="favicon.png" />
+
+  <style>
+    :root {
+      /* 白:黒:赤 = 7:2:1 を意識 */
+      --bg: #ffffff;
+      --bg-sub: #f7f7f7;
+      --text: #111111;
+      --text-sub: #333333;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+
+      --accent: #d7000f;
+      /* JPXっぽい赤 */
+      --accent-weak: rgba(215, 0, 15, 0.08);
+
+      --link: #111111;
+      --card: #ffffff;
+
+      /* heatmap系（赤を避けて青〜紫） */
+      --hm-0: #eef2ff;
+      --hm-1: #dbeafe;
+      --hm-2: #bfdbfe;
+      --hm-3: #93c5fd;
+      --hm-4: #60a5fa;
+      --hm-5: #3b82f6;
+      --hm-6: #2563eb;
+      --hm-7: #1d4ed8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+    }
+
+    a {
+      color: var(--link);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--text), #444);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      flex: 0 0 auto;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .brand p {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .nav {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      flex: 0 0 auto;
+    }
+
+    .nav a {
+      font-size: 13px;
+      color: var(--text-sub);
+      padding: 6px 8px;
+      border-radius: 8px;
+    }
+
+    .nav a:hover {
+      background: var(--bg-sub);
+      text-decoration: none;
+    }
+
+    /* Mini Ticker (JPX風：白地 + 黒 + 赤は差分だけ) */
+    .ticker {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-sub);
+      overflow: hidden;
+    }
+
+    .ticker-track {
+      display: flex;
+      gap: 18px;
+      padding: 8px 0;
+      white-space: nowrap;
+      animation: marquee 22s linear infinite;
+    }
+
+    .ticker:hover .ticker-track {
+      animation-play-state: paused;
+    }
+
+    @keyframes marquee {
+      0% {
+        transform: translateX(0);
+      }
+
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+
+    .tick {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .tick strong {
+      color: var(--text);
+    }
+
+    .badge-up {
+      color: var(--accent);
+      background: var(--accent-weak);
+      border: 1px solid rgba(215, 0, 15, 0.18);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    /* Main layout */
+    main {
+      padding: 18px 0 48px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .nav {
+        display: none;
+      }
+
+      .ticker-track {
+        animation-duration: 28s;
+      }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 10px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0.01em;
+    }
+
+    .section-title .meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Summary */
+    .summary p {
+      margin: 0 0 10px;
+      color: var(--text-sub);
+      font-size: 14px;
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .kv {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .kv-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: var(--bg-sub);
+    }
+
+    .kv-item .label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .kv-item .value {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .kv-item .value small {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-left: 6px;
+    }
+
+    .kv-item .hint {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .red {
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    /* Heatmap placeholder */
+    .heatmap {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .heatmap {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .hm-tile {
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      min-height: 70px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .hm-tile .name {
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .hm-tile .num {
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .hm0 {
+      background: var(--hm-0);
+    }
+
+    .hm1 {
+      background: var(--hm-1);
+    }
+
+    .hm2 {
+      background: var(--hm-2);
+    }
+
+    .hm3 {
+      background: var(--hm-3);
+    }
+
+    .hm4 {
+      background: var(--hm-4);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .hm5 {
+      background: var(--hm-5);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .hm6 {
+      background: var(--hm-6);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .hm7 {
+      background: var(--hm-7);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    th,
+    td {
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      background: var(--bg-sub);
+      color: var(--text-sub);
+      font-weight: 800;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    td.rank {
+      width: 56px;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    td.metric {
+      font-weight: 800;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: var(--bg-sub);
+    }
+
+    .btn.primary {
+      border-color: rgba(215, 0, 15, 0.25);
+      background: var(--accent-weak);
+      color: var(--accent);
+    }
+
+    /* 24h list */
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .event {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fff;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .event .left {
+      min-width: 0;
+    }
+
+    .event .title {
+      font-weight: 900;
+      font-size: 13px;
+      margin: 0 0 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event .sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .event .pill {
+      font-size: 12px;
+      font-weight: 900;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-sub);
+      white-space: nowrap;
+    }
+
+    /* Graph placeholder */
+    .graph {
+      border: 1px dashed #cbd5e1;
+      border-radius: 12px;
+      background: #fafafa;
+      height: 220px;
+      display: grid;
+      place-items: center;
+      color: #64748b;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    /* Affiliate */
+    .affiliate {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .affiliate {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .product {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .thumb {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      background: var(--bg-sub);
+      border: 1px solid var(--border);
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      color: var(--muted);
+    }
+
+    .product h3 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .product p {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      background: var(--bg-sub);
+      padding: 18px 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    footer .links {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo">JR</div>
+          <div>
+            <h1>地震ランキング</h1>
+            <p>今週の地震発生密度（回数 / 10,000km²）を可視化</p>
+          </div>
+        </div>
+
+        <nav class="nav">
+          <a href="#summary">サマリー</a>
+          <a href="#heatmap">ヒートマップ</a>
+          <a href="#top10">上位10</a>
+          <a href="#recent">24時間</a>
+          <a href="#weekly">週間推移</a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="ticker" aria-label="最新情報ティッカー（ホバーで停止）">
+      <div class="container">
+        <!-- 2本並べて無限スクロールっぽく見せる -->
+        <div class="ticker-track">
+          <span class="tick"><strong>直近</strong> M4.2 / 最大震度3（福島県沖）</span>
+          <span class="tick"><strong>急上昇</strong> 宮城 <span class="badge-up">+8</span></span>
+          <span class="tick"><strong>直近</strong> M3.6 / 最大震度2（能登半島）</span>
+          <span class="tick"><strong>急上昇</strong> 北海道 <span class="badge-up">+5</span></span>
+          <span class="tick"><strong>直近</strong> M4.8 / 最大震度3（茨城県南部）</span>
+
+          <span class="tick"><strong>直近</strong> M4.2 / 最大震度3（福島県沖）</span>
+          <span class="tick"><strong>急上昇</strong> 宮城 <span class="badge-up">+8</span></span>
+          <span class="tick"><strong>直近</strong> M3.6 / 最大震度2（能登半島）</span>
+          <span class="tick"><strong>急上昇</strong> 北海道 <span class="badge-up">+5</span></span>
+          <span class="tick"><strong>直近</strong> M4.8 / 最大震度3（茨城県南部）</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Summary -->
+    <section id="summary" class="card summary">
+      <div class="section-title">
+        <h2>サマリー</h2>
+        <div class="meta">集計期間: 2026-01-10 〜 2026-01-17（ダミー）</div>
+      </div>
+
+      <p>
+        このページでは、都道府県ごとの地震発生回数を <b>面積で補正</b> した
+        <b>地震発生密度（回数 / 10,000km²）</b> をランキング形式で表示します。
+        面積の広い地域が有利になりすぎないよう、単純な回数ではなく密度で比較しています。
+      </p>
+      <p>
+        また、<span class="red">震度3以上</span> の地震が発生した地域や、
+        前週比で増えた <b>急上昇</b> 都道府県もあわせて確認できます（速報値）。
+        気象庁の防災情報XMLをもとに自動集計しています。
+      </p>
+
+      <div class="kv">
+        <div class="kv-item">
+          <div class="label">今週の総地震回数（ダミー）</div>
+          <div class="value">214<small>回</small></div>
+          <div class="hint">震度1以上を含む（仮）</div>
+        </div>
+        <div class="kv-item">
+          <div class="label">震度3以上が発生した都道府県</div>
+          <div class="value"><span class="red">9</span><small>都道府県</small></div>
+          <div class="hint">危険色はここだけに限定</div>
+        </div>
+        <div class="kv-item">
+          <div class="label">急上昇トップ（前週比）</div>
+          <div class="value">宮城<small>+8</small></div>
+          <div class="hint">増加分のみ赤で強調</div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <a class="btn primary" href="#heatmap">今週のヒートマップを見る</a>
+        <a class="btn" href="#recent">24時間の履歴を見る</a>
+        <a class="btn" href="/all">47都道府県の集計へ</a>
+      </div>
+    </section>
+
+    <div class="grid">
+
+      <!-- Heatmap -->
+      <section id="heatmap" class="card">
+        <div class="section-title">
+          <h2>今週の都道府県別 地震ランキング（密度）</h2>
+          <div class="meta">単位: 回/10,000km²</div>
+        </div>
+
+        <p style="margin:0 0 8px; color: var(--muted); font-size: 12px;">
+          ※ここは本番では日本地図SVG/Canvasに置き換え。ダミーとしてタイル表示。
+        </p>
+
+        <div class="heatmap">
+          <div class="hm-tile hm6">
+            <div class="name">宮城</div>
+            <div class="num">12.4</div>
+          </div>
+          <div class="hm-tile hm5">
+            <div class="name">福島</div>
+            <div class="num">10.9</div>
+          </div>
+          <div class="hm-tile hm4">
+            <div class="name">茨城</div>
+            <div class="num">9.8</div>
+          </div>
+          <div class="hm-tile hm3">
+            <div class="name">北海道</div>
+            <div class="num">6.2</div>
+          </div>
+          <div class="hm-tile hm2">
+            <div class="name">石川</div>
+            <div class="num">3.7</div>
+          </div>
+          <div class="hm-tile hm1">
+            <div class="name">東京</div>
+            <div class="num">1.9</div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <a class="btn" href="/map">地図で詳細を見る</a>
+          <a class="btn" href="/method">集計方法</a>
+        </div>
+      </section>
+
+      <!-- Top 10 -->
+      <section id="top10" class="card">
+        <div class="section-title">
+          <h2>上位10（密度ランキング）</h2>
+          <div class="meta">速報（ダミー）</div>
+        </div>
+
+        <table aria-label="都道府県別 地震密度 上位10">
+          <thead>
+            <tr>
+              <th style="width:64px;">順位</th>
+              <th>都道府県</th>
+              <th>回/10,000km²</th>
+              <th>回数</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="rank">1</td>
+              <td>宮城</td>
+              <td class="metric">12.4</td>
+              <td>18</td>
+            </tr>
+            <tr>
+              <td class="rank">2</td>
+              <td>福島</td>
+              <td class="metric">10.9</td>
+              <td>20</td>
+            </tr>
+            <tr>
+              <td class="rank">3</td>
+              <td>茨城</td>
+              <td class="metric">9.8</td>
+              <td>22</td>
+            </tr>
+            <tr>
+              <td class="rank">4</td>
+              <td>北海道</td>
+              <td class="metric">6.2</td>
+              <td>28</td>
+            </tr>
+            <tr>
+              <td class="rank">5</td>
+              <td>石川</td>
+              <td class="metric">3.7</td>
+              <td>7</td>
+            </tr>
+            <tr>
+              <td class="rank">6</td>
+              <td>東京</td>
+              <td class="metric">1.9</td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td class="rank">7</td>
+              <td>新潟</td>
+              <td class="metric">1.8</td>
+              <td>6</td>
+            </tr>
+            <tr>
+              <td class="rank">8</td>
+              <td>静岡</td>
+              <td class="metric">1.7</td>
+              <td>5</td>
+            </tr>
+            <tr>
+              <td class="rank">9</td>
+              <td>長野</td>
+              <td class="metric">1.6</td>
+              <td>5</td>
+            </tr>
+            <tr>
+              <td class="rank">10</td>
+              <td>熊本</td>
+              <td class="metric">1.5</td>
+              <td>4</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="btn-row">
+          <a class="btn primary" href="/all">47都道府県の集計結果へ</a>
+          <a class="btn" href="/pref/miyagi">1位の詳細へ</a>
+        </div>
+      </section>
+    </div>
+
+    <!-- 24h -->
+    <section id="recent" class="card" style="margin-top:16px;">
+      <div class="section-title">
+        <h2>24時間の地震発生履歴</h2>
+        <div class="meta">新しい順（ダミー）</div>
+      </div>
+
+      <div class="list">
+        <a class="event" href="/eq/20260117-001">
+          <div class="left">
+            <p class="title">福島県沖 M4.2（最大震度3）</p>
+            <p class="sub">2026-01-17 12:34 / 深さ 40km（ダミー）</p>
+          </div>
+          <div class="pill"><span class="red">震度3</span> 詳細</div>
+        </a>
+
+        <a class="event" href="/eq/20260117-002">
+          <div class="left">
+            <p class="title">能登半島 M3.6（最大震度2）</p>
+            <p class="sub">2026-01-17 10:10 / 深さ 10km（ダミー）</p>
+          </div>
+          <div class="pill">震度2 詳細</div>
+        </a>
+
+        <a class="event" href="/eq/20260117-003">
+          <div class="left">
+            <p class="title">茨城県南部 M4.8（最大震度3）</p>
+            <p class="sub">2026-01-17 08:02 / 深さ 50km（ダミー）</p>
+          </div>
+          <div class="pill"><span class="red">震度3</span> 詳細</div>
+        </a>
+      </div>
+
+      <div class="btn-row">
+        <a class="btn" href="/eq">地震一覧へ</a>
+        <a class="btn" href="/eq?since=7d">過去7日を見る</a>
+      </div>
+    </section>
+
+    <!-- Weekly trend -->
+    <section id="weekly" class="card" style="margin-top:16px;">
+      <div class="section-title">
+        <h2>週間推移（ダミー）</h2>
+        <div class="meta">TVal now風</div>
+      </div>
+
+      <div class="graph">ここに折れ線グラフ（ダミー）</div>
+
+      <div class="btn-row">
+        <a class="btn" href="/trend">推移ページへ</a>
+        <a class="btn" href="/trend?metric=density">密度で見る</a>
+      </div>
+    </section>
+
+    <!-- Affiliate -->
+    <section class="card" style="margin-top:16px;">
+      <div class="section-title">
+        <h2>防災用品（おすすめ）</h2>
+        <div class="meta">備えのチェック</div>
+      </div>
+
+      <p style="margin:0 0 10px; color: var(--text-sub); font-size: 13px;">
+        地震は予測が難しいため、日頃の備えが重要です。家庭の状況に合った備蓄を見直しておくと安心です（ダミー文章）。
+      </p>
+
+      <div class="affiliate">
+        <a class="product" href="#" aria-label="非常食セット（ダミー）">
+          <div class="thumb">食</div>
+          <div>
+            <h3>非常食セット（3日分）</h3>
+            <p>ローリングストックに便利（ダミー）</p>
+          </div>
+        </a>
+
+        <a class="product" href="#" aria-label="防災ラジオ（ダミー）">
+          <div class="thumb">📻</div>
+          <div>
+            <h3>手回し防災ラジオ</h3>
+            <p>停電時の情報収集に（ダミー）</p>
+          </div>
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <div>
+        <b>地震ランキング</b> — 気象庁 防災情報XMLをもとに独自集計（ダミー表示）
+      </div>
+      <div class="links">
+        <a href="/about">このサイトについて</a>
+        <a href="/method">集計方法</a>
+        <a href="/contact">お問い合わせ</a>
+        <a href="/terms">利用規約</a>
+      </div>
+      <div style="margin-top:10px;">
+        ※本サイトの表示は参考情報です。正確な情報は気象庁等の発表をご確認ください。
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>
