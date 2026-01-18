@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>47都道府県の集計結果｜地震ランキング</title>
+  <meta name="description" content="今週の47都道府県別 地震発生密度（回数/10,000km²）と回数、前週比を一覧で比較できます。" />
+
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-sub: #f7f7f7;
+      --text: #111111;
+      --text-sub: #333333;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+
+      --accent: #d7000f;
+      --accent-weak: rgba(215, 0, 15, 0.08);
+
+      --ok: #0f766e;
+      --info: #1d4ed8;
+
+      /* ヒート（赤は避ける：青〜紫） */
+      --hm-0: #eef2ff;
+      --hm-1: #dbeafe;
+      --hm-2: #bfdbfe;
+      --hm-3: #93c5fd;
+      --hm-4: #60a5fa;
+      --hm-5: #3b82f6;
+      --hm-6: #2563eb;
+      --hm-7: #1d4ed8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+    }
+
+    a {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--text), #444);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      flex: 0 0 auto;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .brand p {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .nav {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .nav a {
+      font-size: 13px;
+      color: var(--text-sub);
+      padding: 6px 8px;
+      border-radius: 8px;
+    }
+
+    .nav a:hover {
+      background: var(--bg-sub);
+      text-decoration: none;
+    }
+
+    @media (max-width: 900px) {
+      .nav {
+        display: none;
+      }
+    }
+
+    main {
+      padding: 18px 0 48px;
+    }
+
+    .breadcrumb {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 10px 0 14px;
+    }
+
+    .breadcrumb a {
+      color: var(--muted);
+    }
+
+    .page-title {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 14px;
+    }
+
+    .page-title h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0.01em;
+    }
+
+    .page-title .meta {
+      text-align: right;
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 10px;
+    }
+
+    .section-title h3 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .section-title .right {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Controls */
+    .controls {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .controls {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .input,
+    .select,
+    .btn {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      background: #fff;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .btn {
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: var(--bg-sub);
+    }
+
+    .btn.primary {
+      border-color: rgba(215, 0, 15, 0.25);
+      background: var(--accent-weak);
+      color: var(--accent);
+      font-weight: 900;
+    }
+
+    /* Table */
+    .table-wrap {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background: var(--bg-sub);
+      color: var(--text-sub);
+      font-weight: 900;
+      position: sticky;
+      top: 0;
+      /* テーブル内スクロール時に効く（wrapのmax-heightと合わせる） */
+      z-index: 1;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    td.rank {
+      width: 56px;
+      font-weight: 900;
+    }
+
+    td.right {
+      text-align: right;
+    }
+
+    td.center {
+      text-align: center;
+    }
+
+    .rowlink a {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .arrow {
+      color: var(--muted);
+    }
+
+    /* Heat badge for density */
+    .heat {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 66px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .hm0 {
+      background: var(--hm-0);
+    }
+
+    .hm1 {
+      background: var(--hm-1);
+    }
+
+    .hm2 {
+      background: var(--hm-2);
+    }
+
+    .hm3 {
+      background: var(--hm-3);
+    }
+
+    .hm4 {
+      background: var(--hm-4);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .hm5 {
+      background: var(--hm-5);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .hm6 {
+      background: var(--hm-6);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .hm7 {
+      background: var(--hm-7);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Delta */
+    .delta {
+      font-weight: 900;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .delta.up {
+      color: var(--accent);
+    }
+
+    .delta.down {
+      color: var(--ok);
+    }
+
+    .delta.flat {
+      color: var(--muted);
+    }
+
+    .note {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      background: var(--bg-sub);
+      padding: 18px 0;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 24px;
+    }
+
+    footer .links {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo">JR</div>
+          <div>
+            <h1>地震ランキング</h1>
+            <p>47都道府県の集計結果（今週）</p>
+          </div>
+        </div>
+        <nav class="nav">
+          <a href="/#heatmap">ヒートマップ</a>
+          <a href="/eq?since=7d">地震履歴</a>
+          <a href="/trend">推移</a>
+          <a href="/method">集計方法</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="breadcrumb">
+      <a href="/">ホーム</a> &nbsp;›&nbsp; 47都道府県の集計結果
+    </div>
+
+    <div class="page-title">
+      <div>
+        <h2>47都道府県の集計結果</h2>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">
+          密度（回/10,000km²）・回数・前週比を一覧で比較できます（ダミー）
+        </div>
+      </div>
+      <div class="meta">
+        集計期間: 2026-01-10 〜 2026-01-17<br />
+        最終更新: 2026-01-17 13:20
+      </div>
+    </div>
+
+    <section class="card" aria-label="一覧の操作とテーブル">
+      <div class="section-title">
+        <h3>一覧</h3>
+        <div class="right">単位: 回/10,000km²</div>
+      </div>
+
+      <!-- Controls（見た目だけ：JSで実装する想定） -->
+      <div class="controls" aria-label="フィルタ・ソート">
+        <input class="input" type="search" placeholder="都道府県名で検索（例: 宮城）" />
+        <select class="select">
+          <option>ソート: 密度（高い順）</option>
+          <option>ソート: 密度（低い順）</option>
+          <option>ソート: 回数（多い順）</option>
+          <option>ソート: 前週比（増加順）</option>
+        </select>
+        <select class="select">
+          <option>フィルタ: すべて</option>
+          <option>震度3+あり</option>
+          <option>前週比プラス</option>
+        </select>
+        <button class="btn primary" type="button">CSV（ダミー）</button>
+      </div>
+
+      <div class="table-wrap" style="max-height: 520px; overflow: auto;" aria-label="47都道府県テーブル（スクロール）">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:60px;">順位</th>
+              <th>都道府県</th>
+              <th class="center" style="width:160px;">密度</th>
+              <th class="right" style="width:90px;">回数</th>
+              <th class="right" style="width:120px;">面積(km²)</th>
+              <th class="center" style="width:120px;">前週比</th>
+              <th class="right" style="width:90px;">詳細</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- ダミー（本番は47行） -->
+            <tr class="rowlink">
+              <td class="rank">1</td>
+              <td><a href="/pref/miyagi">宮城 <span class="arrow">›</span></a></td>
+              <td class="center"><span class="heat hm6">12.4</span></td>
+              <td class="right">18</td>
+              <td class="right">7,282</td>
+              <td class="center"><span class="delta up">▲ +8</span></td>
+              <td class="right"><a href="/pref/miyagi">見る</a></td>
+            </tr>
+            <tr class="rowlink">
+              <td class="rank">2</td>
+              <td><a href="/pref/fukushima">福島 <span class="arrow">›</span></a></td>
+              <td class="center"><span class="heat hm5">10.9</span></td>
+              <td class="right">20</td>
+              <td class="right">13,784</td>
+              <td class="center"><span class="delta up">▲ +3</span></td>
+              <td class="right"><a href="/pref/fukushima">見る</a></td>
+            </tr>
+            <tr class="rowlink">
+              <td class="rank">3</td>
+              <td><a href="/pref/ibaraki">茨城 <span class="arrow">›</span></a></td>
+              <td class="center"><span class="heat hm4">9.8</span></td>
+              <td class="right">22</td>
+              <td class="right">6,097</td>
+              <td class="center"><span class="delta flat">— 0</span></td>
+              <td class="right"><a href="/pref/ibaraki">見る</a></td>
+            </tr>
+            <tr class="rowlink">
+              <td class="rank">4</td>
+              <td><a href="/pref/hokkaido">北海道 <span class="arrow">›</span></a></td>
+              <td class="center"><span class="heat hm3">6.2</span></td>
+              <td class="right">28</td>
+              <td class="right">83,424</td>
+              <td class="center"><span class="delta down">▼ -2</span></td>
+              <td class="right"><a href="/pref/hokkaido">見る</a></td>
+            </tr>
+            <tr class="rowlink">
+              <td class="rank">5</td>
+              <td><a href="/pref/ishikawa">石川 <span class="arrow">›</span></a></td>
+              <td class="center"><span class="heat hm2">3.7</span></td>
+              <td class="right">7</td>
+              <td class="right">4,185</td>
+              <td class="center"><span class="delta up">▲ +1</span></td>
+              <td class="right"><a href="/pref/ishikawa">見る</a></td>
+            </tr>
+
+            <!-- ...以下、47都道府県ぶんが入る想定 -->
+            <tr>
+              <td class="rank">47</td>
+              <td><a href="/pref/okinawa">沖縄 <span class="arrow">›</span></a></td>
+              <td class="center"><span class="heat hm0">0.1</span></td>
+              <td class="right">1</td>
+              <td class="right">2,281</td>
+              <td class="center"><span class="delta flat">— 0</span></td>
+              <td class="right"><a href="/pref/okinawa">見る</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        ※密度は「回数 ÷ 面積 × 10,000」で算出（ダミー表記）。
+        ※前週比は「今週回数 − 前週回数」（ダミー表記）。
+        ※本ページの表示は参考情報です。正確な情報は気象庁等の発表をご確認ください。
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <div><b>地震ランキング</b> — 気象庁 防災情報XMLをもとに独自集計（ダミー表示）</div>
+      <div class="links">
+        <a href="/about">このサイトについて</a>
+        <a href="/method">集計方法</a>
+        <a href="/contact">お問い合わせ</a>
+        <a href="/terms">利用規約</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>

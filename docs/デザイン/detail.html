@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>地震詳細｜2026-01-18 00:50 トカラ列島近海 M2.3</title>
+  <meta name="description" content="地震の詳細（震源、マグニチュード、最大震度、観測地域）を見やすく表示します。" />
+
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-sub: #f7f7f7;
+      --text: #111111;
+      --text-sub: #333333;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+
+      --accent: #d7000f;
+      --accent-weak: rgba(215, 0, 15, 0.08);
+
+      --ok: #0f766e;
+      --warn: #b45309;
+      --info: #1d4ed8;
+
+      /* 震度別（控えめに） */
+      --s1-bg: rgba(15, 118, 110, 0.08);
+      --s1-bd: rgba(15, 118, 110, 0.25);
+      --s1-fg: #0f766e;
+
+      --s2-bg: rgba(180, 83, 9, 0.10);
+      --s2-bd: rgba(180, 83, 9, 0.25);
+      --s2-fg: #b45309;
+
+      --s3-bg: rgba(215, 0, 15, 0.08);
+      --s3-bd: rgba(215, 0, 15, 0.25);
+      --s3-fg: #d7000f;
+
+      --map-bg: #fafafa;
+      --map-line: #cbd5e1;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+    }
+
+    a {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    /* Header (共通想定) */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--text), #444);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      flex: 0 0 auto;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .brand p {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .nav {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .nav a {
+      font-size: 13px;
+      color: var(--text-sub);
+      padding: 6px 8px;
+      border-radius: 8px;
+    }
+
+    .nav a:hover {
+      background: var(--bg-sub);
+      text-decoration: none;
+    }
+
+    @media (max-width: 900px) {
+      .nav {
+        display: none;
+      }
+    }
+
+    main {
+      padding: 18px 0 48px;
+    }
+
+    .breadcrumb {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 10px 0 14px;
+    }
+
+    .breadcrumb a {
+      color: var(--muted);
+    }
+
+    .page-title {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 14px;
+    }
+
+    .page-title h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0.01em;
+    }
+
+    .page-title .meta {
+      text-align: right;
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 10px;
+    }
+
+    .section-title h3 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .section-title .right {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Top hero card */
+    .hero {
+      background: linear-gradient(180deg, var(--bg-sub), #fff);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .hero-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .hero-top h3 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0.01em;
+    }
+
+    .hero-top p {
+      margin: 6px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .pill.s1 {
+      background: var(--s1-bg);
+      border-color: var(--s1-bd);
+      color: var(--s1-fg);
+    }
+
+    .pill.s2 {
+      background: var(--s2-bg);
+      border-color: var(--s2-bd);
+      color: var(--s2-fg);
+    }
+
+    .pill.s3 {
+      background: var(--s3-bg);
+      border-color: var(--s3-bd);
+      color: var(--s3-fg);
+    }
+
+    .pill.gray {
+      background: var(--bg-sub);
+      color: var(--text-sub);
+    }
+
+    .kpi {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .kpi {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .kpi-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fff;
+      min-width: 0;
+    }
+
+    .kpi-item .label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .kpi-item .value {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+    }
+
+    .kpi-item .value small {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-left: 6px;
+    }
+
+    /* Summary list */
+    .facts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .facts {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .fact {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: var(--bg-sub);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .fact b {
+      color: var(--text);
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background: var(--bg-sub);
+      color: var(--text-sub);
+      font-weight: 900;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    td.right {
+      text-align: right;
+    }
+
+    td.center {
+      text-align: center;
+    }
+
+    /* Simple “map” placeholder */
+    .mapbox {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--map-bg);
+      box-shadow: var(--shadow);
+    }
+
+    .maphead {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .maparea {
+      height: 220px;
+      display: grid;
+      place-items: center;
+      color: #64748b;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      position: relative;
+    }
+
+    .maparea::before {
+      content: "";
+      position: absolute;
+      inset: 18px;
+      border-radius: 12px;
+      border: 2px dashed var(--map-line);
+      opacity: 0.7;
+    }
+
+    .mapbadge {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #fff;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+      color: var(--text-sub);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    /* CTA buttons */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: var(--bg-sub);
+    }
+
+    .btn.primary {
+      border-color: rgba(215, 0, 15, 0.25);
+      background: var(--accent-weak);
+      color: var(--accent);
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      background: var(--bg-sub);
+      padding: 18px 0;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 24px;
+    }
+
+    footer .links {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo">JR</div>
+          <div>
+            <h1>地震ランキング</h1>
+            <p>地震詳細</p>
+          </div>
+        </div>
+        <nav class="nav">
+          <a href="/#heatmap">ヒートマップ</a>
+          <a href="/all">47都道府県</a>
+          <a href="/eq?since=7d">地震履歴</a>
+          <a href="/trend">推移</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="breadcrumb">
+      <a href="/">ホーム</a> &nbsp;›&nbsp; <a href="/eq?since=7d">地震履歴</a> &nbsp;›&nbsp; 地震詳細
+    </div>
+
+    <div class="page-title">
+      <div>
+        <h2>地震詳細</h2>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">
+          震源・M・最大震度・観測地域を見やすくまとめています（ダミー）。
+        </div>
+      </div>
+      <div class="meta">
+        eventID: 20260118005035<br />
+        発表: 2026-01-18 00:53
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <section class="hero" aria-label="地震の要点">
+      <div class="hero-top">
+        <div>
+          <h3>2026-01-18 00:50頃｜トカラ列島近海</h3>
+          <p>気象庁の「震源・震度に関する情報」をもとに整形（ダミー）。</p>
+        </div>
+        <div class="pill s1">最大震度 1</div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi-item">
+          <div class="label">発生時刻</div>
+          <div class="value">00:50<small>JST</small></div>
+        </div>
+        <div class="kpi-item">
+          <div class="label">震源</div>
+          <div class="value">トカラ列島近海</div>
+        </div>
+        <div class="kpi-item">
+          <div class="label">マグニチュード</div>
+          <div class="value">2.3<small>Mj</small></div>
+        </div>
+        <div class="kpi-item">
+          <div class="label">深さ</div>
+          <div class="value">—<small>（未取得）</small></div>
+        </div>
+      </div>
+
+      <div class="facts">
+        <div class="fact"><span>ステータス</span><b>通常</b></div>
+        <div class="fact"><span>発表機関</span><b>気象庁</b></div>
+        <div class="fact"><span>見出し</span><b>「１８日００時５０分ころ、地震がありました。」</b></div>
+        <div class="fact"><span>観測都道府県（最大震度）</span><b>鹿児島県</b></div>
+      </div>
+
+      <div class="btn-row">
+        <a class="btn" href="/pref/kagoshima">鹿児島の集計へ</a>
+        <a class="btn primary" href="/eq?pref=kagoshima&since=7d">鹿児島の地震履歴へ</a>
+        <a class="btn" href="/eq?since=7d">一覧へ戻る</a>
+      </div>
+    </section>
+
+    <div class="grid" style="margin-top:16px;">
+      <!-- 観測地域 -->
+      <section class="card" aria-label="観測地域（最大震度）">
+        <div class="section-title">
+          <h3>観測地域（最大震度）</h3>
+          <div class="right">都道府県 → 地域（ダミー）</div>
+        </div>
+
+        <table aria-label="都道府県別 最大震度">
+          <thead>
+            <tr>
+              <th>都道府県</th>
+              <th class="center" style="width:120px;">最大震度</th>
+              <th>地域</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="/pref/kagoshima">鹿児島県</a></td>
+              <td class="center"><span class="pill s1">震度1</span></td>
+              <td>鹿児島県十島村</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="btn-row">
+          <a class="btn" href="/pref/kagoshima">鹿児島の集計へ</a>
+          <a class="btn" href="/eq?pref=kagoshima&since=24h">鹿児島の24時間</a>
+        </div>
+      </section>
+
+      <!-- “地図”プレースホルダ（本番はSVG等に差し替え） -->
+      <section class="card" aria-label="位置（ダミー）">
+        <div class="section-title">
+          <h3>位置</h3>
+          <div class="right">後で地図/画像に置換</div>
+        </div>
+
+        <div class="mapbox">
+          <div class="maphead">
+            <div>震源：トカラ列島近海</div>
+            <div>最大震度：<span class="pill s1" style="padding:4px 10px;">1</span></div>
+          </div>
+          <div class="maparea">
+            <div class="mapbadge">
+              ここに地図（SVG/画像）を配置
+              <span class="pill gray" style="padding:4px 10px;">プレースホルダ</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:10px; font-size:12px; color: var(--muted);">
+          ※地図は「震源位置」または「観測都道府県のハイライト」のどちらかに寄せるのが見やすいです。
+        </div>
+      </section>
+    </div>
+
+    <!-- 関連リンク -->
+    <section class="card" style="margin-top:16px;" aria-label="関連リンク">
+      <div class="section-title">
+        <h3>関連</h3>
+        <div class="right">次に見る導線</div>
+      </div>
+
+      <table aria-label="関連リンク一覧">
+        <thead>
+          <tr>
+            <th>リンク</th>
+            <th class="right" style="width:120px;">移動</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>過去7日間の地震履歴へ</td>
+            <td class="right"><a href="/eq?since=7d">見る ›</a></td>
+          </tr>
+          <tr>
+            <td>47都道府県の集計結果へ</td>
+            <td class="right"><a href="/all">見る ›</a></td>
+          </tr>
+          <tr>
+            <td>推移詳細ページへ</td>
+            <td class="right"><a href="/trend">見る ›</a></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:10px; font-size:12px; color: var(--muted);">
+        ※本ページの表示は参考情報です。正確な情報は気象庁等の発表をご確認ください。
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <div><b>地震ランキング</b> — 気象庁 防災情報XMLをもとに独自集計（ダミー表示）</div>
+      <div class="links">
+        <a href="/about">このサイトについて</a>
+        <a href="/method">集計方法</a>
+        <a href="/contact">お問い合わせ</a>
+        <a href="/terms">利用規約</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>

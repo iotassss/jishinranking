@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>過去7日間の地震履歴｜地震ランキング</title>
+  <meta name="description" content="過去7日間の地震履歴を時系列で一覧表示。都道府県・震度・期間で絞り込み、地震詳細ページへ遷移できます。" />
+
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-sub: #f7f7f7;
+      --text: #111111;
+      --text-sub: #333333;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+
+      --accent: #d7000f;
+      --accent-weak: rgba(215, 0, 15, 0.08);
+
+      --ok: #0f766e;
+      --info: #1d4ed8;
+      --warn: #b45309;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+    }
+
+    a {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    /* Header (共通想定) */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--text), #444);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      flex: 0 0 auto;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .brand p {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .nav {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .nav a {
+      font-size: 13px;
+      color: var(--text-sub);
+      padding: 6px 8px;
+      border-radius: 8px;
+    }
+
+    .nav a:hover {
+      background: var(--bg-sub);
+      text-decoration: none;
+    }
+
+    @media (max-width: 900px) {
+      .nav {
+        display: none;
+      }
+    }
+
+    main {
+      padding: 18px 0 48px;
+    }
+
+    .breadcrumb {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 10px 0 14px;
+    }
+
+    .breadcrumb a {
+      color: var(--muted);
+    }
+
+    .page-title {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 14px;
+    }
+
+    .page-title h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0.01em;
+    }
+
+    .page-title .meta {
+      text-align: right;
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 10px;
+    }
+
+    .section-title h3 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .section-title .right {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Filters */
+    .filters {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .filters {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .input,
+    .select,
+    .btn {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      background: #fff;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .btn {
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: var(--bg-sub);
+    }
+
+    .btn.primary {
+      border-color: rgba(215, 0, 15, 0.25);
+      background: var(--accent-weak);
+      color: var(--accent);
+      font-weight: 900;
+    }
+
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .chip {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .chip.active {
+      border-color: rgba(29, 78, 216, 0.25);
+      background: rgba(29, 78, 216, 0.08);
+      color: var(--info);
+    }
+
+    /* Table */
+    .table-wrap {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background: var(--bg-sub);
+      color: var(--text-sub);
+      font-weight: 900;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    td.right {
+      text-align: right;
+    }
+
+    td.center {
+      text-align: center;
+    }
+
+    td.time {
+      white-space: nowrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-sub);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+      min-width: 68px;
+    }
+
+    .pill.s3 {
+      border-color: rgba(215, 0, 15, 0.25);
+      background: var(--accent-weak);
+      color: var(--accent);
+    }
+
+    .pill.s2 {
+      border-color: rgba(180, 83, 9, 0.25);
+      background: rgba(180, 83, 9, 0.10);
+      color: var(--warn);
+    }
+
+    .pill.s1 {
+      border-color: rgba(15, 118, 110, 0.25);
+      background: rgba(15, 118, 110, 0.08);
+      color: var(--ok);
+    }
+
+    .rowlink a {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .arrow {
+      color: var(--muted);
+    }
+
+    .note {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      background: var(--bg-sub);
+      padding: 18px 0;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 24px;
+    }
+
+    footer .links {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo">JR</div>
+          <div>
+            <h1>地震ランキング</h1>
+            <p>過去7日間の地震履歴</p>
+          </div>
+        </div>
+        <nav class="nav">
+          <a href="/#heatmap">ヒートマップ</a>
+          <a href="/all">47都道府県</a>
+          <a href="/trend">推移</a>
+          <a href="/method">集計方法</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="breadcrumb">
+      <a href="/">ホーム</a> &nbsp;›&nbsp; 過去7日間の地震履歴
+    </div>
+
+    <div class="page-title">
+      <div>
+        <h2>過去7日間の地震履歴</h2>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">
+          都道府県・震度で絞り込み、地震詳細に遷移できます（ダミー）
+        </div>
+      </div>
+      <div class="meta">
+        対象期間: 2026-01-11 〜 2026-01-17<br />
+        最終更新: 2026-01-17 13:20
+      </div>
+    </div>
+
+    <section class="card" aria-label="フィルタと一覧">
+      <div class="section-title">
+        <h3>フィルタ</h3>
+        <div class="right">JSで実装する想定（見た目のみ）</div>
+      </div>
+
+      <div class="filters" aria-label="検索・絞り込み">
+        <input class="input" type="search" placeholder="震源/地域で検索（例: 福島県沖）" />
+        <select class="select" aria-label="都道府県">
+          <option>都道府県: すべて</option>
+          <option>北海道</option>
+          <option>宮城</option>
+          <option>福島</option>
+          <option>石川</option>
+          <option>東京</option>
+          <!-- ... -->
+        </select>
+        <select class="select" aria-label="震度">
+          <option>震度: すべて</option>
+          <option>震度3以上</option>
+          <option>震度2以上</option>
+          <option>震度1以上</option>
+        </select>
+        <button class="btn primary" type="button">条件を適用（ダミー）</button>
+      </div>
+
+      <div class="chips" aria-label="期間ショートカット">
+        <button class="chip" type="button">24時間</button>
+        <button class="chip active" type="button">7日</button>
+        <button class="chip" type="button">30日</button>
+        <button class="chip" type="button">震度3+のみ</button>
+      </div>
+
+      <div class="table-wrap" style="max-height: 560px; overflow: auto;" aria-label="地震一覧テーブル（スクロール）">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:170px;">時刻</th>
+              <th>震源</th>
+              <th class="center" style="width:72px;">M</th>
+              <th class="center" style="width:110px;">最大震度</th>
+              <th class="center" style="width:120px;">都道府県</th>
+              <th class="right" style="width:90px;">詳細</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- ダミー（本番は件数ぶん） -->
+            <tr class="rowlink">
+              <td class="time">2026-01-17 12:34</td>
+              <td>福島県沖</td>
+              <td class="center">4.2</td>
+              <td class="center"><span class="pill s3">震度3</span></td>
+              <td class="center">福島</td>
+              <td class="right"><a href="/eq/20260117-001">見る <span class="arrow">›</span></a></td>
+            </tr>
+            <tr class="rowlink">
+              <td class="time">2026-01-17 08:02</td>
+              <td>茨城県南部</td>
+              <td class="center">4.8</td>
+              <td class="center"><span class="pill s3">震度3</span></td>
+              <td class="center">茨城</td>
+              <td class="right"><a href="/eq/20260117-003">見る <span class="arrow">›</span></a></td>
+            </tr>
+            <tr class="rowlink">
+              <td class="time">2026-01-16 22:10</td>
+              <td>能登半島</td>
+              <td class="center">3.6</td>
+              <td class="center"><span class="pill s2">震度2</span></td>
+              <td class="center">石川</td>
+              <td class="right"><a href="/eq/20260116-009">見る <span class="arrow">›</span></a></td>
+            </tr>
+            <tr class="rowlink">
+              <td class="time">2026-01-15 09:41</td>
+              <td>宮城県沖</td>
+              <td class="center">3.9</td>
+              <td class="center"><span class="pill s2">震度2</span></td>
+              <td class="center">宮城</td>
+              <td class="right"><a href="/eq/20260115-021">見る <span class="arrow">›</span></a></td>
+            </tr>
+            <tr class="rowlink">
+              <td class="time">2026-01-14 18:55</td>
+              <td>東京湾</td>
+              <td class="center">3.1</td>
+              <td class="center"><span class="pill s1">震度1</span></td>
+              <td class="center">東京</td>
+              <td class="right"><a href="/eq/20260114-044">見る <span class="arrow">›</span></a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        ※本ページは「過去7日間」の一覧（ダミー）。都道府県は「最大震度が観測された代表地域」を表示する想定。
+        ※本サイトの表示は参考情報です。正確な情報は気象庁等の発表をご確認ください。
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div><b>地震ランキング</b> — 気象庁 防災情報XMLをもとに独自集計（ダミー表示）</div>
+      <div class="links">
+        <a href="/about">このサイトについて</a>
+        <a href="/method">集計方法</a>
+        <a href="/contact">お問い合わせ</a>
+        <a href="/terms">利用規約</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>

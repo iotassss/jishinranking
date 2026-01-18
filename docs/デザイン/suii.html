@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>推移詳細｜地震ランキング</title>
+  <meta name="description" content="地震の推移（回数・密度・震度3以上）を期間別（7/30/90日）に確認できます。都道府県別に切り替え可能。" />
+
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-sub: #f7f7f7;
+      --text: #111111;
+      --text-sub: #333333;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+
+      --accent: #d7000f;
+      --accent-weak: rgba(215, 0, 15, 0.08);
+
+      --ok: #0f766e;
+      --warn: #b45309;
+      --info: #1d4ed8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+    }
+
+    a {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    /* Header (共通想定) */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--text), #444);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      flex: 0 0 auto;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .brand p {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .nav {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .nav a {
+      font-size: 13px;
+      color: var(--text-sub);
+      padding: 6px 8px;
+      border-radius: 8px;
+    }
+
+    .nav a:hover {
+      background: var(--bg-sub);
+      text-decoration: none;
+    }
+
+    @media (max-width: 900px) {
+      .nav {
+        display: none;
+      }
+    }
+
+    main {
+      padding: 18px 0 48px;
+    }
+
+    .breadcrumb {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 10px 0 14px;
+    }
+
+    .breadcrumb a {
+      color: var(--muted);
+    }
+
+    .page-title {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 14px;
+    }
+
+    .page-title h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0.01em;
+    }
+
+    .page-title .meta {
+      text-align: right;
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 10px;
+    }
+
+    .section-title h3 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .section-title .right {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Switch chips */
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .chip {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .chip.active {
+      border-color: rgba(29, 78, 216, 0.25);
+      background: rgba(29, 78, 216, 0.08);
+      color: var(--info);
+    }
+
+    /* Controls row */
+    .controls {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .select,
+    .btn {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      background: #fff;
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .btn {
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: var(--bg-sub);
+    }
+
+    /* Chart placeholder */
+    .chart {
+      border: 1px dashed #cbd5e1;
+      border-radius: 12px;
+      background: #fafafa;
+      height: 320px;
+      display: grid;
+      place-items: center;
+      color: #64748b;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      margin-top: 12px;
+    }
+
+    .explain {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-sub);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .explain b {
+      color: var(--text);
+    }
+
+    .explain .hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* KPI mini */
+    .kpi {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .kpi {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .kpi-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fff;
+    }
+
+    .kpi-item .label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .kpi-item .value {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+    }
+
+    .kpi-item .value small {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-left: 6px;
+    }
+
+    /* CTA buttons */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .btn2 {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+      width: auto;
+    }
+
+    .btn2:hover {
+      background: var(--bg-sub);
+    }
+
+    .btn2.primary {
+      border-color: rgba(215, 0, 15, 0.25);
+      background: var(--accent-weak);
+      color: var(--accent);
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      background: var(--bg-sub);
+      padding: 18px 0;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 24px;
+    }
+
+    footer .links {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo">JR</div>
+          <div>
+            <h1>地震ランキング</h1>
+            <p>推移詳細（回数 / 密度 / 震度3+）</p>
+          </div>
+        </div>
+        <nav class="nav">
+          <a href="/#heatmap">ヒートマップ</a>
+          <a href="/all">47都道府県</a>
+          <a href="/eq?since=7d">地震履歴</a>
+          <a href="/method">集計方法</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="breadcrumb">
+      <a href="/">ホーム</a> &nbsp;›&nbsp; 推移詳細
+    </div>
+
+    <div class="page-title">
+      <div>
+        <h2>推移詳細</h2>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">
+          指標・期間・都道府県を切り替えて、傾向を確認できます（ダミー）。
+        </div>
+      </div>
+      <div class="meta">
+        表示: 全国（ダミー）<br />
+        最終更新: 2026-01-17 13:20
+      </div>
+    </div>
+
+    <section class="card" aria-label="推移コントロールとグラフ">
+      <div class="section-title">
+        <h3>指標</h3>
+        <div class="right">切替（見た目のみ）</div>
+      </div>
+
+      <!-- 指標切替 -->
+      <div class="chips" aria-label="指標切替">
+        <button class="chip" type="button">回数</button>
+        <button class="chip active" type="button">回数 / 10,000km²</button>
+        <button class="chip" type="button">震度3以上</button>
+      </div>
+
+      <!-- 期間切替 -->
+      <div class="section-title" style="margin-top:14px;">
+        <h3>期間</h3>
+        <div class="right">7/30/90日</div>
+      </div>
+      <div class="chips" aria-label="期間切替">
+        <button class="chip active" type="button">7日</button>
+        <button class="chip" type="button">30日</button>
+        <button class="chip" type="button">90日</button>
+      </div>
+
+      <!-- 都道府県切替 -->
+      <div class="controls" aria-label="都道府県選択">
+        <select class="select" aria-label="都道府県">
+          <option>全国（合計/平均）</option>
+          <option>北海道</option>
+          <option>宮城</option>
+          <option>福島</option>
+          <option>石川</option>
+          <option>東京</option>
+          <!-- ... -->
+        </select>
+        <button class="btn" type="button">この条件を共有（ダミー）</button>
+      </div>
+
+      <!-- グラフ -->
+      <div class="chart">ここに時系列グラフ（折れ線/棒）（ダミー）</div>
+
+      <!-- 2〜3行の簡潔な解説 -->
+      <div class="explain" aria-label="簡潔な解説">
+        直近7日間は、<b>一時的に増加している</b> ように見えます（ダミー）。<br />
+        過去30日と比べると、<b>平常レンジ内</b> に収まっている可能性もあります。<br />
+        <span class="hint">※短期の上下だけで断定せず、期間を切り替えて確認してください。</span>
+      </div>
+
+      <!-- mini KPI（あると見映えが締まる） -->
+      <div class="kpi" aria-label="補助指標（ダミー）">
+        <div class="kpi-item">
+          <div class="label">当期間 合計（ダミー）</div>
+          <div class="value">214<small>回</small></div>
+        </div>
+        <div class="kpi-item">
+          <div class="label">当期間 平均（ダミー）</div>
+          <div class="value">3.1<small>/日</small></div>
+        </div>
+        <div class="kpi-item">
+          <div class="label">ピーク日（ダミー）</div>
+          <div class="value">01/15<small>（+）</small></div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <a class="btn2" href="/all">47都道府県の集計へ</a>
+        <a class="btn2 primary" href="/eq?since=7d">過去7日間の履歴へ</a>
+        <a class="btn2" href="/#heatmap">ヒートマップへ</a>
+      </div>
+
+      <div style="margin-top:10px; font-size:12px; color: var(--muted);">
+        ※本ページの表示は参考情報です。正確な情報は気象庁等の発表をご確認ください。
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <div><b>地震ランキング</b> — 気象庁 防災情報XMLをもとに独自集計（ダミー表示）</div>
+      <div class="links">
+        <a href="/about">このサイトについて</a>
+        <a href="/method">集計方法</a>
+        <a href="/contact">お問い合わせ</a>
+        <a href="/terms">利用規約</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>
