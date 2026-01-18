@@ -45,16 +45,20 @@ type Control struct {
 	Title            string  `xml:"Title" json:"title"`
 	DateTime         JMATime `xml:"DateTime" json:"dateTime"`
 	Status           string  `xml:"Status" json:"status"`
+	EditorialOffice  string  `xml:"EditorialOffice" json:"editorialOffice"`
 	PublishingOffice string  `xml:"PublishingOffice" json:"publishingOffice"`
 }
 
 type Head struct {
-	ReportDateTime JMATime  `xml:"ReportDateTime" json:"reportDateTime"`
-	TargetDateTime JMATime  `xml:"TargetDateTime" json:"targetDateTime"`
-	EventID        string   `xml:"EventID" json:"eventID"`
-	InfoType       string   `xml:"InfoType" json:"infoType"`
-	Serial         string   `xml:"Serial" json:"serial"`
-	Headline       Headline `xml:"Headline" json:"headline"`
+	Title           string   `xml:"Title" json:"title"`
+	ReportDateTime  JMATime  `xml:"ReportDateTime" json:"reportDateTime"`
+	TargetDateTime  JMATime  `xml:"TargetDateTime" json:"targetDateTime"`
+	EventID         string   `xml:"EventID" json:"eventID"`
+	InfoType        string   `xml:"InfoType" json:"infoType"`
+	Serial          string   `xml:"Serial" json:"serial"`
+	InfoKind        string   `xml:"InfoKind" json:"infoKind"`
+	InfoKindVersion string   `xml:"InfoKindVersion" json:"infoKindVersion"`
+	Headline        Headline `xml:"Headline" json:"headline"`
 }
 
 type Headline struct {
@@ -103,10 +107,32 @@ type Body struct {
 					Name   string `xml:"Name" json:"name"`
 					Code   string `xml:"Code" json:"code"`
 					MaxInt string `xml:"MaxInt" json:"maxInt"`
+					Cities []struct {
+						Name              string `xml:"Name" json:"name"`
+						Code              string `xml:"Code" json:"code"`
+						MaxInt            string `xml:"MaxInt" json:"maxInt"`
+						IntensityStations []struct {
+							Name string `xml:"Name" json:"name"`
+							Code string `xml:"Code" json:"code"`
+							Int  string `xml:"Int" json:"int"`
+						} `xml:"IntensityStation" json:"intensityStations"`
+					} `xml:"City" json:"cities"`
 				} `xml:"Area" json:"areas"`
 			} `xml:"Pref" json:"prefs"`
 		} `xml:"Observation" json:"observation"`
 	} `xml:"Intensity" json:"intensity"`
+	Comments *struct {
+		ForecastComment *struct {
+			CodeType string `xml:"codeType,attr" json:"codeType"`
+			Text     string `xml:"Text" json:"text"`
+			Code     string `xml:"Code" json:"code"`
+		} `xml:"ForecastComment" json:"forecastComment"`
+		VarComment *struct {
+			CodeType string `xml:"codeType,attr" json:"codeType"`
+			Text     string `xml:"Text" json:"text"`
+			Code     string `xml:"Code" json:"code"`
+		} `xml:"VarComment" json:"varComment"`
+	} `xml:"Comments" json:"comments"`
 }
 
 type Earthquake struct {
@@ -116,7 +142,9 @@ type Earthquake struct {
 
 	Hypocenter *struct {
 		Area *struct {
-			Name string `xml:"Name" json:"name"`
+			Name       string `xml:"Name" json:"name"`
+			Code       string `xml:"Code" json:"code"`
+			Coordinate string `xml:"Coordinate" json:"coordinate"`
 		} `xml:"Area" json:"area"`
 		Location *struct {
 			Latitude  string `xml:"Latitude" json:"latitude"`
@@ -126,8 +154,9 @@ type Earthquake struct {
 	} `xml:"Hypocenter" json:"hypocenter"`
 
 	Magnitude *struct {
-		Type  string `xml:"type,attr" json:"type"`
-		Value string `xml:",chardata" json:"value"`
+		Type        string `xml:"type,attr" json:"type"`
+		Description string `xml:"description,attr" json:"description"`
+		Value       string `xml:",chardata" json:"value"`
 	} `xml:"Magnitude" json:"magnitude"`
 }
 
