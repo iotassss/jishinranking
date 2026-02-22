@@ -307,6 +307,114 @@
 			{{end}}
 		</section>
 
+		<section class="latest-earthquake-area" aria-labelledby="sec-today-big-earthquake">
+			<h2 id="sec-today-big-earthquake">本日の大きい地震ランキング（過去24時間・M3.0以上）</h2>
+			{{if .TodayBigEarthquakes}}
+			<table class="latest-earthquake-table">
+				<thead>
+					<tr>
+						<th>発生時刻</th>
+						<th>震源地</th>
+						<th>M</th>
+						<th>最大震度</th>
+						<th>詳細</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{range $eq := .TodayBigEarthquakes}}
+					<tr>
+						<td>{{ $eq.OccurredAt.Format "2006-01-02 15:04" }}</td>
+						<td>{{ $eq.Hypocenter }}</td>
+						<td>{{ printf "%.1f" $eq.Magnitude }}</td>
+						<td>{{ $eq.MaxIntensity }}</td>
+						<td>
+							{{if $eq.DetailURL}}
+							<a href="{{$eq.DetailURL}}" target="_blank" rel="noopener noreferrer">気象庁XML</a>
+							{{else}}
+							-
+							{{end}}
+						</td>
+					</tr>
+					{{end}}
+				</tbody>
+			</table>
+			{{else}}
+			<p class="latest-earthquake-empty">過去24時間でM3.0以上の地震はありません。</p>
+			{{end}}
+		</section>
+
+		<section class="latest-earthquake-area" aria-labelledby="sec-week-big-earthquake">
+			<h2 id="sec-week-big-earthquake">今週の大きい地震ランキング（過去168時間・M4.0以上）</h2>
+			{{if .WeekBigEarthquakes}}
+			<table class="latest-earthquake-table">
+				<thead>
+					<tr>
+						<th>発生時刻</th>
+						<th>震源地</th>
+						<th>M</th>
+						<th>最大震度</th>
+						<th>詳細</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{range $eq := .WeekBigEarthquakes}}
+					<tr>
+						<td>{{ $eq.OccurredAt.Format "2006-01-02 15:04" }}</td>
+						<td>{{ $eq.Hypocenter }}</td>
+						<td>{{ printf "%.1f" $eq.Magnitude }}</td>
+						<td>{{ $eq.MaxIntensity }}</td>
+						<td>
+							{{if $eq.DetailURL}}
+							<a href="{{$eq.DetailURL}}" target="_blank" rel="noopener noreferrer">気象庁XML</a>
+							{{else}}
+							-
+							{{end}}
+						</td>
+					</tr>
+					{{end}}
+				</tbody>
+			</table>
+			{{else}}
+			<p class="latest-earthquake-empty">過去168時間でM4.0以上の地震はありません。</p>
+			{{end}}
+		</section>
+
+		<section class="latest-earthquake-area" aria-labelledby="sec-month-big-earthquake">
+			<h2 id="sec-month-big-earthquake">今月の大きい地震ランキング（過去720時間・M5.0以上）</h2>
+			{{if .MonthBigEarthquakes}}
+			<table class="latest-earthquake-table">
+				<thead>
+					<tr>
+						<th>発生時刻</th>
+						<th>震源地</th>
+						<th>M</th>
+						<th>最大震度</th>
+						<th>詳細</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{range $eq := .MonthBigEarthquakes}}
+					<tr>
+						<td>{{ $eq.OccurredAt.Format "2006-01-02 15:04" }}</td>
+						<td>{{ $eq.Hypocenter }}</td>
+						<td>{{ printf "%.1f" $eq.Magnitude }}</td>
+						<td>{{ $eq.MaxIntensity }}</td>
+						<td>
+							{{if $eq.DetailURL}}
+							<a href="{{$eq.DetailURL}}" target="_blank" rel="noopener noreferrer">気象庁XML</a>
+							{{else}}
+							-
+							{{end}}
+						</td>
+					</tr>
+					{{end}}
+				</tbody>
+			</table>
+			{{else}}
+			<p class="latest-earthquake-empty">過去720時間でM5.0以上の地震はありません。</p>
+			{{end}}
+		</section>
+
 			<section class="affiliate-area" aria-label="防災用品PR">
 				<div class="affiliate-inner">
 					<h2>今週の地震傾向から備える防災用品</h2>
