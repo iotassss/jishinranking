@@ -33,7 +33,7 @@ type HTMLRepo interface {
 
 // 配信用HTMLを生成する
 type HTMLGenerator interface {
-	Generate(data domain.RankingRecordList, from, to, now time.Time) (domain.PublishedHTML, error)
+	Generate(data domain.DisplayData, from, to, now time.Time) (domain.PublishedHTML, error)
 }
 
 type Handler struct {
@@ -119,6 +119,7 @@ func (h *Handler) Process(
 
 	// 7日前から現在時刻までのデータを抽出
 	thisWeekReports := mergedReports.Between(from, to)
+	latestEarthquakes := mergedReports.LatestEarthquakes(now, 6*time.Hour, 10)
 
 	// 都道府県ごとの集計データを作成
 	prefectureJishinDataMap := domain.MakePrefectureMapFromReportList(thisWeekReports)
@@ -129,8 +130,13 @@ func (h *Handler) Process(
 	rankingRecords.AssignRanks()
 	rankingRecords.AssignTiers()
 
+	displayData := domain.DisplayData{
+		RankingRecords:    rankingRecords,
+		LatestEarthquakes: latestEarthquakes,
+	}
+
 	// HTML生成・保存
-	html, err := h.htmlGenerator.Generate(rankingRecords, from, to, now)
+	html, err := h.htmlGenerator.Generate(displayData, from, to, now)
 	if err != nil {
 		return err
 	}

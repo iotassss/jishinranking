@@ -114,6 +114,43 @@
       box-shadow: 0 2px 8px rgba(200,0,0,0.04);
       padding: 1em 0.5em 0.5em 0.5em;
     }
+		.latest-earthquake-area {
+			max-width: 800px;
+			margin: 2em auto;
+			width: 90%;
+			overflow-x: auto;
+			background: #fff;
+			border-radius: 8px;
+			box-shadow: 0 2px 8px rgba(200,0,0,0.04);
+			padding: 1em 0.5em 0.5em 0.5em;
+		}
+		.latest-earthquake-table {
+			border-collapse: collapse;
+			font-size: 0.97em;
+			width: 100%;
+			min-width: 520px;
+		}
+		.latest-earthquake-table th,
+		.latest-earthquake-table td {
+			border: 1px solid #ccc;
+			padding: 0.5em 1em;
+			text-align: center;
+			font-size: 0.97em;
+		}
+		.latest-earthquake-table th {
+			background: #f2f2f2;
+		}
+		.latest-earthquake-table tr:nth-child(even) {
+			background: #fafafa;
+		}
+		.latest-earthquake-table td:nth-child(2) {
+			text-align: left;
+		}
+		.latest-earthquake-empty {
+			margin: 0.4em 0 0.8em;
+			color: #666;
+			font-size: 0.95em;
+		}
     .table-area p {
       font-size: 0.9em;
       color: #666;
@@ -232,6 +269,42 @@
 				data-tier-{{ $r.PrefCode }}="{{ $r.Tier }}"
 				{{- end }}
 			></div>
+		</section>
+
+		<section class="latest-earthquake-area" aria-labelledby="sec-latest-earthquake">
+			<h2 id="sec-latest-earthquake">最新の地震（過去6時間・規模順）</h2>
+			{{if .LatestEarthquakes}}
+			<table class="latest-earthquake-table">
+				<thead>
+					<tr>
+						<th>発生時刻</th>
+						<th>震源地</th>
+						<th>M</th>
+						<th>最大震度</th>
+						<th>詳細</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{range $eq := .LatestEarthquakes}}
+					<tr>
+						<td>{{ $eq.OccurredAt.Format "2006-01-02 15:04" }}</td>
+						<td>{{ $eq.Hypocenter }}</td>
+						<td>{{ printf "%.1f" $eq.Magnitude }}</td>
+						<td>{{ $eq.MaxIntensity }}</td>
+						<td>
+							{{if $eq.DetailURL}}
+							<a href="{{$eq.DetailURL}}" target="_blank" rel="noopener noreferrer">気象庁XML</a>
+							{{else}}
+							-
+							{{end}}
+						</td>
+					</tr>
+					{{end}}
+				</tbody>
+			</table>
+			{{else}}
+			<p class="latest-earthquake-empty">過去6時間の対象地震はありません。</p>
+			{{end}}
 		</section>
 
 			<section class="affiliate-area" aria-label="防災用品PR">

@@ -39,15 +39,16 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 // Generate: 地震イベントJSONからHTMLランキング表を生成
 // func (g *SimpleHTMLGenerator) Generate(data []byte) ([]byte, error) {
 func (g *SimpleHTMLGenerator) Generate(
-	records domain.RankingRecordList,
+	displayData domain.DisplayData,
 	from, to, now time.Time,
 ) (domain.PublishedHTML, error) {
 	// テンプレート描画
 	var buf bytes.Buffer
 	dataMap := map[string]interface{}{
-		"Ranking":      records,
-		"ReportPeriod": from.Format("2006-01-02") + " ～ " + to.Format("2006-01-02"),
-		"Now":          now.Format(time.RFC3339),
+		"Ranking":           displayData.RankingRecords,
+		"LatestEarthquakes": displayData.LatestEarthquakes,
+		"ReportPeriod":      from.Format("2006-01-02") + " ～ " + to.Format("2006-01-02"),
+		"Now":               now.Format(time.RFC3339),
 	}
 	if err := g.tmpl.Execute(&buf, dataMap); err != nil {
 		return "", fmt.Errorf("template execute failed: %w", err)

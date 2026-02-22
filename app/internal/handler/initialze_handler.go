@@ -88,7 +88,10 @@ func (h *InitializeHandler) Process(
 	rankingRecords.AssignTiers()
 
 	// HTML生成・保存
-	html, err := h.htmlGenerator.Generate(rankingRecords, from, to, now)
+	displayData := domain.DisplayData{
+		RankingRecords: rankingRecords,
+	}
+	html, err := h.htmlGenerator.Generate(displayData, from, to, now)
 	if err != nil {
 		return err
 	}

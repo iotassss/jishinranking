@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"flag"
+	"io"
 	"log"
 	"log/slog"
 	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -84,4 +86,53 @@ func main() {
 		log.Fatalf("handler.Process error: %v", err)
 	}
 	log.Println("handler.Process finished successfully")
+
+	// ==============================
+	// index.htmlをダウンロードして保存（ローカル実行用コード）
+	// ==============================
+	projectRoot, err := findProjectRoot()
+	if err != nil {
+		log.Fatalf("project root の検出に失敗: %v", err)
+	}
+
+	obj, err := s3Client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(htmlBucketID),
+		Key:    aws.String("index.html"),
+	})
+	if err != nil {
+		log.Fatalf("MinIO から index.html の取得に失敗: %v", err)
+	}
+	defer obj.Body.Close()
+
+	body, err := io.ReadAll(obj.Body)
+	if err != nil {
+		log.Fatalf("index.html の読み込みに失敗: %v", err)
+	}
+
+	dstPath := filepath.Join(projectRoot, "index.html")
+	if err := os.WriteFile(dstPath, body, 0644); err != nil {
+		log.Fatalf("index.html の保存に失敗: %v", err)
+	}
+
+	log.Printf("MinIO から index.html をダウンロードし、%s に保存しました", dstPath)
+}
+
+func findProjectRoot() (string, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	cur := wd
+	for {
+		if _, err := os.Stat(filepath.Join(cur, "README.md")); err == nil {
+			return cur, nil
+		}
+
+		parent := filepath.Dir(cur)
+		if parent == cur {
+			return "", os.ErrNotExist
+		}
+		cur = parent
+	}
 }
