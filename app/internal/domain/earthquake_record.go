@@ -18,6 +18,10 @@ type EarthquakeRecord struct {
 type EarthquakeRecordList []EarthquakeRecord
 
 func (rl ReportList) LatestEarthquakes(now time.Time, within time.Duration, limit int) EarthquakeRecordList {
+	return rl.TopEarthquakesByMagnitude(now, within, 0.0, limit)
+}
+
+func (rl ReportList) TopEarthquakesByMagnitude(now time.Time, within time.Duration, minMagnitude float64, limit int) EarthquakeRecordList {
 	if limit <= 0 {
 		return EarthquakeRecordList{}
 	}
@@ -30,6 +34,9 @@ func (rl ReportList) LatestEarthquakes(now time.Time, within time.Duration, limi
 			continue
 		}
 		if record.OccurredAt.Before(from) || record.OccurredAt.After(now) {
+			continue
+		}
+		if record.Magnitude < minMagnitude {
 			continue
 		}
 		records = append(records, record)

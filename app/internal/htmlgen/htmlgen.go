@@ -45,10 +45,13 @@ func (g *SimpleHTMLGenerator) Generate(
 	// テンプレート描画
 	var buf bytes.Buffer
 	dataMap := map[string]interface{}{
-		"Ranking":           displayData.RankingRecords,
-		"LatestEarthquakes": displayData.LatestEarthquakes,
-		"ReportPeriod":      from.Format("2006-01-02") + " ～ " + to.Format("2006-01-02"),
-		"Now":               now.Format(time.RFC3339),
+		"Ranking":             displayData.RankingRecords,
+		"LatestEarthquakes":   displayData.LatestEarthquakes,
+		"TodayBigEarthquakes": displayData.TodayBigEarthquakes,
+		"WeekBigEarthquakes":  displayData.WeekBigEarthquakes,
+		"MonthBigEarthquakes": displayData.MonthBigEarthquakes,
+		"ReportPeriod":        from.Format("2006-01-02") + " ～ " + to.Format("2006-01-02"),
+		"Now":                 now.Format(time.RFC3339),
 	}
 	if err := g.tmpl.Execute(&buf, dataMap); err != nil {
 		return "", fmt.Errorf("template execute failed: %w", err)

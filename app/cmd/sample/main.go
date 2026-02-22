@@ -81,7 +81,7 @@ func main() {
 	// メイン処理
 	// ==============================
 	// TODO: これは引数で渡す必要があるか検討
-	err = h.Process(ctx, *init)
+	err = h.ProcessV2(ctx, *init)
 	if err != nil {
 		log.Fatalf("handler.Process error: %v", err)
 	}

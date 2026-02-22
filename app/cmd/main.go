@@ -83,6 +83,6 @@ func main() {
 	// ==============================
 	// 1 invoke = 1 Process（これで Runtime.ExitError を潰せる）
 	lambda.Start(func(ctx context.Context) error {
-		return h.Process(ctx, initMode)
+		return h.ProcessV2(ctx, initMode)
 	})
 }

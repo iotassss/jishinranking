@@ -7,6 +7,15 @@ import (
 	"time"
 )
 
+const (
+	// 震度速報
+	TelegramCodeEarthquakeBreaking = "VXSE51"
+	// 地震情報（震源に関する情報）
+	TelegramCodeEarthquakeEpicenter = "VXSE52"
+	// 地震情報（震源・震度に関する情報）
+	TelegramCodeEarthquakeDetail = "VXSE53"
+)
+
 // JMATime parses RFC3339 like "2025-12-20T06:48:56+09:00"
 type JMATime struct{ time.Time }
 
@@ -271,6 +280,20 @@ func (rl ReportList) Between(from, to time.Time) ReportList {
 	var filtered ReportList
 	for _, r := range rl {
 		if r.Head.ReportDateTime.Time.After(from) && r.Head.ReportDateTime.Time.Before(to) {
+			filtered = append(filtered, r)
+		}
+	}
+	return filtered
+}
+
+func (rl ReportList) FilterByTelegramCode(code string) ReportList {
+	if strings.TrimSpace(code) == "" {
+		return rl
+	}
+
+	var filtered ReportList
+	for _, r := range rl {
+		if strings.Contains(strings.ToUpper(r.Metadata.URL), strings.ToUpper(code)) {
 			filtered = append(filtered, r)
 		}
 	}

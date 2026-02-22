@@ -16,8 +16,8 @@ func (h *Handler) ProcessV2(
 	// TODO: ここの日付を１ヶ月に延長することで、月間ランキングも集計できるようにする
 	// 1週間分のデータを取得するための期間を設定
 	now := time.Now()
-	from := now.Add(-7 * 24 * time.Hour)
-	to := now
+	oneWeekAgo := now.Add(-7 * 24 * time.Hour)
+	oneMonthAgo := now.Add(-30 * 24 * time.Hour)
 
 	// ==============================
 	// JMAデータ取得・保存処理
@@ -46,11 +46,12 @@ func (h *Handler) ProcessV2(
 		}
 	}
 
-	// 過去7日間の保存済みデータ取得
-	oldReports, err := h.dataRepo.Get(ctx, &from, &to)
+	// 過去30日間の保存済みデータ取得
+	oldReports, err := h.dataRepo.Get(ctx, &oneMonthAgo, &now)
 	if err != nil {
 		return err
 	}
+	oldReports = oldReports.FilterByTelegramCode(domain.TelegramCodeEarthquakeDetail)
 
 	// 直近の保存済みレポートを取得
 	latestOldReport := oldReports.Latest()
@@ -69,10 +70,10 @@ func (h *Handler) ProcessV2(
 	// ==============================
 
 	// 既存データと今回のデータをmerge
-	mergedReports := primaryReports.Merge(oldReports)
+	thisMonthReports := primaryReports.Merge(oldReports)
 
 	// 7日前から現在時刻までのデータを抽出
-	thisWeekReports := mergedReports.Between(from, to)
+	thisWeekReports := thisMonthReports.Between(oneWeekAgo, now)
 
 	// 都道府県ごとの集計データを作成
 	prefectureJishinDataMap := domain.MakePrefectureMapFromReportList(thisWeekReports)
@@ -87,22 +88,26 @@ func (h *Handler) ProcessV2(
 	// 最新の地震
 	// ==============================
 	// 過去6時間以内の地震のうち大きい順に10件
-	latestEarthquakes := mergedReports.LatestEarthquakes(now, 6*time.Hour, 10)
+
+	latestEarthquakes := thisMonthReports.LatestEarthquakes(now, 6*time.Hour, 10)
 
 	// ==============================
 	// 本日の大きい地震ランキング
 	// ==============================
 	// 過去24時間で発生したM3.0以上の地震のうち大きい順に10件
+	todayBigEarthquakes := thisMonthReports.TopEarthquakesByMagnitude(now, 24*time.Hour, 3.0, 10)
 
 	// ==============================
 	// 今週の大きい地震ランキング
 	// ==============================
 	// 過去168時間で発生したM4.0以上の地震のうち大きい順に10件
+	weekBigEarthquakes := thisMonthReports.TopEarthquakesByMagnitude(now, 168*time.Hour, 4.0, 10)
 
 	// ==============================
 	// 今月の大きい地震ランキング
 	// ==============================
 	// 過去720時間で発生したM5.0以上の地震のうち大きい順に10件
+	monthBigEarthquakes := thisMonthReports.TopEarthquakesByMagnitude(now, 720*time.Hour, 5.0, 10)
 
 	// ==============================
 	// 本日の都道府県地震ランキング
@@ -125,12 +130,15 @@ func (h *Handler) ProcessV2(
 	// ==============================
 
 	displayData := domain.DisplayData{
-		RankingRecords:    rankingRecords,
-		LatestEarthquakes: latestEarthquakes,
+		RankingRecords:      rankingRecords,
+		LatestEarthquakes:   latestEarthquakes,
+		TodayBigEarthquakes: todayBigEarthquakes,
+		WeekBigEarthquakes:  weekBigEarthquakes,
+		MonthBigEarthquakes: monthBigEarthquakes,
 	}
 
 	// HTML生成・保存
-	html, err := h.htmlGenerator.Generate(displayData, from, to, now)
+	html, err := h.htmlGenerator.Generate(displayData, oneWeekAgo, now, now)
 	if err != nil {
 		return err
 	}
