@@ -109,7 +109,7 @@ func main() {
 		log.Fatalf("index.html の読み込みに失敗: %v", err)
 	}
 
-	dstPath := filepath.Join(projectRoot, "index.html")
+	dstPath := filepath.Join(projectRoot, "output", "index.html")
 	if err := os.WriteFile(dstPath, body, 0644); err != nil {
 		log.Fatalf("index.html の保存に失敗: %v", err)
 	}
