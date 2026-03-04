@@ -79,7 +79,8 @@ func (h *Handler) ProcessV2(
 	prefectureJishinDataMap := domain.MakePrefectureMapFromReportList(thisWeekReports)
 
 	// HTML出力テーブル用に整形
-	rankingRecords := domain.ConvertPrefectureJishinDataMapToRankingRecordList(prefectureJishinDataMap)
+	// ヒートマップのTierは回/1000km²（面積正規化）で算出する
+	rankingRecords := domain.ConvertPrefectureJishinDataMapToAreaNormalizedRankingRecordList(prefectureJishinDataMap)
 	rankingRecords.SortByCountDesc()
 	rankingRecords.AssignRanks()
 	rankingRecords.AssignTiers()
@@ -124,8 +125,8 @@ func (h *Handler) ProcessV2(
 	// 今週の都道府県別地震回数ランキング
 	// ==============================
 	// 回/1000km²（47件）
-	weekPrefectureMap := domain.MakePrefectureMapFromReportList(thisWeekReports)
-	weekPrefectureRanking := domain.ConvertPrefectureJishinDataMapToAreaNormalizedRankingRecordList(weekPrefectureMap)
+	// prefectureJishinDataMapはthisWeekReportsから生成済みのため再利用する
+	weekPrefectureRanking := domain.ConvertPrefectureJishinDataMapToAreaNormalizedRankingRecordList(prefectureJishinDataMap)
 	weekPrefectureRanking.SortByRatioDesc()
 	weekPrefectureRanking.AssignRanksByRatio()
 	weekPrefectureRanking.AssignTiers()
@@ -135,7 +136,7 @@ func (h *Handler) ProcessV2(
 	// ==============================
 	// score = (24h回数 + 1) / (7日平均 + 1)
 	// 条件: (24h回数 ≥ 3) AND (score ≥ 2.0)
-	surgeRanking := domain.MakeSurgeRecordList(todayPrefectureMap, weekPrefectureMap, 3, 2.0, 10)
+	surgeRanking := domain.MakeSurgeRecordList(todayPrefectureMap, prefectureJishinDataMap, 3, 2.0, 10)
 
 	// ==============================
 	// HTML生成・保存処理

@@ -253,14 +253,14 @@
   </header>
 	<main>
 		<section aria-labelledby="sec-map">
-			<h2 id="sec-map">都道府県別 地震発生回数（ヒートマップ）</h2>
+			<h2 id="sec-map">都道府県別 地震発生密度（ヒートマップ・回/1000km²）</h2>
 			<div class="legend-area">
-				<span class="legend-label">発生回数少</span><span class="legend-color" style="background:#fff5f5;"></span>
+				<span class="legend-label">発生密度低</span><span class="legend-color" style="background:#fff5f5;"></span>
 				<span class="legend-color" style="background:#ffcccc;"></span>
 				<span class="legend-color" style="background:#ff9999;"></span>
 				<span class="legend-color" style="background:#ff6666;"></span>
 				<span class="legend-color" style="background:#ff3333;"></span>
-				<span class="legend-color" style="background:#cc0000;"></span><span class="legend-label">発生回数多</span>
+				<span class="legend-color" style="background:#cc0000;"></span><span class="legend-label">発生密度高</span>
 			</div>
 			<div id="my-map"
 				{{- range $i, $r := .Ranking }}
