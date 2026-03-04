@@ -110,31 +110,46 @@ func (h *Handler) ProcessV2(
 	monthBigEarthquakes := thisMonthReports.TopEarthquakesByMagnitude(now, 720*time.Hour, 5.0, 10)
 
 	// ==============================
-	// 本日の都道府県地震ランキング
+	// 本日の都道府県別地震回数ランキング
 	// ==============================
 	// 回/1000km²（47件）
+	todayReports := thisMonthReports.Between(now.Add(-24*time.Hour), now)
+	todayPrefectureMap := domain.MakePrefectureMapFromReportList(todayReports)
+	todayPrefectureRanking := domain.ConvertPrefectureJishinDataMapToAreaNormalizedRankingRecordList(todayPrefectureMap)
+	todayPrefectureRanking.SortByRatioDesc()
+	todayPrefectureRanking.AssignRanksByRatio()
+	todayPrefectureRanking.AssignTiers()
 
 	// ==============================
-	// 今週の都道府県地震ランキング
+	// 今週の都道府県別地震回数ランキング
 	// ==============================
 	// 回/1000km²（47件）
+	weekPrefectureMap := domain.MakePrefectureMapFromReportList(thisWeekReports)
+	weekPrefectureRanking := domain.ConvertPrefectureJishinDataMapToAreaNormalizedRankingRecordList(weekPrefectureMap)
+	weekPrefectureRanking.SortByRatioDesc()
+	weekPrefectureRanking.AssignRanksByRatio()
+	weekPrefectureRanking.AssignTiers()
 
 	// ==============================
 	// 地震発生頻度急上昇都道府県（10件）
 	// ==============================
 	// score = (24h回数 + 1) / (7日平均 + 1)
 	// 条件: (24h回数 ≥ 3) AND (score ≥ 2.0)
+	surgeRanking := domain.MakeSurgeRecordList(todayPrefectureMap, weekPrefectureMap, 3, 2.0, 10)
 
 	// ==============================
 	// HTML生成・保存処理
 	// ==============================
 
 	displayData := domain.DisplayData{
-		RankingRecords:      rankingRecords,
-		LatestEarthquakes:   latestEarthquakes,
-		TodayBigEarthquakes: todayBigEarthquakes,
-		WeekBigEarthquakes:  weekBigEarthquakes,
-		MonthBigEarthquakes: monthBigEarthquakes,
+		RankingRecords:         rankingRecords,
+		LatestEarthquakes:      latestEarthquakes,
+		TodayBigEarthquakes:    todayBigEarthquakes,
+		WeekBigEarthquakes:     weekBigEarthquakes,
+		MonthBigEarthquakes:    monthBigEarthquakes,
+		TodayPrefectureRanking: todayPrefectureRanking,
+		WeekPrefectureRanking:  weekPrefectureRanking,
+		SurgeRanking:           surgeRanking,
 	}
 
 	// HTML生成・保存

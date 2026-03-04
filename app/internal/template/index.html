@@ -415,6 +415,88 @@
 			{{end}}
 		</section>
 
+		<section class="table-area" aria-labelledby="sec-today-pref-ranking">
+			<h2 id="sec-today-pref-ranking">本日の都道府県別地震回数ランキング（回/1000km²）</h2>
+			<table>
+				<thead>
+					<tr>
+						<th>順位</th>
+						<th>都道府県</th>
+						<th>発生回数</th>
+						<th>回/1000km²</th>
+						<th class="col-intensity">最大震度</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{range $i, $r := .TodayPrefectureRanking}}
+					<tr class="rank-{{if le $r.Rank 3}}{{$r.Rank}}{{end}}">
+						<td>{{$r.Rank}}</td>
+						<td>{{$r.PrefName}}</td>
+						<td>{{$r.Count}}</td>
+						<td>{{printf "%.3f" $r.Ratio}}</td>
+						<td class="col-intensity">{{$r.Intensity}}</td>
+					</tr>
+					{{end}}
+				</tbody>
+			</table>
+		</section>
+
+		<section class="table-area" aria-labelledby="sec-week-pref-ranking">
+			<h2 id="sec-week-pref-ranking">今週の都道府県別地震回数ランキング（回/1000km²）</h2>
+			<table>
+				<thead>
+					<tr>
+						<th>順位</th>
+						<th>都道府県</th>
+						<th>発生回数</th>
+						<th>回/1000km²</th>
+						<th class="col-intensity">最大震度</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{range $i, $r := .WeekPrefectureRanking}}
+					<tr class="rank-{{if le $r.Rank 3}}{{$r.Rank}}{{end}}">
+						<td>{{$r.Rank}}</td>
+						<td>{{$r.PrefName}}</td>
+						<td>{{$r.Count}}</td>
+						<td>{{printf "%.3f" $r.Ratio}}</td>
+						<td class="col-intensity">{{$r.Intensity}}</td>
+					</tr>
+					{{end}}
+				</tbody>
+			</table>
+		</section>
+
+		<section class="table-area" aria-labelledby="sec-surge-ranking">
+			<h2 id="sec-surge-ranking">地震発生頻度急上昇都道府県（上位10）</h2>
+			{{if .SurgeRanking}}
+			<table>
+				<thead>
+					<tr>
+						<th>順位</th>
+						<th>都道府県</th>
+						<th>24h回数</th>
+						<th>7日平均</th>
+						<th>score</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{range $i, $r := .SurgeRanking}}
+					<tr class="rank-{{if le $r.Rank 3}}{{$r.Rank}}{{end}}">
+						<td>{{$r.Rank}}</td>
+						<td>{{$r.PrefName}}</td>
+						<td>{{$r.TodayCount}}</td>
+						<td>{{printf "%.2f" $r.WeekAvg}}</td>
+						<td>{{printf "%.2f" $r.Score}}</td>
+					</tr>
+					{{end}}
+				</tbody>
+			</table>
+			{{else}}
+			<p class="latest-earthquake-empty">条件を満たす急上昇都道府県はありません。</p>
+			{{end}}
+		</section>
+
 			<section class="affiliate-area" aria-label="防災用品PR">
 				<div class="affiliate-inner">
 					<h2>今週の地震傾向から備える防災用品</h2>

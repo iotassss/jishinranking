@@ -109,6 +109,58 @@ var prefectureMappp = map[string]PrefectureJishinData{
 	Okinawa:   {Name: "沖縄県"},
 }
 
+// 都道府県面積（km²）
+// 回/1000km² = 回数 / 面積 * 1000 で利用する
+var prefectureAreaKM2 = map[string]float64{
+	Hokkaido:  83424.44,
+	Aomori:    9645.64,
+	Iwate:     15275.01,
+	Miyagi:    7282.29,
+	Akita:     11637.52,
+	Yamagata:  9323.15,
+	Fukushima: 13784.14,
+	Ibaraki:   6097.39,
+	Tochigi:   6408.09,
+	Gunma:     6362.28,
+	Saitama:   3797.75,
+	Chiba:     5156.74,
+	Tokyo:     2194.03,
+	Kanagawa:  2416.11,
+	Niigata:   12583.95,
+	Toyama:    4247.54,
+	Ishikawa:  4186.21,
+	Fukui:     4190.58,
+	Yamanashi: 4465.27,
+	Nagano:    13561.56,
+	Gifu:      10621.29,
+	Shizuoka:  7777.35,
+	Aichi:     5172.92,
+	Mie:       5774.48,
+	Shiga:     4017.38,
+	Kyoto:     4612.19,
+	Osaka:     1905.34,
+	Hyogo:     8400.96,
+	Nara:      3690.94,
+	Wakayama:  4724.64,
+	Tottori:   3507.13,
+	Shimane:   6707.86,
+	Okayama:   7114.50,
+	Hiroshima: 8479.65,
+	Yamaguchi: 6112.30,
+	Tokushima: 4146.75,
+	Kagawa:    1876.86,
+	Ehime:     5676.11,
+	Kochi:     7103.86,
+	Fukuoka:   4986.51,
+	Saga:      2440.68,
+	Nagasaki:  4132.09,
+	Kumamoto:  7409.44,
+	Oita:      6341.82,
+	Miyazaki:  7735.22,
+	Kagoshima: 9186.33,
+	Okinawa:   2281.12,
+}
+
 func MakePrefectureMap() map[string]PrefectureJishinData {
 	// prefectureMapppをコピーした新しいmapを作成して返す
 	newMap := make(map[string]PrefectureJishinData)
@@ -162,5 +214,27 @@ func ConvertPrefectureJishinDataMapToRankingRecordList(prefMap map[string]Prefec
 			Intensity: data.Intensity,
 		})
 	}
+	return rankingList
+}
+
+// 都道府県ごとの発生回数を「回/1000km²」に正規化して返す
+func ConvertPrefectureJishinDataMapToAreaNormalizedRankingRecordList(prefMap map[string]PrefectureJishinData) RankingRecordList {
+	var rankingList RankingRecordList
+	for code, data := range prefMap {
+		ratio := 0.0
+		if area, exists := prefectureAreaKM2[code]; exists && area > 0 {
+			ratio = float64(data.Count) / area * 1000.0
+		}
+
+		rankingList = append(rankingList, RankingRecord{
+			Rank:      0,
+			PrefCode:  code,
+			PrefName:  data.Name,
+			Count:     data.Count,
+			Ratio:     ratio,
+			Intensity: data.Intensity,
+		})
+	}
+
 	return rankingList
 }

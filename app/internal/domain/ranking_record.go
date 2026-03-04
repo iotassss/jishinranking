@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"math"
 	"sort"
 	"strconv"
 )
@@ -27,6 +28,19 @@ func (r RankingRecordList) SortByCountDesc() {
 	})
 }
 
+// 回数密度（Ratio）の降順にソートする
+func (r RankingRecordList) SortByRatioDesc() {
+	sort.Slice(r, func(i, j int) bool {
+		if r[i].Ratio == r[j].Ratio {
+			if r[i].Count == r[j].Count {
+				return r[i].PrefCode < r[j].PrefCode
+			}
+			return r[i].Count > r[j].Count
+		}
+		return r[i].Ratio > r[j].Ratio
+	})
+}
+
 // 震度の降順にソートする
 func (r RankingRecordList) SortByIntensityDesc() {}
 
@@ -39,6 +53,21 @@ func (r RankingRecordList) AssignRanks() {
 		}
 		r[i].Rank = currentRank
 	}
+}
+
+func (r RankingRecordList) AssignRanksByRatio() {
+	r.SortByRatioDesc()
+	currentRank := 1
+	for i := 0; i < len(r); i++ {
+		if i > 0 && !isNearlyEqual(r[i].Ratio, r[i-1].Ratio) {
+			currentRank = i + 1
+		}
+		r[i].Rank = currentRank
+	}
+}
+
+func isNearlyEqual(a, b float64) bool {
+	return math.Abs(a-b) < 1e-12
 }
 
 // ratioが0.0のRankingRecordはtierを0にする

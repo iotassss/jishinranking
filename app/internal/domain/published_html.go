@@ -15,7 +15,7 @@ func (p PublishedHTML) UpdatePeriod(from time.Time, to time.Time) PublishedHTML 
 	rePeriod := regexp.MustCompile(`集計期間: \d{4}-\d{2}-\d{2} ～ \d{4}-\d{2}-\d{2}`)
 	updated := rePeriod.ReplaceAllString(string(p), fmt.Sprintf(`集計期間: %s ～ %s`, from.Format("2006-01-02"), to.Format("2006-01-02")))
 
-	slog.Info("Updated Period:", updated)
+	slog.Info("Updated Period", "changed", updated != string(p))
 
 	return PublishedHTML(updated)
 }
