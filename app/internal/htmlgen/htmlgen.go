@@ -53,6 +53,7 @@ func (g *SimpleHTMLGenerator) Generate(
 		"TodayPrefectureRanking": displayData.TodayPrefectureRanking,
 		"WeekPrefectureRanking":  displayData.WeekPrefectureRanking,
 		"SurgeRanking":           displayData.SurgeRanking,
+		"Summary":                displayData.Summary,
 		"ReportPeriod":           from.Format("2006-01-02") + " ～ " + to.Format("2006-01-02"),
 		"Now":                    now.Format(time.RFC3339),
 	}

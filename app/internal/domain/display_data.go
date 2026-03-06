@@ -9,4 +9,5 @@ type DisplayData struct {
 	TodayPrefectureRanking RankingRecordList    `json:"today_prefecture_ranking"`
 	WeekPrefectureRanking  RankingRecordList    `json:"week_prefecture_ranking"`
 	SurgeRanking           SurgeRecordList      `json:"surge_ranking"`
+	Summary                string               `json:"summary"`
 }

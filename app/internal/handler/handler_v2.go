@@ -139,6 +139,12 @@ func (h *Handler) ProcessV2(
 	surgeRanking := domain.MakeSurgeRecordList(todayPrefectureMap, prefectureJishinDataMap, 3, 2.0, 10)
 
 	// ==============================
+	// サマリー生成
+	// ==============================
+	// weekPrefectureRanking は回/1000km²降順ソート済みのため先頭が最高密度都道府県
+	summary := domain.BuildSummary(weekPrefectureRanking, surgeRanking, latestEarthquakes)
+
+	// ==============================
 	// HTML生成・保存処理
 	// ==============================
 
@@ -151,6 +157,7 @@ func (h *Handler) ProcessV2(
 		TodayPrefectureRanking: todayPrefectureRanking,
 		WeekPrefectureRanking:  weekPrefectureRanking,
 		SurgeRanking:           surgeRanking,
+		Summary:                summary,
 	}
 
 	// HTML生成・保存

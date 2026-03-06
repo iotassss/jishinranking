@@ -196,6 +196,23 @@
 			100% { box-shadow: 0 0 0 14px rgba(204,0,0,0); }
 		}
 
+		.summary-area {
+			max-width: 800px;
+			margin: 2em auto;
+			width: 90%;
+			background: #fff;
+			border-radius: 8px;
+			box-shadow: 0 2px 8px rgba(200,0,0,0.04);
+			padding: 1em 0.5em 1.2em 0.5em;
+		}
+		.summary-area p {
+			font-size: 0.97em;
+			line-height: 1.9;
+			color: #333;
+			padding: 0 0.5em;
+			margin: 0;
+		}
+
 		.site-footer {
 			background: #ffe5e5;
 			padding: 2em 0;
@@ -252,15 +269,20 @@
 		</p>
   </header>
 	<main>
+		<section class="summary-area" aria-labelledby="sec-summary">
+			<h2 id="sec-summary">今週の地震サマリー</h2>
+			<p>{{.Summary}}</p>
+		</section>
+
 		<section aria-labelledby="sec-map">
-			<h2 id="sec-map">都道府県別 地震発生密度（ヒートマップ・回/1000km²）</h2>
+			<h2 id="sec-map">都道府県別地震ヒートマップ（回/1000km²）</h2>
 			<div class="legend-area">
-				<span class="legend-label">発生密度低</span><span class="legend-color" style="background:#fff5f5;"></span>
+				<span class="legend-label">地震少</span><span class="legend-color" style="background:#fff5f5;"></span>
 				<span class="legend-color" style="background:#ffcccc;"></span>
 				<span class="legend-color" style="background:#ff9999;"></span>
 				<span class="legend-color" style="background:#ff6666;"></span>
 				<span class="legend-color" style="background:#ff3333;"></span>
-				<span class="legend-color" style="background:#cc0000;"></span><span class="legend-label">発生密度高</span>
+				<span class="legend-color" style="background:#cc0000;"></span><span class="legend-label">地震多</span>
 			</div>
 			<div id="my-map"
 				{{- range $i, $r := .Ranking }}
