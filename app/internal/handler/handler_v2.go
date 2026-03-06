@@ -13,7 +13,6 @@ func (h *Handler) ProcessV2(
 	ctx context.Context,
 	FetchLongFeed bool,
 ) error {
-	// TODO: ここの日付を１ヶ月に延長することで、月間ランキングも集計できるようにする
 	// 1週間分のデータを取得するための期間を設定
 	now := time.Now()
 	oneWeekAgo := now.Add(-7 * 24 * time.Hour)
@@ -96,24 +95,28 @@ func (h *Handler) ProcessV2(
 	// 本日の大きい地震ランキング
 	// ==============================
 	// 過去24時間で発生したM3.0以上の地震のうち大きい順に10件
+
 	todayBigEarthquakes := thisMonthReports.TopEarthquakesByMagnitude(now, 24*time.Hour, 3.0, 10)
 
 	// ==============================
 	// 今週の大きい地震ランキング
 	// ==============================
 	// 過去168時間で発生したM4.0以上の地震のうち大きい順に10件
+
 	weekBigEarthquakes := thisMonthReports.TopEarthquakesByMagnitude(now, 168*time.Hour, 4.0, 10)
 
 	// ==============================
 	// 今月の大きい地震ランキング
 	// ==============================
 	// 過去720時間で発生したM5.0以上の地震のうち大きい順に10件
+
 	monthBigEarthquakes := thisMonthReports.TopEarthquakesByMagnitude(now, 720*time.Hour, 5.0, 10)
 
 	// ==============================
 	// 本日の都道府県別地震回数ランキング
 	// ==============================
 	// 回/1000km²（47件）
+
 	todayReports := thisMonthReports.Between(now.Add(-24*time.Hour), now)
 	todayPrefectureMap := domain.MakePrefectureMapFromReportList(todayReports)
 	todayPrefectureRanking := domain.ConvertPrefectureJishinDataMapToAreaNormalizedRankingRecordList(todayPrefectureMap)
@@ -125,6 +128,7 @@ func (h *Handler) ProcessV2(
 	// 今週の都道府県別地震回数ランキング
 	// ==============================
 	// 回/1000km²（47件）
+
 	// prefectureJishinDataMapはthisWeekReportsから生成済みのため再利用する
 	weekPrefectureRanking := domain.ConvertPrefectureJishinDataMapToAreaNormalizedRankingRecordList(prefectureJishinDataMap)
 	weekPrefectureRanking.SortByRatioDesc()
@@ -136,12 +140,14 @@ func (h *Handler) ProcessV2(
 	// ==============================
 	// score = (24h回数 + 1) / (7日平均 + 1)
 	// 条件: (24h回数 ≥ 3) AND (score ≥ 2.0)
+
 	surgeRanking := domain.MakeSurgeRecordList(todayPrefectureMap, prefectureJishinDataMap, 3, 2.0, 10)
 
 	// ==============================
 	// サマリー生成
 	// ==============================
 	// weekPrefectureRanking は回/1000km²降順ソート済みのため先頭が最高密度都道府県
+
 	summary := domain.BuildSummary(weekPrefectureRanking, surgeRanking, latestEarthquakes)
 
 	// ==============================
