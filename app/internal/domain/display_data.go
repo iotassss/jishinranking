@@ -11,4 +11,5 @@ type DisplayData struct {
 	SurgeRanking           SurgeRecordList      `json:"surge_ranking"`
 	HourlyEarthquake       HourlyEarthquakeData `json:"hourly_earthquake"`
 	Summary                string               `json:"summary"`
+	WeekReportCount        int                  `json:"week_report_count"`
 }

@@ -174,6 +174,7 @@ func (h *Handler) ProcessV2(
 		SurgeRanking:           surgeRanking,
 		HourlyEarthquake:       hourlyEarthquake,
 		Summary:                summary,
+		WeekReportCount:        len(thisWeekReports),
 	}
 
 	// HTML生成・保存

@@ -169,6 +169,7 @@ func (g *SimpleHTMLGenerator) Generate(
 		"ReportPeriod":           from.Format("2006-01-02") + " ～ " + to.Format("2006-01-02"),
 		"Now":                    now.Format(time.RFC3339),
 		"HourlyChartData":        makeHourlyChartData(displayData.HourlyEarthquake),
+		"WeekTotalCount":         displayData.WeekReportCount,
 	}
 	if err := g.tmpl.Execute(&buf, dataMap); err != nil {
 		return "", fmt.Errorf("template execute failed: %w", err)
