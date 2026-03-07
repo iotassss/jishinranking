@@ -20,8 +20,9 @@
 	<meta property="og:image" content="https://jishinranking.com/ogp.png">
 	<meta name="twitter:card" content="summary_large_image">
 
-	<!-- パフォ改善（unpkgの接続） -->
+	<!-- パフォ改善（CDN接続） -->
 	<link rel="preconnect" href="https://unpkg.com" crossorigin>
+	<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 
   <style>
     body {
@@ -242,8 +243,28 @@
       .table-area { padding: 0.5em 0.1em; }
       table { font-size: 0.93em; }
 		} */
+
+		.chart-area {
+			max-width: 800px;
+			margin: 2em auto;
+			width: 90%;
+			background: #fff;
+			border-radius: 8px;
+			box-shadow: 0 2px 8px rgba(200,0,0,0.04);
+			padding: 1em 0.5em 1.5em 0.5em;
+		}
+		.chart-container {
+			position: relative;
+			width: 100%;
+			max-height: 360px;
+		}
   </style>
-	<script defer src="https://unpkg.com/japan-map-js@1.0.1/dist/jpmap.min.js"></script>
+	<!-- jpmap は内部で Map=function(){} とグローバルの Map を上書きする。
+	     Chart.js を先にロードしてネイティブ Map でロード時初期化を終わらせ、
+	     その後 jpmap をロードする。Chart 作成直前にネイティブ Map を復元する。 -->
+	<script>window.__NativeMap = window.Map;</script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/japan-map-js@1.0.1/dist/jpmap.min.js"></script>
 	<script type="application/ld+json">
 	{
 		"@context":"https://schema.org",
@@ -519,6 +540,13 @@
 			{{end}}
 		</section>
 
+		<section class="chart-area" aria-labelledby="sec-hourly-chart">
+			<h2 id="sec-hourly-chart">過去1週間の地震発生推移（1時間ごと・都道府県別）</h2>
+			<div class="chart-container">
+				<canvas id="hourly-chart" aria-label="1時間ごとの都道府県別地震発生回数グラフ" role="img"></canvas>
+			</div>
+		</section>
+
 			<section class="affiliate-area" aria-label="防災用品PR">
 				<div class="affiliate-inner">
 					<h2>今週の地震傾向から備える防災用品</h2>
@@ -572,7 +600,7 @@
 	</footer>
 
   <script>
-    window.addEventListener("DOMContentLoaded", () => {
+    (() => {
       const areaLinks = {
         1: "/hokkaido",
         13: "/tokyo",
@@ -625,7 +653,7 @@
           if (url) location.href = url;
         },
       });
-    });
+    })();
 
 		// 更新時刻からの経過時間を表示
 		(() => {
@@ -647,6 +675,45 @@
 
 			render();
 			setInterval(render, 30 * 1000); // 30秒ごとに更新
+		})();
+  </script>
+
+  <script>
+		// jpmap がグローバル Map を上書きしているため、Chart.js 使用前にネイティブ Map を復元する
+		window.Map = window.__NativeMap;
+		// 24時間の地震発生推移グラフ（Chart.js 積み上げ棒グラフ）
+		(function() {
+			const ctx = document.getElementById("hourly-chart");
+			if (!ctx) return;
+			const chartData = {{.HourlyChartData}};
+			if (!chartData.datasets || chartData.datasets.length === 0) {
+				ctx.parentElement.innerHTML = '<p style="text-align:center;color:#666;padding:2em 0;">過去1週間の地震データがありません。</p>';
+				return;
+			}
+			new Chart(ctx, {
+				type: "bar",
+				data: chartData,
+				options: {
+					responsive: true,
+					maintainAspectRatio: true,
+					scales: {
+						x: {
+							stacked: true,
+							ticks: { maxRotation: 45, minRotation: 30, font: { size: 11 } }
+						},
+						y: {
+							stacked: true,
+							beginAtZero: true,
+							title: { display: true, text: "発生回数" },
+							ticks: { stepSize: 1 }
+						}
+					},
+					plugins: {
+						legend: { position: "bottom", labels: { boxWidth: 14, font: { size: 12 } } },
+						tooltip: { mode: "index", intersect: false }
+					}
+				}
+			});
 		})();
   </script>
 </body>

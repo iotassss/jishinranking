@@ -77,6 +77,7 @@ func (h *Handler) ProcessV2(
 	// 都道府県ごとの集計データを作成
 	prefectureJishinDataMap := domain.MakePrefectureMapFromReportList(thisWeekReports)
 
+	// TODO: 以下のview向けデータ生計処理はview層に移すのが適切か要義論
 	// HTML出力テーブル用に整形
 	// ヒートマップのTierは回/1000km²（面積正規化）で算出する
 	rankingRecords := domain.ConvertPrefectureJishinDataMapToAreaNormalizedRankingRecordList(prefectureJishinDataMap)
@@ -144,6 +145,14 @@ func (h *Handler) ProcessV2(
 	surgeRanking := domain.MakeSurgeRecordList(todayPrefectureMap, prefectureJishinDataMap, 3, 2.0, 10)
 
 	// ==============================
+	// 1時間ごとの地震発生回数（過去1週間分）
+	// ==============================
+	// yyyy/mm/dd hh:00:00 ごと・都道府県ごとに回数を集計する
+	// グラフ用途: 横軸 = 時間スロット、縦軸 = 発生回数
+
+	hourlyEarthquake := domain.MakeHourlyEarthquakeData(thisWeekReports, now)
+
+	// ==============================
 	// サマリー生成
 	// ==============================
 	// weekPrefectureRanking は回/1000km²降順ソート済みのため先頭が最高密度都道府県
@@ -163,6 +172,7 @@ func (h *Handler) ProcessV2(
 		TodayPrefectureRanking: todayPrefectureRanking,
 		WeekPrefectureRanking:  weekPrefectureRanking,
 		SurgeRanking:           surgeRanking,
+		HourlyEarthquake:       hourlyEarthquake,
 		Summary:                summary,
 	}
 
