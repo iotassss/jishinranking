@@ -183,12 +183,30 @@ func (h *Handler) ProcessV2(
 		return err
 	}
 
-	// // （ローカル）HTMLをファイルとしてここに保存する
-	// filename := "index.html"
-	// os.WriteFile(filename, []byte(html), 0o644)
-
 	if err := h.htmlRepo.Save(ctx, htmlKey, html); err != nil {
 		return err
+	}
+
+	// ==============================
+	// 詳細ページ生成・保存
+	// ==============================
+	// 今月分の VXSE53 レポートについて詳細HTMLを生成する
+	// （MonthBigEarthquakes は過去30日間を対象とするため、thisMonthReports を使う）
+	detailReports := thisMonthReports.FilterByTelegramCode(domain.TelegramCodeEarthquakeDetail)
+	for _, report := range detailReports {
+		detail, ok := domain.MakeEarthquakeDetail(report)
+		if !ok {
+			continue
+		}
+		detailHTML, err := h.htmlGenerator.GenerateDetail(detail)
+		if err != nil {
+			slog.Warn("detail HTML generation failed", "eventID", detail.EventID, "err", err)
+			continue
+		}
+		if err := h.htmlRepo.Save(ctx, detail.Key(), detailHTML); err != nil {
+			slog.Warn("detail HTML save failed", "eventID", detail.EventID, "err", err)
+			continue
+		}
 	}
 
 	return nil

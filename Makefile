@@ -1,4 +1,8 @@
-.PHONY: build build-app build-init-app
+.PHONY: build build-app build-init-app serve
+
+# ローカル開発用サーバー: make serve [DIR=./output]
+serve:
+	cd app && go run ./cmd/serve $(if $(DIR),$(DIR),../output)
 
 build: build-app build-init-app
 
@@ -21,3 +25,7 @@ build-init-app:
 	rm -rf build/linux/init_app
 	mv app/build/linux/init_app/ build/linux/init_app/
 	rm -rf app/build
+
+build-init-local-app:
+	cd app && \
+	go run ./cmd/sample/main.go -init

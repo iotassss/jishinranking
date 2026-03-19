@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>地震詳細｜2026-01-18 00:50 トカラ列島近海 M2.3</title>
+  <title>地震詳細｜2026-03-10 14:23 茨城県沖 M5.3</title>
   <meta name="description" content="地震の詳細（震源、マグニチュード、最大震度、観測地域）を見やすく表示します。" />
 
   <style>
@@ -277,75 +277,140 @@
       color: var(--text-sub);
     }
 
-    .kpi {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
+    .eq-main {
+      display: flex;
+      align-items: stretch;
       margin-top: 12px;
-    }
-
-    @media (max-width: 900px) {
-      .kpi {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    .kpi-item {
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
+      border-radius: 14px;
       background: #fff;
+      overflow: hidden;
+    }
+
+    .eq-main-epicenter {
+      flex: 1;
+      padding: 14px 30px;
       min-width: 0;
     }
 
-    .kpi-item .label {
-      font-size: 12px;
+    .eq-main-label {
+      font-size: 11px;
       color: var(--muted);
-      margin-bottom: 6px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
     }
 
-    .kpi-item .value {
-      font-size: 18px;
+    .eq-main-place {
+      font-size: 20px;
       font-weight: 900;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.01em;
+      line-height: 1.2;
+      overflow-wrap: break-word;
     }
 
-    .kpi-item .value small {
-      font-size: 12px;
+    .eq-main-divider {
+      width: 1px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    .eq-main-mag {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 22px;
+      background: var(--accent-weak);
+      gap: 2px;
+    }
+
+    .eq-main-mag .eq-main-label {
+      color: rgba(215, 0, 15, 0.6);
+    }
+
+    .eq-main-num {
+      font-size: 36px;
+      font-weight: 900;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+      line-height: 1;
+    }
+
+    .eq-main-num small {
+      font-size: 14px;
       font-weight: 700;
+      margin-left: 2px;
+      vertical-align: baseline;
+    }
+
+    .kpi-sub {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      font-size: 12px;
       color: var(--muted);
-      margin-left: 6px;
+    }
+
+    .kpi-sub-label::after {
+      content: ": ";
+    }
+
+    .kpi-sub b {
+      color: var(--text-sub);
+      font-weight: 600;
     }
 
     /* Summary list */
     .facts {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      display: flex;
+      flex-direction: column;
       margin-top: 10px;
-    }
-
-    @media (max-width: 900px) {
-      .facts {
-        grid-template-columns: 1fr;
-      }
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
     }
 
     .fact {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-      background: var(--bg-sub);
       display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      font-size: 13px;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
       color: var(--text-sub);
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .fact:last-child {
+      border-bottom: none;
+    }
+
+    .fact + .fact {
+      padding-left: 0;
+      border-left: none;
+    }
+
+    .fact span {
+      color: var(--muted);
+      flex: 0 0 5.5em;
+      white-space: nowrap;
+    }
+
+    .fact span::after {
+      content: ": ";
     }
 
     .fact b {
       color: var(--text);
+      font-weight: 700;
+    }
+
+    @media (max-width: 640px) {
+      .fact b {
+        font-size: 13px;
+        line-height: 1.5;
+      }
     }
 
     /* Tables */
@@ -407,38 +472,7 @@
     }
 
     .maparea {
-      height: 220px;
-      display: grid;
-      place-items: center;
-      color: #64748b;
-      font-weight: 900;
-      letter-spacing: 0.02em;
-      position: relative;
-    }
-
-    .maparea::before {
-      content: "";
-      position: absolute;
-      inset: 18px;
-      border-radius: 12px;
-      border: 2px dashed var(--map-line);
-      opacity: 0.7;
-    }
-
-    .mapbadge {
-      position: relative;
-      z-index: 1;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: #fff;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-      color: var(--text-sub);
-      font-size: 13px;
-      font-weight: 800;
+      height: 240px;
     }
 
     /* CTA buttons */
@@ -488,6 +522,7 @@
       margin-top: 8px;
     }
   </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 
 <body>
@@ -524,50 +559,44 @@
         </div>
       </div>
       <div class="meta">
-        eventID: 20260118005035<br />
-        発表: 2026-01-18 00:53
+        eventID: 20260310142501<br />
+        発表: 2026-03-10 14:27
       </div>
     </div>
 
     <!-- Hero -->
     <section class="hero" aria-label="地震の要点">
       <div class="hero-top">
-        <div>
-          <h3>2026-01-18 00:50頃｜トカラ列島近海</h3>
-          <p>気象庁の「震源・震度に関する情報」をもとに整形（ダミー）。</p>
-        </div>
-        <div class="pill s1">最大震度 1</div>
+        <div class="pill s2">最大震度 3</div>
       </div>
 
-      <div class="kpi">
-        <div class="kpi-item">
-          <div class="label">発生時刻</div>
-          <div class="value">00:50<small>JST</small></div>
+      <div class="eq-main">
+        <div class="eq-main-mag">
+          <div class="eq-main-label">マグニチュード</div>
+          <div class="eq-main-num">5.3<small>Mj</small></div>
         </div>
-        <div class="kpi-item">
-          <div class="label">震源</div>
-          <div class="value">トカラ列島近海</div>
-        </div>
-        <div class="kpi-item">
-          <div class="label">マグニチュード</div>
-          <div class="value">2.3<small>Mj</small></div>
-        </div>
-        <div class="kpi-item">
-          <div class="label">深さ</div>
-          <div class="value">—<small>（未取得）</small></div>
+        <div class="eq-main-divider"></div>
+        <div class="eq-main-epicenter">
+          <div class="eq-main-label">震源</div>
+          <div class="eq-main-place">茨城県沖あああああああああああああ</div>
         </div>
       </div>
+      <div class="kpi-sub">
+      </div>
+
 
       <div class="facts">
+        <div class="fact"><span>発生時刻</span><b>2026-03-10 14:23</b></div>
+        <div class="fact"><span>震源の深さ</span><b>50 km</b></div>
         <div class="fact"><span>ステータス</span><b>通常</b></div>
         <div class="fact"><span>発表機関</span><b>気象庁</b></div>
-        <div class="fact"><span>見出し</span><b>「１８日００時５０分ころ、地震がありました。」</b></div>
-        <div class="fact"><span>観測都道府県（最大震度）</span><b>鹿児島県</b></div>
+        <div class="fact"><span>見出し</span><b>「１０日１４時２３分ころ、茨城県で最大震度３を観測する地震がありました。」</b></div>
+        <div class="fact"><span>観測都県</span><b>茨城県（震度3）ほか5都県</b></div>
       </div>
 
       <div class="btn-row">
-        <a class="btn" href="/pref/kagoshima">鹿児島の集計へ</a>
-        <a class="btn primary" href="/eq?pref=kagoshima&since=7d">鹿児島の地震履歴へ</a>
+        <a class="btn" href="/pref/ibaraki">茨城の集計へ</a>
+        <a class="btn primary" href="/eq?pref=ibaraki&since=7d">茨城の地震履歴へ</a>
         <a class="btn" href="/eq?since=7d">一覧へ戻る</a>
       </div>
     </section>
@@ -590,16 +619,41 @@
           </thead>
           <tbody>
             <tr>
-              <td><a href="/pref/kagoshima">鹿児島県</a></td>
-              <td class="center"><span class="pill s1">震度1</span></td>
-              <td>鹿児島県十島村</td>
+              <td><a href="/pref/ibaraki">茨城県</a></td>
+              <td class="center"><span class="pill s2">震度3</span></td>
+              <td>水戸市・ひたちなか市・笠間市・鹿嶋市</td>
+            </tr>
+            <tr>
+              <td><a href="/pref/chiba">千葉県</a></td>
+              <td class="center"><span class="pill s1">震度2</span></td>
+              <td>銚子市・旭市・匝瑳市</td>
+            </tr>
+            <tr>
+              <td><a href="/pref/tokyo">東京都</a></td>
+              <td class="center"><span class="pill s1">震度2</span></td>
+              <td>江戸川区・葛飾区・足立区</td>
+            </tr>
+            <tr>
+              <td><a href="/pref/tochigi">栃木県</a></td>
+              <td class="center"><span class="pill s1">震度2</span></td>
+              <td>宇都宮市・真岡市</td>
+            </tr>
+            <tr>
+              <td><a href="/pref/saitama">埼玉県</a></td>
+              <td class="center"><span class="pill gray">震度1</span></td>
+              <td>さいたま市・春日部市・久喜市</td>
+            </tr>
+            <tr>
+              <td><a href="/pref/kanagawa">神奈川県</a></td>
+              <td class="center"><span class="pill gray">震度1</span></td>
+              <td>横浜市・川崎市</td>
             </tr>
           </tbody>
         </table>
 
         <div class="btn-row">
-          <a class="btn" href="/pref/kagoshima">鹿児島の集計へ</a>
-          <a class="btn" href="/eq?pref=kagoshima&since=24h">鹿児島の24時間</a>
+          <a class="btn" href="/pref/ibaraki">茨城の集計へ</a>
+          <a class="btn" href="/eq?pref=ibaraki&since=24h">茨城の24時間</a>
         </div>
       </section>
 
@@ -612,14 +666,11 @@
 
         <div class="mapbox">
           <div class="maphead">
-            <div>震源：トカラ列島近海</div>
-            <div>最大震度：<span class="pill s1" style="padding:4px 10px;">1</span></div>
+            <div>震源：茨城県沖</div>
+            <div>最大震度：<span class="pill s2" style="padding:4px 10px;">3</span></div>
           </div>
           <div class="maparea">
-            <div class="mapbadge">
-              ここに地図（SVG/画像）を配置
-              <span class="pill gray" style="padding:4px 10px;">プレースホルダ</span>
-            </div>
+            <div id="eq-map" style="width:100%;height:100%;"></div>
           </div>
         </div>
 
@@ -678,6 +729,35 @@
     </div>
   </footer>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    (function () {
+      // 茨城県沖の震源座標（ダミー）
+      var LAT = 36.4, LNG = 141.2;
+
+      var map = L.map('eq-map', { zoomControl: true, attributionControl: true })
+                 .setView([LAT, LNG], 7);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 18
+      }).addTo(map);
+
+      var crossIcon = L.divIcon({
+        html: '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">'
+            + '<line x1="4" y1="4" x2="24" y2="24" stroke="#d7000f" stroke-width="3.5" stroke-linecap="round"/>'
+            + '<line x1="24" y1="4" x2="4" y2="24" stroke="#d7000f" stroke-width="3.5" stroke-linecap="round"/>'
+            + '</svg>',
+        className: '',
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
+      });
+
+      L.marker([LAT, LNG], { icon: crossIcon })
+        .bindTooltip('震源：茨城県沖', { permanent: false, direction: 'top' })
+        .addTo(map);
+    })();
+  </script>
 </body>
 
 </html>

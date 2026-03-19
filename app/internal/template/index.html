@@ -146,9 +146,13 @@
       border: 1px solid var(--border); border-radius: 12px; padding: 11px 14px;
       background: #fff; display: flex; justify-content: space-between; gap: 12px; align-items: center;
     }
+    .event.clickable { cursor: pointer; transition: background 0.15s; }
+    .event.clickable:hover { background: var(--bg-sub); }
     .event .left { min-width: 0; flex: 1; }
     .event .ev-title { font-weight: 700; font-size: 13px; margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .event .ev-sub { font-size: 12px; color: var(--muted); margin: 0; }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover td { background: var(--bg-sub) !important; }
     .pill {
       font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px;
       border: 1px solid var(--border); background: var(--bg-sub); white-space: nowrap;
@@ -354,16 +358,14 @@
       {{if .LatestEarthquakes}}
       <div class="event-list">
         {{range .LatestEarthquakes}}
-        <div class="event">
+        <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
           <div class="left">
             <p class="ev-title">{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
             <p class="ev-sub">{{.OccurredAt.Format "2006-01-02 15:04"}}</p>
           </div>
-          {{if .DetailURL}}
-          <a class="pill{{if ge .MaxIntensity "3"}} alert{{end}}" href="{{.DetailURL}}" target="_blank" rel="noopener noreferrer">震度{{.MaxIntensity}}　詳細</a>
-          {{else}}
-          <span class="pill{{if ge .MaxIntensity "3"}} alert{{end}}">震度{{.MaxIntensity}}</span>
-          {{end}}
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <span class="pill{{if ge .MaxIntensity "3"}} alert{{end}}">震度{{.MaxIntensity}}</span>
+          </div>
         </div>
         {{end}}
       </div>
@@ -384,12 +386,12 @@
         </thead>
         <tbody>
           {{range .TodayBigEarthquakes}}
-          <tr>
+          <tr{{if .EventID}} class="clickable" onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
             <td>{{.OccurredAt.Format "01/02 15:04"}}</td>
             <td>{{.Hypocenter}}</td>
             <td class="metric">{{printf "%.1f" .Magnitude}}</td>
             <td>{{.MaxIntensity}}</td>
-            <td>{{if .DetailURL}}<a href="{{.DetailURL}}" target="_blank" rel="noopener noreferrer">気象庁XML</a>{{else}}-{{end}}</td>
+            <td>{{if .EventID}}→{{else}}-{{end}}</td>
           </tr>
           {{end}}
         </tbody>
@@ -411,12 +413,12 @@
         </thead>
         <tbody>
           {{range .WeekBigEarthquakes}}
-          <tr>
+          <tr{{if .EventID}} class="clickable" onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
             <td>{{.OccurredAt.Format "01/02 15:04"}}</td>
             <td>{{.Hypocenter}}</td>
             <td class="metric">{{printf "%.1f" .Magnitude}}</td>
             <td>{{.MaxIntensity}}</td>
-            <td>{{if .DetailURL}}<a href="{{.DetailURL}}" target="_blank" rel="noopener noreferrer">気象庁XML</a>{{else}}-{{end}}</td>
+            <td>{{if .EventID}}→{{else}}-{{end}}</td>
           </tr>
           {{end}}
         </tbody>
@@ -438,12 +440,12 @@
         </thead>
         <tbody>
           {{range .MonthBigEarthquakes}}
-          <tr>
+          <tr{{if .EventID}} class="clickable" onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
             <td>{{.OccurredAt.Format "01/02 15:04"}}</td>
             <td>{{.Hypocenter}}</td>
             <td class="metric">{{printf "%.1f" .Magnitude}}</td>
             <td>{{.MaxIntensity}}</td>
-            <td>{{if .DetailURL}}<a href="{{.DetailURL}}" target="_blank" rel="noopener noreferrer">気象庁XML</a>{{else}}-{{end}}</td>
+            <td>{{if .EventID}}→{{else}}-{{end}}</td>
           </tr>
           {{end}}
         </tbody>

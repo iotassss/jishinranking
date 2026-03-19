@@ -34,6 +34,7 @@ type HTMLRepo interface {
 // 配信用HTMLを生成する
 type HTMLGenerator interface {
 	Generate(data domain.DisplayData, from, to, now time.Time) (domain.PublishedHTML, error)
+	GenerateDetail(detail domain.EarthquakeDetail) (domain.PublishedHTML, error)
 }
 
 type Handler struct {

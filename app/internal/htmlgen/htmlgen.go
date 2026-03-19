@@ -18,7 +18,8 @@ type EarthquakeEvent struct {
 }
 
 type SimpleHTMLGenerator struct {
-	tmpl *template.Template
+	tmpl       *template.Template
+	detailTmpl *template.Template
 }
 
 // ---- hourly chart helpers ----
@@ -132,19 +133,46 @@ func makeHourlyChartData(h domain.HourlyEarthquakeData) template.JS {
 }
 
 func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
-	// テンプレートファイルのパス
+	jst := time.FixedZone("JST", 9*60*60)
+
+	// index.html
 	tmplPath := filepath.Join(templatePath, "index.html")
-	// 関数マップ（順位表示用）
 	funcMap := template.FuncMap{
 		"add": func(a, b int) int { return a + b },
 		"mul": func(a, b float64) float64 { return a * b },
 	}
 	tmpl, err := template.New("index.html").Funcs(funcMap).ParseFiles(tmplPath)
 	if err != nil {
-		// 開発時はpanic、運用時はエラー返却推奨
 		panic(fmt.Sprintf("template parse error: %v", err))
 	}
-	return &SimpleHTMLGenerator{tmpl: tmpl}
+
+	// detail.html
+	detailFuncMap := template.FuncMap{
+		"add": func(a, b int) int { return a + b },
+		"fmtTime": func(t time.Time, layout string) string {
+			return t.In(jst).Format(layout)
+		},
+		"intensityClass": domain.IntensityPillClassFor,
+		"joinStrings": func(ss []string, sep string) string {
+			result := ""
+			for i, s := range ss {
+				if i > 0 {
+					result += sep
+				}
+				result += s
+			}
+			return result
+		},
+		"prefName":   func(p domain.PrefIntensityDetail) string { return p.Name },
+		"prefMaxInt": func(p domain.PrefIntensityDetail) string { return p.MaxInt },
+	}
+	detailTmplPath := filepath.Join(templatePath, "detail.html")
+	detailTmpl, err := template.New("detail.html").Funcs(detailFuncMap).ParseFiles(detailTmplPath)
+	if err != nil {
+		panic(fmt.Sprintf("detail template parse error: %v", err))
+	}
+
+	return &SimpleHTMLGenerator{tmpl: tmpl, detailTmpl: detailTmpl}
 }
 
 // TODO: 回数のランキングと最大震度のランキングを含むHTMLを生成できるように変更する
@@ -173,6 +201,35 @@ func (g *SimpleHTMLGenerator) Generate(
 	}
 	if err := g.tmpl.Execute(&buf, dataMap); err != nil {
 		return "", fmt.Errorf("template execute failed: %w", err)
+	}
+	return domain.PublishedHTML(buf.String()), nil
+}
+
+// GenerateDetail は1地震イベントの詳細HTMLを生成する。
+func (g *SimpleHTMLGenerator) GenerateDetail(detail domain.EarthquakeDetail) (domain.PublishedHTML, error) {
+	var buf bytes.Buffer
+	dataMap := map[string]interface{}{
+		"EventID":          detail.EventID,
+		"OccurredAt":       detail.OccurredAt,
+		"ReportedAt":       detail.ReportedAt,
+		"Status":           detail.Status,
+		"PublishingOffice": detail.PublishingOffice,
+		"HeadlineText":     detail.HeadlineText,
+		"Hypocenter":       detail.Hypocenter,
+		"Latitude":         detail.Latitude,
+		"Longitude":        detail.Longitude,
+		"Depth":            detail.Depth,
+		"CoordinateKnown":  detail.CoordinateKnown,
+		"Magnitude":        detail.Magnitude,
+		"MagnitudeType":    detail.MagnitudeType,
+		"MaxIntensity":     detail.MaxIntensity,
+		"ObservedPrefs":    detail.ObservedPrefs,
+		// script内で使う数値をtemplate.JSとして渡すことでエスケープを回避する
+		"LatJS": template.JS(fmt.Sprintf("%g", detail.Latitude)),
+		"LngJS": template.JS(fmt.Sprintf("%g", detail.Longitude)),
+	}
+	if err := g.detailTmpl.Execute(&buf, dataMap); err != nil {
+		return "", fmt.Errorf("detail template execute failed: %w", err)
 	}
 	return domain.PublishedHTML(buf.String()), nil
 }

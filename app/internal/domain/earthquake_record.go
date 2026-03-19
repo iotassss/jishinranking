@@ -8,6 +8,7 @@ import (
 )
 
 type EarthquakeRecord struct {
+	EventID      string    `json:"event_id"`
 	OccurredAt   time.Time `json:"occurred_at"`
 	Hypocenter   string    `json:"hypocenter"`
 	Magnitude    float64   `json:"magnitude"`
@@ -92,6 +93,7 @@ func makeEarthquakeRecord(report Report) (EarthquakeRecord, bool) {
 	}
 
 	return EarthquakeRecord{
+		EventID:      strings.TrimSpace(report.Head.EventID),
 		OccurredAt:   occurredAt,
 		Hypocenter:   hypocenter,
 		Magnitude:    magnitude,
