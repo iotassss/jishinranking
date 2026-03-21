@@ -46,7 +46,44 @@
     nav.nav { display: flex; gap: 4px; align-items: center; flex: 0 0 auto; }
     nav.nav a { font-size: 13px; color: var(--text-sub); padding: 6px 10px; border-radius: 8px; }
     nav.nav a:hover { background: var(--bg-sub); text-decoration: none; }
-    @media (max-width: 900px) { nav.nav { display: none; } }
+
+    /* ハンバーガーボタン */
+    .nav-toggle {
+      display: none; flex-direction: column; justify-content: center; gap: 5px;
+      width: 36px; height: 36px; background: none; border: none; cursor: pointer;
+      padding: 4px; border-radius: 8px; flex: 0 0 auto;
+    }
+    .nav-toggle:hover { background: var(--bg-sub); }
+    .nav-toggle span {
+      display: block; height: 2px; background: var(--text-sub); border-radius: 2px;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+
+    /* モバイルナビ */
+    .nav-drawer {
+      display: none; position: fixed; inset: 0; z-index: 49;
+    }
+    .nav-drawer.open { display: block; }
+    .nav-drawer-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,.3);
+    }
+    .nav-drawer-panel {
+      position: absolute; top: 0; right: 0; bottom: 0;
+      width: min(280px, 80vw);
+      background: var(--bg); padding: 64px 16px 24px;
+      display: flex; flex-direction: column; gap: 4px;
+      box-shadow: -4px 0 24px rgba(0,0,0,.12);
+    }
+    .nav-drawer-panel a {
+      display: block; font-size: 15px; color: var(--text-sub);
+      padding: 10px 12px; border-radius: 10px;
+    }
+    .nav-drawer-panel a:hover { background: var(--bg-sub); text-decoration: none; }
+
+    @media (max-width: 900px) {
+      nav.nav { display: none; }
+      .nav-toggle { display: flex; }
+    }
 
     /* Buttons */
     .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -95,15 +132,32 @@
           </div>
         </a>
         <nav class="nav" aria-label="グローバルナビゲーション">
+          <a href="/">ホーム</a>
           <a href="/#heatmap">ヒートマップ</a>
           <a href="/all">47都道府県</a>
           <a href="/eq?since=7d">地震履歴</a>
           <a href="/trend">推移</a>
           <a href="/about.html">このサイトについて</a>
         </nav>
+        <button class="nav-toggle" aria-label="メニューを開く" onclick="document.getElementById('nav-drawer').classList.add('open')">
+          <span></span><span></span><span></span>
+        </button>
       </div>
     </div>
   </header>
+
+  <!-- モバイルドロワー -->
+  <div class="nav-drawer" id="nav-drawer" role="dialog" aria-modal="true" aria-label="ナビゲーション">
+    <div class="nav-drawer-overlay" onclick="document.getElementById('nav-drawer').classList.remove('open')"></div>
+    <div class="nav-drawer-panel">
+      <a href="/">ホーム</a>
+      <a href="/#heatmap">ヒートマップ</a>
+      <a href="/all">47都道府県</a>
+      <a href="/eq?since=7d">地震履歴</a>
+      <a href="/trend">推移</a>
+      <a href="/about.html">このサイトについて</a>
+    </div>
+  </div>
 {{end}}
 
 {{define "common_footer"}}
