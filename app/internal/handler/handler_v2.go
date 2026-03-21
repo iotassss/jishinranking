@@ -3,6 +3,7 @@ package handler
 // 原則依存するパッケージは標準ライブラリとdomainのみとする
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -190,9 +191,11 @@ func (h *Handler) ProcessV2(
 	// ==============================
 	// 詳細ページ生成・保存
 	// ==============================
-	// 今月分の VXSE53 レポートについて詳細HTMLを生成する
-	// （MonthBigEarthquakes は過去30日間を対象とするため、thisMonthReports を使う）
+	// 過去30日分の VXSE53 レポートすべてについて毎回詳細HTMLを再生成する。
+	// これにより、テンプレート変更が既存ページにも即時反映される。
 	detailReports := thisMonthReports.FilterByTelegramCode(domain.TelegramCodeEarthquakeDetail)
+	slog.Info("Generating detail pages", "count", len(detailReports))
+	successCount := 0
 	for _, report := range detailReports {
 		detail, ok := domain.MakeEarthquakeDetail(report)
 		if !ok {
@@ -207,7 +210,21 @@ func (h *Handler) ProcessV2(
 			slog.Warn("detail HTML save failed", "eventID", detail.EventID, "err", err)
 			continue
 		}
+		successCount++
 	}
+	slog.Info("Detail pages generated", "success", successCount, "total", len(detailReports))
+
+	// ==============================
+	// about ページ生成・保存
+	// ==============================
+	aboutHTML, err := h.htmlGenerator.GenerateAbout()
+	if err != nil {
+		return fmt.Errorf("about HTML generation failed: %w", err)
+	}
+	if err := h.htmlRepo.Save(ctx, "about.html", aboutHTML); err != nil {
+		return fmt.Errorf("about HTML save failed: %w", err)
+	}
+	slog.Info("About page generated")
 
 	return nil
 }

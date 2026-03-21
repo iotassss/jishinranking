@@ -1,0 +1,126 @@
+{{define "base_css"}}
+  <style>
+    :root {
+      --bg:          #ffffff;
+      --bg-sub:      #f7f7f7;
+      --text:        #111111;
+      --text-sub:    #333333;
+      --muted:       #6b7280;
+      --border:      #e5e7eb;
+      --shadow:      0 6px 18px rgba(0,0,0,.06);
+      --accent:      #d7000f;
+      --accent-weak: rgba(215,0,15,.08);
+      --s1-bg: rgba(15, 118, 110, 0.08);
+      --s1-bd: rgba(15, 118, 110, 0.25);
+      --s1-fg: #0f766e;
+      --s2-bg: rgba(180, 83, 9, 0.10);
+      --s2-bd: rgba(180, 83, 9, 0.25);
+      --s2-fg: #b45309;
+      --s3-bg: rgba(215, 0, 15, 0.08);
+      --s3-bd: rgba(215, 0, 15, 0.25);
+      --s3-fg: #d7000f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system,
+        "Hiragino Sans", "Noto Sans JP", "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+    }
+    a { color: var(--text); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { width: min(1100px, calc(100% - 32px)); margin: 0 auto; }
+
+    /* Header */
+    header { position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--border); }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      flex: 0 0 auto; object-fit: contain;
+    }
+    .brand h1 { margin: 0; font-size: 18px; font-weight: 800; line-height: 1.2; }
+    .brand-sub { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+    nav.nav { display: flex; gap: 4px; align-items: center; flex: 0 0 auto; }
+    nav.nav a { font-size: 13px; color: var(--text-sub); padding: 6px 10px; border-radius: 8px; }
+    nav.nav a:hover { background: var(--bg-sub); text-decoration: none; }
+    @media (max-width: 900px) { nav.nav { display: none; } }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 14px; border-radius: 10px;
+      border: 1px solid var(--border); background: #fff;
+      font-size: 13px; font-weight: 700; color: var(--text-sub); text-decoration: none; cursor: pointer;
+    }
+    .btn:hover { background: var(--bg-sub); text-decoration: none; }
+    .btn.primary { border-color: rgba(215,0,15,.25); background: var(--accent-weak); color: var(--accent); }
+
+    /* Card */
+    .card { background: #fff; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); padding: 16px; }
+    .mt { margin-top: 16px; }
+
+    /* Pill */
+    .pill {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 6px 10px; border-radius: 999px;
+      border: 1px solid var(--border); background: #fff;
+      font-size: 12px; font-weight: 900; white-space: nowrap;
+    }
+    .pill.s1 { background: var(--s1-bg); border-color: var(--s1-bd); color: var(--s1-fg); }
+    .pill.s2 { background: var(--s2-bg); border-color: var(--s2-bd); color: var(--s2-fg); }
+    .pill.s3 { background: var(--s3-bg); border-color: var(--s3-bd); color: var(--s3-fg); }
+    .pill.gray { background: var(--bg-sub); color: var(--text-sub); }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--border); background: var(--bg-sub); padding: 22px 0; color: var(--muted); font-size: 12px; margin-top: 24px; }
+    footer .links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--text); text-decoration: underline; }
+  </style>
+{{end}}
+
+{{define "common_header"}}
+  <header>
+    <div class="container">
+      <div class="topbar">
+        <a class="brand" href="/" style="text-decoration:none;">
+          <img class="logo" src="/jishinranking_256px.png" alt="地震ランキング" width="36" height="36" />
+          <div>
+            <h1>地震ランキング</h1>
+            <p class="brand-sub">{{.BrandSub}}</p>
+          </div>
+        </a>
+        <nav class="nav" aria-label="グローバルナビゲーション">
+          <a href="/#heatmap">ヒートマップ</a>
+          <a href="/all">47都道府県</a>
+          <a href="/eq?since=7d">地震履歴</a>
+          <a href="/trend">推移</a>
+          <a href="/about.html">このサイトについて</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+{{end}}
+
+{{define "common_footer"}}
+  <footer>
+    <div class="container">
+      <div><strong>地震ランキング</strong> — 気象庁 防災情報XMLをもとに独自集計</div>
+      <div class="links">
+        <a href="/about.html">このサイトについて</a>
+        <a href="/method">集計方法</a>
+        <a href="/contact">お問い合わせ</a>
+        <a href="/terms">利用規約</a>
+        <a href="https://xml.kishou.go.jp/xmlpull.html" target="_blank" rel="noopener noreferrer">気象庁XML</a>
+      </div>
+      <div style="margin-top:10px">
+        ※本サイトは気象庁の公式サイトではありません。掲載遅延・欠損が生じる場合があります。
+        正確な情報は<a href="https://www.jma.go.jp/" target="_blank" rel="noopener noreferrer">気象庁公式サイト</a>をご確認ください。
+      </div>
+    </div>
+  </footer>
+{{end}}

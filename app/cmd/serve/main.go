@@ -1,58 +1,130 @@
-// ローカル開発用 静的ファイルサーバー
+// ローカル開発用 MinIO プロキシサーバー
+// アクセスの都度 MinIO (localhost:9000) の jishinranking-html バケットを参照する。
 // 使い方:
 //
-//	go run ./cmd/serve [ディレクトリ]
+//	go run ./cmd/serve
 //
-// デフォルトは ../output を公開。 http://localhost:8080 でアクセス可能。
+// http://localhost:8080 でアクセス可能。
 package main
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
+	"mime"
 	"net/http"
-	"os"
-	"path/filepath"
+	"path"
+	"strings"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+)
+
+const (
+	htmlBucketID  = "jishinranking-html"
+	minioEndpoint = "http://localhost:9000"
+	minioRegion   = "ap-northeast-1"
 )
 
 func main() {
 	addr := flag.String("addr", ":8080", "listenアドレス (例: :8080)")
 	flag.Parse()
 
-	dir := flag.Arg(0)
-	if dir == "" {
-		// デフォルト: このファイルから見た ../output
-		exe, err := os.Executable()
-		if err == nil {
-			dir = filepath.Join(filepath.Dir(exe), "../output")
-		} else {
-			dir = "../output"
-		}
-	}
+	ctx := context.Background()
 
-	absDir, err := filepath.Abs(dir)
+	awsCfg, err := config.LoadDefaultConfig(
+		ctx,
+		config.WithRegion(minioRegion),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("minioadmin", "minioadmin", "")),
+	)
 	if err != nil {
-		log.Fatalf("ディレクトリの解決に失敗しました: %v", err)
+		log.Fatalf("AWS SDK config 初期化失敗: %v", err)
 	}
 
-	if _, err := os.Stat(absDir); os.IsNotExist(err) {
-		log.Fatalf("ディレクトリが存在しません: %s", absDir)
-	}
+	s3Client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(minioEndpoint)
+		o.UsePathStyle = true
+	})
 
-	fmt.Printf("🌐 Serving: %s\n", absDir)
+	fmt.Printf("🌐 MinIO プロキシ: %s/%s\n", minioEndpoint, htmlBucketID)
 	fmt.Printf("   http://localhost%s\n\n", *addr)
 
-	fs := http.FileServer(http.Dir(absDir))
-	http.Handle("/", loggingMiddleware(fs))
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		key := urlToKey(r.URL.Path)
+		log.Printf("%s %s → s3://%s/%s", r.Method, r.URL.Path, htmlBucketID, key)
+
+		obj, err := s3Client.GetObject(ctx, &s3.GetObjectInput{
+			Bucket: aws.String(htmlBucketID),
+			Key:    aws.String(key),
+		})
+		if err != nil {
+			var nsk *types.NoSuchKey
+			if errors.As(err, &nsk) {
+				http.NotFound(w, r)
+				return
+			}
+			log.Printf("S3 GetObject error: %v", err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+		defer obj.Body.Close()
+
+		w.Header().Set("Content-Type", contentTypeFor(key))
+		io.Copy(w, obj.Body)
+	})
 
 	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatalf("サーバー起動失敗: %v", err)
 	}
 }
 
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("%s %s", r.Method, r.URL.Path)
-		next.ServeHTTP(w, r)
-	})
+// urlToKey は URL パスを S3 オブジェクトキーに変換する。
+//
+//	"/"           → "index.html"
+//	"/eq/xxx/"    → "eq/xxx/index.html"
+//	"/about.html" → "about.html"
+//	"/img.png"    → "img.png"
+func urlToKey(urlPath string) string {
+	p := path.Clean(urlPath)
+	if p == "/" || p == "." {
+		return "index.html"
+	}
+	key := strings.TrimPrefix(p, "/")
+	// 元のパスが "/" 終わり、または拡張子なし → index.html を補完
+	if strings.HasSuffix(urlPath, "/") || path.Ext(key) == "" {
+		return key + "/index.html"
+	}
+	return key
+}
+
+// contentTypeFor はキーの拡張子から Content-Type を返す。
+func contentTypeFor(key string) string {
+	switch path.Ext(key) {
+	case ".html":
+		return "text/html; charset=utf-8"
+	case ".css":
+		return "text/css; charset=utf-8"
+	case ".js":
+		return "application/javascript"
+	case ".json":
+		return "application/json"
+	case ".png":
+		return "image/png"
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".svg":
+		return "image/svg+xml"
+	case ".ico":
+		return "image/x-icon"
+	}
+	if ct := mime.TypeByExtension(path.Ext(key)); ct != "" {
+		return ct
+	}
+	return "application/octet-stream"
 }

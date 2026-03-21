@@ -28,3 +28,23 @@ resource "aws_s3_bucket_public_access_block" "jishinranking_html" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+
+# =========================
+# 静的アセット (images)
+# =========================
+
+resource "aws_s3_object" "static_favicon" {
+  bucket       = aws_s3_bucket.jishinranking_html.id
+  key          = "jishinranking_32px.png"
+  source       = "../static/jishinranking_32px.png"
+  content_type = "image/png"
+  source_hash  = filemd5("../static/jishinranking_32px.png")
+}
+
+resource "aws_s3_object" "static_icon_256" {
+  bucket       = aws_s3_bucket.jishinranking_html.id
+  key          = "jishinranking_256px.png"
+  source       = "../static/jishinranking_256px.png"
+  content_type = "image/png"
+  source_hash  = filemd5("../static/jishinranking_256px.png")
+}

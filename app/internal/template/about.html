@@ -13,65 +13,25 @@
   <meta property="og:url" content="https://jishinranking.com/about" />
   <meta property="og:site_name" content="地震ランキング" />
   <meta property="og:locale" content="ja_JP" />
+  <link rel="icon" href="/jishinranking_32px.png?v=1" type="image/png" />
+  {{template "base_css" .}}
   <style>
-    :root {
-      --bg:          #ffffff;
-      --bg-sub:      #f7f7f7;
-      --text:        #111111;
-      --text-sub:    #333333;
-      --muted:       #6b7280;
-      --border:      #e5e7eb;
-      --shadow:      0 6px 18px rgba(0,0,0,.06);
-      --accent:      #d7000f;
-      --accent-weak: rgba(215,0,15,.08);
-      --card:        #ffffff;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system,
-        "Hiragino Sans", "Noto Sans JP", "Segoe UI", Arial, sans-serif;
-      color: var(--text);
-      background: var(--bg);
-      line-height: 1.6;
-    }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .container { width: min(860px, calc(100% - 32px)); margin: 0 auto; }
+    /* about.html 固有スタイル */
 
-    /* Header */
-    header { position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--border); }
-    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; }
-    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-    .logo {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--text), #444);
-      display: grid; place-items: center; color: #fff;
-      font-weight: 800; font-size: 13px; flex: 0 0 auto;
-    }
-    .brand h1 { margin: 0; font-size: 18px; font-weight: 800; line-height: 1.2; }
-    .brand-sub { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
-    nav.nav { display: flex; gap: 4px; align-items: center; flex: 0 0 auto; }
-    nav.nav a { font-size: 13px; color: var(--text-sub); padding: 6px 10px; border-radius: 8px; text-decoration: none; }
-    nav.nav a:hover { background: var(--bg-sub); text-decoration: none; }
-    @media (max-width: 860px) { nav.nav { display: none; } }
+    /* リンク色を accent に上書き（ヘッダー除外のためmainにスコープ） */
+    main a { color: var(--accent); }
 
-    /* Content */
     main { padding: 32px 0 64px; }
     .page-title { font-size: 22px; font-weight: 900; margin: 0 0 4px; }
     .page-lead { font-size: 14px; color: var(--muted); margin: 0 0 28px; }
 
-    /* Card */
-    .card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 14px; box-shadow: var(--shadow); padding: 24px 28px;
-    }
+    /* カードのパディングを about 用に上書き */
+    .card { padding: 24px 28px; }
     .card + .card { margin-top: 16px; }
 
     .section-anchor { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; }
     .section-anchor .icon {
       width: 32px; height: 32px; border-radius: 9px;
-      /* background: var(--accent-weak); border: 1px solid rgba(215,0,15,.18); */
       display: grid; place-items: center; font-size: 16px; flex: 0 0 auto;
     }
     .section-anchor h2 { margin: 0; font-size: 16px; font-weight: 800; }
@@ -79,7 +39,7 @@
     .body-text { color: var(--text-sub); font-size: 14px; line-height: 1.9; margin: 0; }
     .body-text + .body-text { margin-top: 10px; }
 
-    /* List */
+    /* Definition list */
     .def-list { margin: 12px 0 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; font-size: 14px; }
     .def-row { display: grid; grid-template-columns: 160px 1fr; border-bottom: 1px solid var(--border); }
     .def-row:last-child { border-bottom: none; }
@@ -113,32 +73,11 @@
     }
     .disclaimer-box ul { margin: 6px 0 0; padding-left: 1.4em; }
     .disclaimer-box li { margin-bottom: 4px; }
-
-    footer { border-top: 1px solid var(--border); background: var(--bg-sub); padding: 22px 0; color: var(--muted); font-size: 12px; }
-    footer .links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
-    footer a { color: var(--muted); }
-    footer a:hover { color: var(--text); text-decoration: underline; }
   </style>
 </head>
 
 <body>
-  <header>
-    <div class="container">
-      <div class="topbar">
-        <a class="brand" href="/" style="text-decoration:none;color:inherit;">
-          <div class="logo">JR</div>
-          <div>
-            <h1>地震ランキング</h1>
-            <p class="brand-sub">都道府県別に地震をランキング＆可視化</p>
-          </div>
-        </a>
-        <nav class="nav" aria-label="グローバルナビゲーション">
-          <a href="/">ホーム</a>
-          <a href="/about" aria-current="page">このサイトについて</a>
-        </nav>
-      </div>
-    </div>
-  </header>
+  {{template "common_header" .}}
 
   <main class="container">
     <p class="page-title" style="margin-top:0">このサイトについて</p>
@@ -294,20 +233,7 @@
 
   </main>
 
-  <footer>
-    <div class="container">
-      <div><strong>地震ランキング</strong> — 気象庁 防災情報XMLをもとに独自集計</div>
-      <div class="links">
-        <a href="/about">このサイトについて</a>
-        <a href="/method">集計方法</a>
-        <a href="https://xml.kishou.go.jp/xmlpull.html" target="_blank" rel="noopener noreferrer">気象庁XML</a>
-      </div>
-      <div style="margin-top:10px">
-        ※本サイトは気象庁の公式サイトではありません。掲載遅延・欠損が生じる場合があります。
-        正確な情報は<a href="https://www.jma.go.jp/" target="_blank" rel="noopener noreferrer">気象庁公式サイト</a>をご確認ください。
-      </div>
-    </div>
-  </footer>
+  {{template "common_footer" .}}
 
 </body>
 </html>

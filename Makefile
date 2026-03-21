@@ -1,8 +1,14 @@
-.PHONY: build build-app build-init-app serve
+.PHONY: build build-app build-init-app serve copy-static
 
-# ローカル開発用サーバー: make serve [DIR=./output]
+# static/ の静的アセットを output/ にコピーする
+copy-static:
+	@mkdir -p output
+	cp -r static/. output/
+
+# ローカル開発用サーバー: make serve
+# MinIO (localhost:9000) をアクセスの都度参照するプロキシとして起動する。
 serve:
-	cd app && go run ./cmd/serve $(if $(DIR),$(DIR),../output)
+	cd app && go run ./cmd/serve
 
 build: build-app build-init-app
 

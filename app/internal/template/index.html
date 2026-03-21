@@ -15,19 +15,12 @@
   <meta property="og:locale" content="ja_JP" />
   <meta property="og:image" content="https://jishinranking.com/ogp.png" />
   <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/jishinranking_32px.png?v=1" type="image/png" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  {{template "base_css" .}}
   <style>
+    /* index.html 固有スタイル */
     :root {
-      --bg:          #ffffff;
-      --bg-sub:      #f7f7f7;
-      --text:        #111111;
-      --text-sub:    #333333;
-      --muted:       #6b7280;
-      --border:      #e5e7eb;
-      --shadow:      0 6px 18px rgba(0,0,0,.06);
-      --accent:      #d7000f;
-      --accent-weak: rgba(215,0,15,.08);
-      --card:        #ffffff;
       --hm-0: #fff1f2;
       --hm-1: #fecdd3;
       --hm-2: #fda4af;
@@ -35,34 +28,6 @@
       --hm-4: #ef4444;
       --hm-5: #b91c1c;
     }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system,
-        "Hiragino Sans", "Noto Sans JP", "Segoe UI", Arial, sans-serif;
-      color: var(--text);
-      background: var(--bg);
-      line-height: 1.6;
-    }
-    a { color: var(--text); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .container { width: min(1100px, calc(100% - 32px)); margin: 0 auto; }
-
-    /* Header */
-    header { position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--border); }
-    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; }
-    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-    .logo {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--text), #444);
-      display: grid; place-items: center; color: #fff;
-      font-weight: 800; font-size: 13px; flex: 0 0 auto;
-    }
-    .brand h1 { margin: 0; font-size: 18px; font-weight: 800; line-height: 1.2; }
-    .brand-sub { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
-    nav.nav { display: flex; gap: 4px; align-items: center; flex: 0 0 auto; }
-    nav.nav a { font-size: 13px; color: var(--text-sub); padding: 6px 10px; border-radius: 8px; }
-    nav.nav a:hover { background: var(--bg-sub); text-decoration: none; }
 
     /* Ticker */
     .ticker { border-top: 1px solid var(--border); background: var(--bg-sub); overflow: hidden; }
@@ -93,12 +58,6 @@
       .ticker-track { animation-duration: 55s; }
     }
 
-    /* Card */
-    .card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 14px; box-shadow: var(--shadow); padding: 18px;
-    }
-    .mt { margin-top: 16px; }
     .section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 14px; }
     .section-title h2 { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: .01em; }
     .section-title .meta { font-size: 12px; color: var(--muted); white-space: nowrap; flex: 0 0 auto; }
@@ -113,16 +72,6 @@
     .kv-item .value small { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 4px; }
     .kv-item .hint { margin-top: 4px; font-size: 12px; color: var(--text-sub); }
     .red { color: var(--accent); font-weight: 800; }
-
-    /* Buttons */
-    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn {
-      display: inline-flex; align-items: center; padding: 8px 14px;
-      border-radius: 10px; border: 1px solid var(--border); background: #fff;
-      font-size: 13px; font-weight: 700; color: var(--text-sub); text-decoration: none;
-    }
-    .btn:hover { background: var(--bg-sub); text-decoration: none; }
-    .btn.primary { border-color: rgba(215,0,15,.25); background: var(--accent-weak); color: var(--accent); }
 
     /* Map */
     #my-map { width: 100%; min-height: 260px; }
@@ -178,10 +127,6 @@
     }
     .product h3 { margin: 0; font-size: 13px; font-weight: 700; }
     .product p  { margin: 3px 0 0; font-size: 12px; color: var(--muted); }
-    footer { border-top: 1px solid var(--border); background: var(--bg-sub); padding: 22px 0; color: var(--muted); font-size: 12px; }
-    footer .links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
-    footer a { color: var(--muted); }
-    footer a:hover { color: var(--text); text-decoration: underline; }
     .live-badge {
       display: inline-block; margin-right: 4px; padding: 2px 7px;
       border-radius: 999px; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700;
@@ -207,42 +152,24 @@
 </head>
 
 <body>
-  <header>
-    <div class="container">
-      <div class="topbar">
-        <div class="brand">
-          <div class="logo">JR</div>
-          <div>
-            <h1>地震ランキング</h1>
-            <p class="brand-sub">都道府県別に地震をランキング＆可視化</p>
-          </div>
-        </div>
-        <nav class="nav" aria-label="ページ内ナビゲーション">
-          <a href="#summary">サマリー</a>
-          <a href="#heatmap">ヒートマップ</a>
-          <a href="#recent">最新地震</a>
-          <a href="#weekly">週間推移</a>
-          <a href="/about.html">このサイトについて</a>
-        </nav>
-      </div>
+  {{template "common_header" .}}
+
+  <div class="ticker" aria-label="最新情報ティッカー（ホバーで停止）">
+    <div class="ticker-track">
+      {{- range .LatestEarthquakes}}
+      <span class="tick"><strong>直近</strong> M{{printf "%.1f" .Magnitude}} 震度{{.MaxIntensity}}（{{.Hypocenter}}）</span>
+      {{- end}}
+      {{- range .SurgeRanking}}
+      <span class="tick"><strong>急上昇</strong> {{.PrefName}} <span class="badge-up">x{{printf "%.1f" .Score}}</span></span>
+      {{- end}}
+      {{- range .LatestEarthquakes}}
+      <span class="tick"><strong>直近</strong> M{{printf "%.1f" .Magnitude}} 震度{{.MaxIntensity}}（{{.Hypocenter}}）</span>
+      {{- end}}
+      {{- range .SurgeRanking}}
+      <span class="tick"><strong>急上昇</strong> {{.PrefName}} <span class="badge-up">x{{printf "%.1f" .Score}}</span></span>
+      {{- end}}
     </div>
-    <div class="ticker" aria-label="最新情報ティッカー（ホバーで停止）">
-      <div class="ticker-track">
-        {{- range .LatestEarthquakes}}
-        <span class="tick"><strong>直近</strong> M{{printf "%.1f" .Magnitude}} 震度{{.MaxIntensity}}（{{.Hypocenter}}）</span>
-        {{- end}}
-        {{- range .SurgeRanking}}
-        <span class="tick"><strong>急上昇</strong> {{.PrefName}} <span class="badge-up">x{{printf "%.1f" .Score}}</span></span>
-        {{- end}}
-        {{- range .LatestEarthquakes}}
-        <span class="tick"><strong>直近</strong> M{{printf "%.1f" .Magnitude}} 震度{{.MaxIntensity}}（{{.Hypocenter}}）</span>
-        {{- end}}
-        {{- range .SurgeRanking}}
-        <span class="tick"><strong>急上昇</strong> {{.PrefName}} <span class="badge-up">x{{printf "%.1f" .Score}}</span></span>
-        {{- end}}
-      </div>
-    </div>
-  </header>
+  </div>
 
   <main class="container">
 
@@ -574,20 +501,7 @@
 
   </main>
 
-  <footer>
-    <div class="container">
-      <div><strong>地震ランキング</strong> — 気象庁 防災情報XMLをもとに独自集計</div>
-      <div class="links">
-        <a href="/about.html">このサイトについて</a>
-        <a href="/method">集計方法</a>
-        <a href="https://xml.kishou.go.jp/xmlpull.html" target="_blank" rel="noopener noreferrer">気象庁XML</a>
-      </div>
-      <div style="margin-top:10px">
-        ※本サイトは気象庁の公式サイトではありません。掲載遅延・欠損が生じる場合があります。
-        正確な情報は<a href="https://www.jma.go.jp/" target="_blank" rel="noopener noreferrer">気象庁公式サイト</a>をご確認ください。
-      </div>
-    </div>
-  </footer>
+  {{template "common_footer" .}}
 
   <script>
     (() => {

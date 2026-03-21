@@ -7,65 +7,14 @@
   <meta name="description" content="地震の詳細（震源、マグニチュード、最大震度、観測地域）を見やすく表示します。" />
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://jishinranking.com/eq/{{.EventID}}/" />
+  <link rel="icon" href="/jishinranking_32px.png?v=1" type="image/png" />
+  {{template "base_css" .}}
   <style>
+    /* detail.html 固有スタイル */
     :root {
-      --bg: #ffffff;
-      --bg-sub: #f7f7f7;
-      --text: #111111;
-      --text-sub: #333333;
-      --muted: #6b7280;
-      --border: #e5e7eb;
-      --shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-      --accent: #d7000f;
-      --accent-weak: rgba(215, 0, 15, 0.08);
-      --s1-bg: rgba(15, 118, 110, 0.08);
-      --s1-bd: rgba(15, 118, 110, 0.25);
-      --s1-fg: #0f766e;
-      --s2-bg: rgba(180, 83, 9, 0.10);
-      --s2-bd: rgba(180, 83, 9, 0.25);
-      --s2-fg: #b45309;
-      --s3-bg: rgba(215, 0, 15, 0.08);
-      --s3-bd: rgba(215, 0, 15, 0.25);
-      --s3-fg: #d7000f;
-
       --map-bg: #fafafa;
       --map-line: #cbd5e1;
     }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system,
-        "Hiragino Sans", "Noto Sans JP", "Segoe UI", Arial, sans-serif;
-      color: var(--text);
-      background: var(--bg);
-      line-height: 1.6;
-    }
-    a { color: var(--text); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .container { width: min(1100px, calc(100% - 32px)); margin: 0 auto; }
-
-    /* Header */
-    header {
-      position: sticky; top: 0; z-index: 50;
-      background: var(--bg); border-bottom: 1px solid var(--border);
-    }
-    .topbar {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 16px; padding: 14px 0;
-    }
-    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-    .logo {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--text), #444);
-      display: grid; place-items: center; color: #fff;
-      font-weight: 900; letter-spacing: 0.02em; flex: 0 0 auto;
-    }
-    .brand h1 { margin: 0; font-size: 16px; line-height: 1.2; }
-    .brand p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
-    .nav { display: flex; gap: 14px; align-items: center; }
-    .nav a { font-size: 13px; color: var(--text-sub); padding: 6px 8px; border-radius: 8px; }
-    .nav a:hover { background: var(--bg-sub); text-decoration: none; }
-    @media (max-width: 900px) { .nav { display: none; } }
 
     main { padding: 18px 0 48px; }
 
@@ -92,18 +41,6 @@
     .hero-top h3 { margin: 0; font-size: 16px; letter-spacing: 0.01em; }
     .hero-top p { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
 
-    /* Pill */
-    .pill {
-      display: inline-flex; align-items: center; justify-content: center;
-      padding: 6px 10px; border-radius: 999px;
-      border: 1px solid var(--border); background: #fff;
-      font-size: 12px; font-weight: 900; white-space: nowrap;
-    }
-    .pill.s1 { background: var(--s1-bg); border-color: var(--s1-bd); color: var(--s1-fg); }
-    .pill.s2 { background: var(--s2-bg); border-color: var(--s2-bd); color: var(--s2-fg); }
-    .pill.s3 { background: var(--s3-bg); border-color: var(--s3-bd); color: var(--s3-fg); }
-    .pill.gray { background: var(--bg-sub); color: var(--text-sub); }
-
     /* eq-main card（M＋震源） */
     .eq-main {
       display: flex; align-items: stretch; margin-top: 12px;
@@ -126,9 +63,7 @@
     }
     .eq-main-num small { font-size: 14px; font-weight: 700; margin-left: 2px; }
     .eq-main-divider { width: 1px; background: var(--border); flex-shrink: 0; }
-    .eq-main-epicenter {
-      flex: 1; padding: 14px 30px; min-width: 0;
-    }
+    .eq-main-epicenter { flex: 1; padding: 14px 30px; min-width: 0; }
     .eq-main-place {
       font-size: 20px; font-weight: 900;
       letter-spacing: 0.01em; line-height: 1.2; overflow-wrap: break-word;
@@ -155,24 +90,15 @@
       padding: 7px 0; border-bottom: 1px solid var(--border);
     }
     .fact:last-child { border-bottom: none; }
-    .fact span {
-      color: var(--muted); flex: 0 0 5.5em; white-space: nowrap;
-    }
+    .fact span { color: var(--muted); flex: 0 0 5.5em; white-space: nowrap; }
     .fact span::after { content: ": "; }
     .fact b { color: var(--text); font-weight: 700; }
-    @media (max-width: 640px) {
-      .fact b { font-size: 13px; line-height: 1.5; }
-    }
+    @media (max-width: 640px) { .fact b { font-size: 13px; line-height: 1.5; } }
 
     /* グリッド */
     .grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; }
     @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
 
-    /* カード */
-    .card {
-      background: #fff; border: 1px solid var(--border);
-      border-radius: 14px; box-shadow: var(--shadow); padding: 16px;
-    }
     .section-title {
       display: flex; align-items: baseline; justify-content: space-between;
       gap: 12px; margin: 0 0 10px;
@@ -208,50 +134,12 @@
       height: 240px; display: grid; place-items: center;
       color: var(--muted); font-size: 13px;
     }
-
-    /* ボタン */
-    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 10px 12px; border-radius: 12px;
-      border: 1px solid var(--border); background: #fff;
-      font-size: 13px; font-weight: 900; cursor: pointer;
-    }
-    .btn:hover { background: var(--bg-sub); }
-    .btn.primary {
-      border-color: rgba(215, 0, 15, 0.25);
-      background: var(--accent-weak); color: var(--accent);
-    }
-
-    footer {
-      border-top: 1px solid var(--border); background: var(--bg-sub);
-      padding: 18px 0; color: var(--muted); font-size: 12px; margin-top: 24px;
-    }
-    footer .links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
   </style>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 
 <body>
-  <header>
-    <div class="container">
-      <div class="topbar">
-        <div class="brand">
-          <div class="logo">JR</div>
-          <div>
-            <h1>地震ランキング</h1>
-            <p>地震詳細</p>
-          </div>
-        </div>
-        <nav class="nav">
-          <a href="/#heatmap">ヒートマップ</a>
-          <a href="/all">47都道府県</a>
-          <a href="/eq?since=7d">地震履歴</a>
-          <a href="/trend">推移</a>
-        </nav>
-      </div>
-    </div>
-  </header>
+  {{template "common_header" .}}
 
   <main class="container">
     <div class="breadcrumb">
@@ -398,17 +286,7 @@
 
   </main>
 
-  <footer>
-    <div class="container">
-      <div><b>地震ランキング</b> — 気象庁 防災情報XMLをもとに独自集計</div>
-      <div class="links">
-        <a href="/about">このサイトについて</a>
-        <a href="/method">集計方法</a>
-        <a href="/contact">お問い合わせ</a>
-        <a href="/terms">利用規約</a>
-      </div>
-    </div>
-  </footer>
+  {{template "common_footer" .}}
 
   {{if .CoordinateKnown}}
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
