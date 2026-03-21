@@ -93,12 +93,12 @@ func BuildSummary(
 		))
 	}
 
-	// 4. 直近の地震（最大規模のもの）
+	// 4. 直近の地震（最大震度のもの）
 	if len(latestEarthquakes) > 0 {
 		eq := latestEarthquakes[0]
 		parts = append(parts, fmt.Sprintf(
-			"直近6時間では%sを震源とするM%.1fの地震が観測されています（%s）。",
-			eq.Hypocenter, eq.Magnitude, eq.OccurredAt.In(jst).Format("01/02 15:04"),
+			"直近6時間では%sを震源とする震度%s・M%.1fの地震が観測されています（%s）。",
+			eq.Hypocenter, eq.MaxIntensity, eq.Magnitude, eq.OccurredAt.In(jst).Format("01/02 15:04"),
 		))
 	}
 

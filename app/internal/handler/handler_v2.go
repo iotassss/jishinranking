@@ -96,23 +96,23 @@ func (h *Handler) ProcessV2(
 	// ==============================
 	// 本日の大きい地震ランキング
 	// ==============================
-	// 過去24時間で発生したM3.0以上の地震のうち大きい順に10件
+	// 過去24時間で発生した最大震度2以上の地震のうち大きい順に10件
 
-	todayBigEarthquakes := thisMonthReports.TopEarthquakesByMagnitude(now, 24*time.Hour, 3.0, 10)
+	todayBigEarthquakes := thisMonthReports.TopEarthquakesByMinIntensity(now, 24*time.Hour, 2, 10)
 
 	// ==============================
 	// 今週の大きい地震ランキング
 	// ==============================
-	// 過去168時間で発生したM4.0以上の地震のうち大きい順に10件
+	// 過去168時間で発生した最大震度3以上の地震のうち大きい順に10件
 
-	weekBigEarthquakes := thisMonthReports.TopEarthquakesByMagnitude(now, 168*time.Hour, 4.0, 10)
+	weekBigEarthquakes := thisMonthReports.TopEarthquakesByMinIntensity(now, 168*time.Hour, 3, 10)
 
 	// ==============================
 	// 今月の大きい地震ランキング
 	// ==============================
-	// 過去720時間で発生したM5.0以上の地震のうち大きい順に10件
+	// 過去720時間で発生した最大震度4以上の地震のうち大きい順に10件
 
-	monthBigEarthquakes := thisMonthReports.TopEarthquakesByMagnitude(now, 720*time.Hour, 5.0, 10)
+	monthBigEarthquakes := thisMonthReports.TopEarthquakesByMinIntensity(now, 720*time.Hour, 4, 10)
 
 	// ==============================
 	// 本日の都道府県別地震回数ランキング

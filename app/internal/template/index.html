@@ -157,13 +157,13 @@
   <div class="ticker" aria-label="最新情報ティッカー（ホバーで停止）">
     <div class="ticker-track">
       {{- range .LatestEarthquakes}}
-      <span class="tick"><strong>直近</strong> M{{printf "%.1f" .Magnitude}} 震度{{.MaxIntensity}}（{{.Hypocenter}}）</span>
+      <span class="tick"><strong>直近</strong> 震度{{.MaxIntensity}} M{{printf "%.1f" .Magnitude}}（{{.Hypocenter}}）</span>
       {{- end}}
       {{- range .SurgeRanking}}
       <span class="tick"><strong>急上昇</strong> {{.PrefName}} <span class="badge-up">x{{printf "%.1f" .Score}}</span></span>
       {{- end}}
       {{- range .LatestEarthquakes}}
-      <span class="tick"><strong>直近</strong> M{{printf "%.1f" .Magnitude}} 震度{{.MaxIntensity}}（{{.Hypocenter}}）</span>
+      <span class="tick"><strong>直近</strong> 震度{{.MaxIntensity}} M{{printf "%.1f" .Magnitude}}（{{.Hypocenter}}）</span>
       {{- end}}
       {{- range .SurgeRanking}}
       <span class="tick"><strong>急上昇</strong> {{.PrefName}} <span class="badge-up">x{{printf "%.1f" .Score}}</span></span>
@@ -280,18 +280,15 @@
     <section id="recent" class="card mt" aria-labelledby="sec-recent">
       <div class="section-title">
         <h2 id="sec-recent">最新の地震（過去6時間）</h2>
-        <div class="meta">M規模の大きい順</div>
+        <div class="meta">震度の大きい順</div>
       </div>
       {{if .LatestEarthquakes}}
       <div class="event-list">
         {{range .LatestEarthquakes}}
         <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
           <div class="left">
-            <p class="ev-title">{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
+            <p class="ev-title"><span class="pill{{if ge .MaxIntensity "3"}} alert{{end}}" style="margin-right:8px">震度{{.MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
             <p class="ev-sub">{{.OccurredAt.Format "2006-01-02 15:04"}}</p>
-          </div>
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-            <span class="pill{{if ge .MaxIntensity "3"}} alert{{end}}">震度{{.MaxIntensity}}</span>
           </div>
         </div>
         {{end}}
@@ -303,82 +300,82 @@
 
     <section class="card mt" aria-labelledby="sec-today-big">
       <div class="section-title">
-        <h2 id="sec-today-big">本日の大きい地震（過去24時間・M3.0以上）</h2>
-        <div class="meta">規模順</div>
+        <h2 id="sec-today-big">本日の大きい地震（過去24時間・最大震度2以上）</h2>
+        <div class="meta">震度順</div>
       </div>
       {{if .TodayBigEarthquakes}}
       <table aria-label="本日の大きい地震">
         <thead>
-          <tr><th>発生時刻</th><th>震源地</th><th>M</th><th>最大震度</th><th>詳細</th></tr>
+          <tr><th>発生時刻</th><th>震源地</th><th>最大震度</th><th>M</th><th>詳細</th></tr>
         </thead>
         <tbody>
           {{range .TodayBigEarthquakes}}
           <tr{{if .EventID}} class="clickable" onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
             <td>{{.OccurredAt.Format "01/02 15:04"}}</td>
             <td>{{.Hypocenter}}</td>
-            <td class="metric">{{printf "%.1f" .Magnitude}}</td>
             <td>{{.MaxIntensity}}</td>
+            <td class="metric">{{printf "%.1f" .Magnitude}}</td>
             <td>{{if .EventID}}→{{else}}-{{end}}</td>
           </tr>
           {{end}}
         </tbody>
       </table>
       {{else}}
-      <p class="empty-notice">過去24時間でM3.0以上の地震はありません。</p>
+      <p class="empty-notice">過去24時間で最大震度2以上の地震はありません。</p>
       {{end}}
     </section>
 
     <section class="card mt" aria-labelledby="sec-week-big">
       <div class="section-title">
-        <h2 id="sec-week-big">今週の大きい地震（過去168時間・M4.0以上）</h2>
-        <div class="meta">規模順</div>
+        <h2 id="sec-week-big">今週の大きい地震（過去168時間・最大震度3以上）</h2>
+        <div class="meta">震度順</div>
       </div>
       {{if .WeekBigEarthquakes}}
       <table aria-label="今週の大きい地震">
         <thead>
-          <tr><th>発生時刻</th><th>震源地</th><th>M</th><th>最大震度</th><th>詳細</th></tr>
+          <tr><th>発生時刻</th><th>震源地</th><th>最大震度</th><th>M</th><th>詳細</th></tr>
         </thead>
         <tbody>
           {{range .WeekBigEarthquakes}}
           <tr{{if .EventID}} class="clickable" onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
             <td>{{.OccurredAt.Format "01/02 15:04"}}</td>
             <td>{{.Hypocenter}}</td>
-            <td class="metric">{{printf "%.1f" .Magnitude}}</td>
             <td>{{.MaxIntensity}}</td>
+            <td class="metric">{{printf "%.1f" .Magnitude}}</td>
             <td>{{if .EventID}}→{{else}}-{{end}}</td>
           </tr>
           {{end}}
         </tbody>
       </table>
       {{else}}
-      <p class="empty-notice">過去168時間でM4.0以上の地震はありません。</p>
+      <p class="empty-notice">過去168時間で最大震度3以上の地震はありません。</p>
       {{end}}
     </section>
 
     <section class="card mt" aria-labelledby="sec-month-big">
       <div class="section-title">
-        <h2 id="sec-month-big">今月の大きい地震（過去720時間・M5.0以上）</h2>
-        <div class="meta">規模順</div>
+        <h2 id="sec-month-big">今月の大きい地震（過去720時間・最大震度4以上）</h2>
+        <div class="meta">震度順</div>
       </div>
       {{if .MonthBigEarthquakes}}
       <table aria-label="今月の大きい地震">
         <thead>
-          <tr><th>発生時刻</th><th>震源地</th><th>M</th><th>最大震度</th><th>詳細</th></tr>
+          <tr><th>発生時刻</th><th>震源地</th><th>最大震度</th><th>M</th><th>詳細</th></tr>
         </thead>
         <tbody>
           {{range .MonthBigEarthquakes}}
           <tr{{if .EventID}} class="clickable" onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
             <td>{{.OccurredAt.Format "01/02 15:04"}}</td>
             <td>{{.Hypocenter}}</td>
-            <td class="metric">{{printf "%.1f" .Magnitude}}</td>
             <td>{{.MaxIntensity}}</td>
+            <td class="metric">{{printf "%.1f" .Magnitude}}</td>
             <td>{{if .EventID}}→{{else}}-{{end}}</td>
           </tr>
           {{end}}
         </tbody>
       </table>
       {{else}}
-      <p class="empty-notice">過去720時間でM5.0以上の地震はありません。</p>
+      <p class="empty-notice">過去720時間で最大震度4以上の地震はありません。</p>
       {{end}}
     </section>
 
