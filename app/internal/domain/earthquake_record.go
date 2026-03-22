@@ -8,12 +8,13 @@ import (
 )
 
 type EarthquakeRecord struct {
-	EventID      string    `json:"event_id"`
-	OccurredAt   time.Time `json:"occurred_at"`
-	Hypocenter   string    `json:"hypocenter"`
-	Magnitude    float64   `json:"magnitude"`
-	MaxIntensity string    `json:"max_intensity"`
-	DetailURL    string    `json:"detail_url"`
+	EventID       string                `json:"event_id"`
+	OccurredAt    time.Time             `json:"occurred_at"`
+	Hypocenter    string                `json:"hypocenter"`
+	Magnitude     float64               `json:"magnitude"`
+	MaxIntensity  string                `json:"max_intensity"`
+	DetailURL     string                `json:"detail_url"`
+	ObservedPrefs []PrefIntensityDetail `json:"observed_prefs"`
 }
 
 type EarthquakeRecordList []EarthquakeRecord
@@ -166,12 +167,27 @@ func makeEarthquakeRecord(report Report) (EarthquakeRecord, bool) {
 		}
 	}
 
+	var prefs []PrefIntensityDetail
+	if report.Body.Intensity != nil && report.Body.Intensity.Observation != nil {
+		for _, p := range report.Body.Intensity.Observation.Prefs {
+			prefs = append(prefs, PrefIntensityDetail{
+				Name:   p.Name,
+				Code:   p.Code,
+				MaxInt: p.MaxInt,
+			})
+		}
+		sort.Slice(prefs, func(i, j int) bool {
+			return prefIntensityOrder(prefs[i].MaxInt) > prefIntensityOrder(prefs[j].MaxInt)
+		})
+	}
+
 	return EarthquakeRecord{
-		EventID:      strings.TrimSpace(report.Head.EventID),
-		OccurredAt:   occurredAt,
-		Hypocenter:   hypocenter,
-		Magnitude:    magnitude,
-		MaxIntensity: maxIntensity,
-		DetailURL:    report.Metadata.URL,
+		EventID:       strings.TrimSpace(report.Head.EventID),
+		OccurredAt:    occurredAt,
+		Hypocenter:    hypocenter,
+		Magnitude:     magnitude,
+		MaxIntensity:  maxIntensity,
+		DetailURL:     report.Metadata.URL,
+		ObservedPrefs: prefs,
 	}, true
 }
