@@ -36,6 +36,7 @@ type HTMLGenerator interface {
 	Generate(data domain.DisplayData, from, to, now time.Time) (domain.PublishedHTML, error)
 	GenerateDetail(detail domain.EarthquakeDetail) (domain.PublishedHTML, error)
 	GenerateAbout() (domain.PublishedHTML, error)
+	GenerateHistory(tab string, earthquakes domain.EarthquakeRecordList, counts map[string]int, now time.Time) (domain.PublishedHTML, error)
 }
 
 type Handler struct {

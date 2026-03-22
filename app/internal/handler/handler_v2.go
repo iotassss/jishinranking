@@ -91,28 +91,28 @@ func (h *Handler) ProcessV2(
 	// ==============================
 	// 過去6時間以内の地震のうち大きい順に10件
 
-	latestEarthquakes := thisMonthReports.LatestEarthquakes(now, 6*time.Hour, 10)
+	latestEarthquakes := thisMonthReports.LatestEarthquakes(now, 6*time.Hour, 3)
 
 	// ==============================
 	// 本日の大きい地震ランキング
 	// ==============================
 	// 過去24時間で発生した最大震度2以上の地震のうち大きい順に10件
 
-	todayBigEarthquakes := thisMonthReports.TopEarthquakesByMinIntensity(now, 24*time.Hour, 2, 10)
+	todayBigEarthquakes := thisMonthReports.TopEarthquakesByMinIntensity(now, 24*time.Hour, 2, 3)
 
 	// ==============================
 	// 今週の大きい地震ランキング
 	// ==============================
 	// 過去168時間で発生した最大震度3以上の地震のうち大きい順に10件
 
-	weekBigEarthquakes := thisMonthReports.TopEarthquakesByMinIntensity(now, 168*time.Hour, 3, 10)
+	weekBigEarthquakes := thisMonthReports.TopEarthquakesByMinIntensity(now, 168*time.Hour, 3, 3)
 
 	// ==============================
 	// 今月の大きい地震ランキング
 	// ==============================
 	// 過去720時間で発生した最大震度4以上の地震のうち大きい順に10件
 
-	monthBigEarthquakes := thisMonthReports.TopEarthquakesByMinIntensity(now, 720*time.Hour, 4, 10)
+	monthBigEarthquakes := thisMonthReports.TopEarthquakesByMinIntensity(now, 720*time.Hour, 4, 3)
 
 	// ==============================
 	// 本日の都道府県別地震回数ランキング
@@ -225,6 +225,56 @@ func (h *Handler) ProcessV2(
 		return fmt.Errorf("about HTML save failed: %w", err)
 	}
 	slog.Info("About page generated")
+
+	// ==============================
+	// 地震履歴ページ生成・保存 (/eq/6h/, /eq/today/, /eq/week/, /eq/month/)
+	// ==============================
+	// VXSE53（地震詳細電文）のみを使用してイベントを一意に特定する。
+	historyBaseReports := thisMonthReports.FilterByTelegramCode(domain.TelegramCodeEarthquakeDetail)
+
+	eq6h := historyBaseReports.AllEarthquakesInPeriod(now, 6*time.Hour)
+	eqToday := historyBaseReports.AllEarthquakesInPeriod(now, 24*time.Hour)
+	eqWeek := historyBaseReports.AllEarthquakesInPeriod(now, 168*time.Hour)
+	eqMonth := historyBaseReports.AllEarthquakesInPeriod(now, 720*time.Hour)
+
+	historyCounts := map[string]int{
+		"6h":    len(eq6h),
+		"today": len(eqToday),
+		"week":  len(eqWeek),
+		"month": len(eqMonth),
+	}
+
+	historyTabs := []struct {
+		tab string
+		eqs domain.EarthquakeRecordList
+		key string
+	}{
+		{"6h", eq6h, "eq/6h/index.html"},
+		{"today", eqToday, "eq/today/index.html"},
+		{"week", eqWeek, "eq/week/index.html"},
+		{"month", eqMonth, "eq/month/index.html"},
+	}
+
+	histSuccessCount := 0
+	for _, ht := range historyTabs {
+		histHTML, err := h.htmlGenerator.GenerateHistory(ht.tab, ht.eqs, historyCounts, now)
+		if err != nil {
+			slog.Warn("history HTML generation failed", "tab", ht.tab, "err", err)
+			continue
+		}
+		if err := h.htmlRepo.Save(ctx, ht.key, histHTML); err != nil {
+			slog.Warn("history HTML save failed", "tab", ht.tab, "err", err)
+			continue
+		}
+		histSuccessCount++
+	}
+	slog.Info("History pages generated", "success", histSuccessCount, "total", len(historyTabs))
+
+	// /eq/ → /eq/week/ へのリダイレクトページを生成
+	redirectHTML := domain.PublishedHTML(`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta http-equiv="refresh" content="0; url=/eq/week/"><link rel="canonical" href="https://jishinranking.com/eq/week/"></head><body><a href="/eq/week/">地震履歴（今週）</a></body></html>`)
+	if err := h.htmlRepo.Save(ctx, "eq/index.html", redirectHTML); err != nil {
+		slog.Warn("eq/index.html redirect save failed", "err", err)
+	}
 
 	return nil
 }

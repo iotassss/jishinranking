@@ -104,6 +104,39 @@ func (rl ReportList) TopEarthquakesByMinIntensity(now time.Time, within time.Dur
 	return records
 }
 
+// AllEarthquakesInPeriod は指定期間内のすべての地震を発生時刻の降順で返す。
+// 同一 EventID の重複は除外し、ObservedPrefs が多い（より詳細な）記録を採用する。
+func (rl ReportList) AllEarthquakesInPeriod(now time.Time, within time.Duration) EarthquakeRecordList {
+	from := now.Add(-within)
+	seen := make(map[string]EarthquakeRecord)
+	for _, report := range rl {
+		record, ok := makeEarthquakeRecord(report)
+		if !ok {
+			continue
+		}
+		if record.OccurredAt.Before(from) || record.OccurredAt.After(now) {
+			continue
+		}
+		prev, exists := seen[record.EventID]
+		if !exists || len(record.ObservedPrefs) > len(prev.ObservedPrefs) {
+			seen[record.EventID] = record
+		}
+	}
+	records := make(EarthquakeRecordList, 0, len(seen))
+	for _, r := range seen {
+		records = append(records, r)
+	}
+	sort.Slice(records, func(i, j int) bool {
+		return records[i].OccurredAt.After(records[j].OccurredAt)
+	})
+	return records
+}
+
+// IntensityLevel は最大震度の文字列を比較用の整数（1〜9）に変換する。公開版。
+func IntensityLevel(s string) int {
+	return intensityToInt(s)
+}
+
 // intensityToInt は最大震度の文字列を比較用の整数に変換する。
 // 大きいほど強い震度を表す。
 func intensityToInt(s string) int {

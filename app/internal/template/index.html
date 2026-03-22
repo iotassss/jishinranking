@@ -125,6 +125,15 @@
 
     /* Misc */
     .empty-notice { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
+    .more-link {
+      margin-top: 12px; padding-top: 10px;
+      border-top: 1px solid var(--border);
+      text-align: right;
+    }
+    .more-link a {
+      font-size: 13px; font-weight: 700; color: var(--accent);
+    }
+    .more-link a:hover { color: var(--accent); text-decoration: underline; }
     .chart-container { position: relative; width: 100%; max-height: 340px; }
     .affiliate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
     @media (max-width: 560px) { .affiliate-grid { grid-template-columns: 1fr; } }
@@ -314,6 +323,9 @@
       {{else}}
       <p class="empty-notice">過去6時間の対象地震はありません。</p>
       {{end}}
+      <div class="more-link">
+        <a href="/eq/6h/">過去6時間の地震をすべて見る &rsaquo;</a>
+      </div>
     </section>
 
     <section class="card mt" aria-labelledby="sec-today-big">
@@ -340,6 +352,9 @@
       {{else}}
       <p class="empty-notice">過去24時間で最大震度2以上の地震はありません。</p>
       {{end}}
+      <div class="more-link">
+        <a href="/eq/today/">今日の地震をすべて見る &rsaquo;</a>
+      </div>
     </section>
 
     <section class="card mt" aria-labelledby="sec-week-big">
@@ -366,6 +381,9 @@
       {{else}}
       <p class="empty-notice">過去168時間で最大震度3以上の地震はありません。</p>
       {{end}}
+      <div class="more-link">
+        <a href="/eq/week/">今週の地震をすべて見る &rsaquo;</a>
+      </div>
     </section>
 
     <section class="card mt" aria-labelledby="sec-month-big">
@@ -392,6 +410,9 @@
       {{else}}
       <p class="empty-notice">過去720時間で最大震度4以上の地震はありません。</p>
       {{end}}
+      <div class="more-link">
+        <a href="/eq/month/">今月の地震をすべて見る &rsaquo;</a>
+      </div>
     </section>
 
     <section class="card mt" aria-labelledby="sec-surge">

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>地震履歴｜{{.TabTitle}}｜地震ランキング</title>
+  <meta name="description" content="{{.TabTitle}}の地震発生履歴。気象庁の防災情報XMLをもとに集計しています。" />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://jishinranking.com/eq/{{.Tab}}/" />
+  <link rel="icon" href="/jishinranking_32px.png?v=1" type="image/png" />
+  {{template "base_css" .}}
+  <style>
+    /* ===== history.html 固有スタイル ===== */
+    main { padding: 18px 0 56px; }
+
+    .breadcrumb { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    .breadcrumb a { color: var(--muted); }
+
+    .page-head {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 12px; margin-bottom: 14px;
+    }
+    .page-head h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: .01em; }
+    .page-head .meta { font-size: 12px; color: var(--muted); text-align: right; white-space: nowrap; }
+
+    /* タブナビ */
+    .tab-nav {
+      display: flex; gap: 0; flex-wrap: nowrap;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 16px; overflow-x: auto;
+    }
+    .tab-nav a {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 9px 14px; border-radius: 10px 10px 0 0;
+      font-size: 13px; font-weight: 700; color: var(--muted);
+      border: 1px solid transparent; border-bottom: none;
+      margin-bottom: -2px; position: relative; text-decoration: none; white-space: nowrap;
+      transition: background .12s, color .12s;
+    }
+    .tab-nav a:hover { color: var(--text-sub); background: var(--bg-sub); text-decoration: none; }
+    .tab-nav a.active {
+      color: var(--text); background: #fff;
+      border-color: var(--border); border-bottom-color: #fff; z-index: 1;
+    }
+    .tab-nav a .cnt {
+      font-size: 11px; font-weight: 700; padding: 1px 7px;
+      border-radius: 999px; background: var(--bg-sub); color: var(--muted);
+    }
+    .tab-nav a.active .cnt { background: var(--accent-weak); color: var(--accent); }
+
+    /* 統計KPI行 */
+    .stat-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .stat-item {
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 10px 16px; background: var(--bg-sub);
+      flex: 1; min-width: 110px;
+    }
+    .stat-item .stat-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+    .stat-item .stat-val { font-size: 18px; font-weight: 800; letter-spacing: .02em; }
+    .stat-item .stat-val small { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 4px; }
+    .stat-alert { color: var(--accent); }
+
+    /* ソートバー */
+    .sort-bar {
+      display: flex; align-items: center; gap: 8px;
+      flex-wrap: wrap; margin-bottom: 14px;
+    }
+    .sort-bar .sort-label { font-size: 12px; color: var(--muted); flex: 0 0 auto; }
+    .sort-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 12px; border-radius: 999px;
+      border: 1px solid var(--border); background: #fff;
+      font-size: 12px; font-weight: 700; color: var(--text-sub); cursor: pointer;
+    }
+    .sort-btn:hover { background: var(--bg-sub); }
+    .sort-btn.active {
+      border-color: rgba(215,0,15,.3); background: var(--accent-weak); color: var(--accent);
+    }
+
+    /* 地震イベントカード */
+    .event-list { display: flex; flex-direction: column; gap: 8px; }
+    .event {
+      border: 1px solid var(--border); border-radius: 12px; padding: 11px 14px;
+      background: #fff; display: flex; justify-content: space-between;
+      gap: 12px; align-items: center;
+      cursor: pointer; transition: background .12s;
+      text-decoration: none; color: var(--text);
+    }
+    .event:hover { background: var(--bg-sub); text-decoration: none; }
+
+    /* 震度バッジ */
+    .intensity-badge {
+      flex: 0 0 auto; width: 46px; height: 46px; border-radius: 10px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      border: 1px solid var(--border); background: var(--bg-sub); line-height: 1.1;
+    }
+    .intensity-badge.alert {
+      border-color: rgba(215,0,15,.3); background: var(--accent-weak);
+    }
+    .intensity-badge .int-label { font-size: 9px; color: var(--muted); }
+    .intensity-badge .int-val { font-size: 17px; font-weight: 900; }
+    .intensity-badge.alert .int-val { color: var(--accent); }
+
+    .event .left { min-width: 0; flex: 1; }
+    .event .ev-title {
+      font-weight: 700; font-size: 14px; margin: 0 0 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .event .ev-mag {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 1px 7px; border-radius: 6px;
+      background: var(--bg-sub); border: 1px solid var(--border);
+      margin-right: 6px; color: var(--text-sub);
+    }
+    .event .ev-sub { font-size: 12px; color: var(--muted); margin: 0; }
+
+    .event .ev-right {
+      flex: 0 0 auto; display: flex; flex-direction: row; flex-wrap: wrap;
+      align-items: center; justify-content: flex-end;
+      gap: 4px; max-width: 240px; min-width: 0;
+    }
+    .ev-pref-item {
+      font-size: 11px; color: var(--text-sub);
+      background: var(--bg-sub); border: 1px solid var(--border);
+      border-radius: 6px; padding: 1px 7px; white-space: nowrap;
+    }
+    @media (max-width: 600px) { .event .ev-right { display: none; } }
+
+    .empty-notice {
+      color: var(--muted); font-size: 14px; text-align: center; padding: 56px 0;
+    }
+  </style>
+</head>
+<body>
+  {{template "common_header" .}}
+
+  <main class="container">
+
+    <!-- パンくず -->
+    <div class="breadcrumb">
+      <a href="/">ホーム</a> &nbsp;›&nbsp; 地震履歴
+    </div>
+
+    <!-- ページタイトル -->
+    <div class="page-head">
+      <div>
+        <h2>地震発生履歴</h2>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px;">
+          気象庁の防災情報XMLをもとに集計した地震の発生記録です。
+        </div>
+      </div>
+      <div class="meta">
+        更新: <time datetime="{{.Now}}">{{fmtTime .NowTime "2006-01-02 15:04"}}</time>
+      </div>
+    </div>
+
+    <!-- タブナビ -->
+    <nav class="tab-nav" aria-label="期間フィルタ">
+      <a href="/eq/6h/"    {{if eq .Tab "6h"   }}class="active"{{end}}>過去6時間  <span class="cnt">{{.Count6h}}</span></a>
+      <a href="/eq/today/" {{if eq .Tab "today" }}class="active"{{end}}>今日       <span class="cnt">{{.CountToday}}</span></a>
+      <a href="/eq/week/"  {{if eq .Tab "week"  }}class="active"{{end}}>今週       <span class="cnt">{{.CountWeek}}</span></a>
+      <a href="/eq/month/" {{if eq .Tab "month" }}class="active"{{end}}>今月       <span class="cnt">{{.CountMonth}}</span></a>
+    </nav>
+
+    <!-- 統計KPI -->
+    <div class="stat-row">
+      <div class="stat-item">
+        <div class="stat-label">発生件数</div>
+        <div class="stat-val">{{.TotalCount}}<small>件</small></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">震度3以上</div>
+        <div class="stat-val{{if gt .AlertCount 0}} stat-alert{{end}}">{{.AlertCount}}<small>件</small></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">最大M値</div>
+        <div class="stat-val">{{if gt .MaxMag 0.0}}{{printf "%.1f" .MaxMag}}<small>Mj</small>{{else}}—{{end}}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">最大震度</div>
+        <div class="stat-val{{if gt .MaxIntLevel 2}} stat-alert{{end}}">{{if eq .MaxInt "-"}}—{{else}}{{.MaxInt}}{{end}}</div>
+      </div>
+    </div>
+
+    <!-- ソートバー -->
+    <div class="sort-bar" role="group" aria-label="並び替え">
+      <span class="sort-label">並び替え：</span>
+      <button class="sort-btn"        data-sort="time-desc" onclick="sortList('time-desc',this)">新しい順 ↓</button>
+      <button class="sort-btn"        data-sort="time-asc"  onclick="sortList('time-asc', this)">古い順 ↑</button>
+      <button class="sort-btn"        data-sort="mag-desc"  onclick="sortList('mag-desc', this)">M値が大きい順 ↓</button>
+      <button class="sort-btn active" data-sort="int-desc"  onclick="sortList('int-desc', this)">震度が大きい順 ↓</button>
+    </div>
+
+    <!-- 地震リスト -->
+    {{if .Earthquakes}}
+    <div id="eq-list" class="event-list">
+      {{- range .Earthquakes}}
+      <a class="event" href="/eq/{{.EventID}}/"
+         data-time="{{fmtTime .OccurredAt "20060102150405"}}"
+         data-mag="{{printf "%.2f" .Magnitude}}"
+         data-int="{{intensityLevel .MaxIntensity}}">
+        <div class="intensity-badge{{if ge .MaxIntensity "3"}} alert{{end}}">
+          <div class="int-label">震度</div>
+          <div class="int-val">{{.MaxIntensity}}</div>
+        </div>
+        <div class="left">
+          <p class="ev-title"><span class="ev-mag">M{{printf "%.1f" .Magnitude}}</span>{{.Hypocenter}}</p>
+          <p class="ev-sub">{{fmtTime .OccurredAt "2006-01-02 15:04"}}</p>
+        </div>
+        {{if .ObservedPrefs}}
+        <div class="ev-right">
+          {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<span class="ev-pref-item">{{$p.Name}}（{{$p.MaxInt}}）</span>{{end}}{{end}}
+        </div>
+        {{end}}
+      </a>
+      {{- end}}
+    </div>
+    {{else}}
+    <div class="empty-notice">この期間の地震データはありません。</div>
+    {{end}}
+
+    <div class="btn-row mt" style="margin-top:20px;">
+      <a class="btn" href="/">← ランキングへ戻る</a>
+    </div>
+
+  </main>
+
+  {{template "common_footer" .}}
+
+  <script>
+    function sortList(key, btn) {
+      document.querySelectorAll('.sort-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+
+      var list = document.getElementById('eq-list');
+      if (!list) return;
+      var items = Array.from(list.querySelectorAll('.event'));
+
+      items.sort(function(a, b) {
+        switch (key) {
+          case 'time-desc': return b.dataset.time.localeCompare(a.dataset.time);
+          case 'time-asc':  return a.dataset.time.localeCompare(b.dataset.time);
+          case 'mag-desc':  return parseFloat(b.dataset.mag) - parseFloat(a.dataset.mag);
+          case 'int-desc':  return parseInt(b.dataset.int, 10) - parseInt(a.dataset.int, 10);
+          default: return 0;
+        }
+      });
+
+      items.forEach(function(el) { list.appendChild(el); });
+    }
+  </script>
+</body>
+</html>

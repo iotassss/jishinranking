@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>地震履歴 (過去6時間)｜地震ランキング</title>
+  <meta name="description" content="最近の地震の発生履歴をまとめています。6時間・今日・今週・今月でタブ切り替えができます。" />
+
+  <style>
+    /* ========== Base (共通) ========== */
+    :root {
+      --bg:          #ffffff;
+      --bg-sub:      #f7f7f7;
+      --text:        #111111;
+      --text-sub:    #333333;
+      --muted:       #6b7280;
+      --border:      #e5e7eb;
+      --shadow:      0 6px 18px rgba(0,0,0,.06);
+      --accent:      #d7000f;
+      --accent-weak: rgba(215,0,15,.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system,
+        "Hiragino Sans", "Noto Sans JP", "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+    }
+
+    a { color: var(--text); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container { width: min(1100px, calc(100% - 32px)); margin: 0 auto; }
+
+    /* Header */
+    header {
+      position: sticky; top: 0; z-index: 50;
+      background: var(--bg); border-bottom: 1px solid var(--border);
+    }
+    .topbar {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 16px; padding: 14px 0;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--text), #444);
+      display: grid; place-items: center;
+      color: #fff; font-weight: 900; flex: 0 0 auto;
+      font-size: 13px; letter-spacing: -.02em;
+    }
+    .brand h1 { margin: 0; font-size: 18px; font-weight: 800; line-height: 1.2; }
+    .brand-sub { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+    nav.nav { display: flex; gap: 4px; align-items: center; flex: 0 0 auto; }
+    nav.nav a { font-size: 13px; color: var(--text-sub); padding: 6px 10px; border-radius: 8px; }
+    nav.nav a:hover { background: var(--bg-sub); text-decoration: none; }
+    nav.nav a.active { font-weight: 700; color: var(--text); background: var(--bg-sub); }
+    @media (max-width: 900px) { nav.nav { display: none; } }
+
+    /* Card */
+    .card {
+      background: #fff; border: 1px solid var(--border);
+      border-radius: 14px; box-shadow: var(--shadow); padding: 16px;
+    }
+    .mt { margin-top: 16px; }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 14px; border-radius: 10px;
+      border: 1px solid var(--border); background: #fff;
+      font-size: 13px; font-weight: 700; color: var(--text-sub);
+      text-decoration: none; cursor: pointer;
+    }
+    .btn:hover { background: var(--bg-sub); text-decoration: none; }
+    .btn.primary { border-color: rgba(215,0,15,.25); background: var(--accent-weak); color: var(--accent); }
+
+    footer {
+      border-top: 1px solid var(--border); background: var(--bg-sub);
+      padding: 18px 0; color: var(--muted); font-size: 12px; margin-top: 32px;
+    }
+    footer .links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+
+    /* ========== Page specific ========== */
+    main { padding: 18px 0 56px; }
+
+    /* パンくず */
+    .breadcrumb { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    .breadcrumb a { color: var(--muted); }
+
+    /* ページタイトル行 */
+    .page-head {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 12px; margin-bottom: 14px;
+    }
+    .page-head h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: .01em; }
+    .page-head .meta { font-size: 12px; color: var(--muted); text-align: right; white-space: nowrap; }
+
+    /* ========== タブナビ ========== */
+    .tab-nav {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0; margin-bottom: 16px;
+    }
+    .tab-nav a {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 8px 14px; border-radius: 10px 10px 0 0;
+      font-size: 13px; font-weight: 700; color: var(--muted);
+      border: 1px solid transparent; border-bottom: none;
+      margin-bottom: -2px; position: relative; text-decoration: none;
+      transition: background .12s, color .12s;
+    }
+    .tab-nav a:hover { color: var(--text-sub); background: var(--bg-sub); text-decoration: none; }
+    .tab-nav a.active {
+      color: var(--text); background: #fff;
+      border-color: var(--border); border-bottom-color: #fff;
+      z-index: 1;
+    }
+    .tab-nav a .cnt {
+      font-size: 11px; font-weight: 700; padding: 1px 7px;
+      border-radius: 999px; background: var(--bg-sub); color: var(--muted);
+    }
+    .tab-nav a.active .cnt { background: var(--accent-weak); color: var(--accent); }
+
+    /* ========== ソートバー ========== */
+    .sort-bar {
+      display: flex; align-items: center; gap: 8px;
+      flex-wrap: wrap; margin-bottom: 14px;
+    }
+    .sort-bar .label { font-size: 12px; color: var(--muted); flex: 0 0 auto; }
+    .sort-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 12px; border-radius: 999px;
+      border: 1px solid var(--border); background: #fff;
+      font-size: 12px; font-weight: 700; color: var(--text-sub); cursor: pointer;
+    }
+    .sort-btn:hover { background: var(--bg-sub); }
+    .sort-btn.active {
+      border-color: rgba(215,0,15,.3); background: var(--accent-weak);
+      color: var(--accent);
+    }
+    .sort-btn .arrow { font-size: 10px; }
+
+    /* ========== 統計バー ========== */
+    .stat-row {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .stat-item {
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 10px 16px; background: var(--bg-sub);
+      flex: 1; min-width: 120px;
+    }
+    .stat-item .stat-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+    .stat-item .stat-val {
+      font-size: 18px; font-weight: 800; letter-spacing: .02em;
+    }
+    .stat-item .stat-val small {
+      font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 4px;
+    }
+    .red { color: var(--accent); }
+
+    /* ========== 地震イベントカード ========== */
+    .event-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .event {
+      border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px;
+      background: #fff; display: flex; justify-content: space-between;
+      gap: 12px; align-items: center;
+      cursor: pointer; transition: background .12s;
+      text-decoration: none; color: var(--text);
+    }
+    .event:hover { background: var(--bg-sub); text-decoration: none; }
+
+    /* 大きめの震度マーカー */
+    .event .intensity-badge {
+      flex: 0 0 auto;
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      border: 1px solid var(--border);
+      background: var(--bg-sub);
+      line-height: 1.1;
+    }
+    .event .intensity-badge .int-label { font-size: 9px; color: var(--muted); }
+    .event .intensity-badge .int-val { font-size: 16px; font-weight: 900; }
+
+    /* 震度3以上 */
+    .event .intensity-badge.alert {
+      border-color: rgba(215,0,15,.3);
+      background: var(--accent-weak);
+    }
+    .event .intensity-badge.alert .int-val { color: var(--accent); }
+
+    .event .left { min-width: 0; flex: 1; }
+    .event .ev-title {
+      font-weight: 700; font-size: 14px; margin: 0 0 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .event .ev-mag {
+      display: inline-block;
+      font-size: 11px; font-weight: 700;
+      padding: 1px 7px; border-radius: 6px;
+      background: var(--bg-sub); border: 1px solid var(--border);
+      margin-right: 6px; color: var(--text-sub);
+    }
+    .event .ev-sub { font-size: 12px; color: var(--muted); margin: 0; }
+
+    .event .ev-right {
+      flex: 0 0 auto; display: flex; flex-direction: row; flex-wrap: wrap;
+      align-items: center; justify-content: flex-end;
+      gap: 4px; max-width: 240px; min-width: 0;
+    }
+    .ev-pref-item {
+      font-size: 11px; color: var(--text-sub);
+      background: var(--bg-sub); border: 1px solid var(--border);
+      border-radius: 6px; padding: 1px 7px; white-space: nowrap;
+    }
+    @media (max-width: 600px) { .event .ev-right { display: none; } }
+
+    .empty-notice { color: var(--muted); font-size: 13px; text-align: center; padding: 48px 0; }
+
+    /* 深さバッジ */
+    .depth-badge {
+      font-size: 11px; color: var(--muted);
+      background: var(--bg-sub); border: 1px solid var(--border);
+      border-radius: 6px; padding: 1px 7px; white-space: nowrap;
+      flex: 0 0 auto;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===== ヘッダー ===== -->
+  <header>
+    <div class="container">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo">JR</div>
+          <div>
+            <h1>地震ランキング</h1>
+            <div class="brand-sub">地震発生履歴</div>
+          </div>
+        </div>
+        <nav class="nav">
+          <a href="/">ランキング</a>
+          <a href="/eq/" class="active">地震履歴</a>
+          <a href="/about/">このサイトについて</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- パンくず -->
+    <div class="breadcrumb">
+      <a href="/">ホーム</a> &nbsp;›&nbsp; 地震履歴
+    </div>
+
+    <!-- ページタイトル -->
+    <div class="page-head">
+      <div>
+        <h2>地震発生履歴</h2>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px;">
+          気象庁の防災情報XMLをもとに集計した地震の発生記録です。
+        </div>
+      </div>
+      <div class="meta">
+        更新: 2026-03-22 01:47
+      </div>
+    </div>
+
+    <!-- ===== タブナビ ===== -->
+    <!--
+      実装では各タブが別ページ (/eq/6h/, /eq/today/, /eq/week/, /eq/month/)。
+      現在開いているページのタブに "active" クラスが付く。
+    -->
+    <nav class="tab-nav" aria-label="期間フィルタ">
+      <a href="/eq/6h/"    class="active">過去6時間  <span class="cnt">14</span></a>
+      <a href="/eq/today/">今日        <span class="cnt">42</span></a>
+      <a href="/eq/week/"> 今週        <span class="cnt">187</span></a>
+      <a href="/eq/month/">今月        <span class="cnt">631</span></a>
+    </nav>
+
+    <!-- ===== 統計ミニKPI ===== -->
+    <div class="stat-row">
+      <div class="stat-item">
+        <div class="stat-label">発生件数（表示中）</div>
+        <div class="stat-val">14<small>件</small></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">震度3以上</div>
+        <div class="stat-val red">3<small>件</small></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">最大M値</div>
+        <div class="stat-val">5.1<small>Mj</small></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">最大震度</div>
+        <div class="stat-val red">4</div>
+      </div>
+    </div>
+
+    <!-- ===== ソートバー ===== -->
+    <!--
+      ソートはJavaScriptで、埋め込みJSONデータを使ってDOMを再描画。
+      事前生成HTMLであっても、ソートはクライアント側で完結できる。
+    -->
+    <div class="sort-bar" role="group" aria-label="並び替え">
+      <span class="label">並び替え：</span>
+      <button class="sort-btn active" data-sort="time-desc" onclick="sortList('time-desc', this)">
+        新しい順 <span class="arrow">↓</span>
+      </button>
+      <button class="sort-btn" data-sort="time-asc" onclick="sortList('time-asc', this)">
+        古い順 <span class="arrow">↑</span>
+      </button>
+      <button class="sort-btn" data-sort="mag-desc" onclick="sortList('mag-desc', this)">
+        M値が大きい順 <span class="arrow">↓</span>
+      </button>
+      <button class="sort-btn" data-sort="int-desc" onclick="sortList('int-desc', this)">
+        震度が大きい順 <span class="arrow">↓</span>
+      </button>
+    </div>
+
+    <!-- ===== 地震リスト ===== -->
+    <div id="eq-list" class="event-list">
+
+      <!-- 震度4 -->
+      <a class="event" href="/eq/20260322012300/"
+         data-time="20260322012300" data-mag="5.1" data-int="4">
+        <div class="intensity-badge alert">
+          <div class="int-label">震度</div>
+          <div class="int-val">4</div>
+        </div>
+        <div class="left">
+          <p class="ev-title">
+            <span class="ev-mag">M5.1</span>石川県能登地方
+          </p>
+          <p class="ev-sub">2026-03-22 01:23 &nbsp;／&nbsp; 深さ 15 km</p>
+        </div>
+        <div class="ev-right">
+          <span class="ev-pref-item">石川（震度4）</span>
+          <span class="ev-pref-item">富山（震度3）</span>
+          <span class="ev-pref-item">福井（震度2）</span>
+        </div>
+      </a>
+
+      <!-- 震度3 -->
+      <a class="event" href="/eq/20260322005500/"
+         data-time="20260322005500" data-mag="4.2" data-int="3">
+        <div class="intensity-badge alert">
+          <div class="int-label">震度</div>
+          <div class="int-val">3</div>
+        </div>
+        <div class="left">
+          <p class="ev-title">
+            <span class="ev-mag">M4.2</span>宮城県沖
+          </p>
+          <p class="ev-sub">2026-03-22 00:55 &nbsp;／&nbsp; 深さ 40 km</p>
+        </div>
+        <div class="ev-right">
+          <span class="ev-pref-item">宮城（震度3）</span>
+          <span class="ev-pref-item">岩手（震度2）</span>
+        </div>
+      </a>
+
+      <!-- 震度2 -->
+      <a class="event" href="/eq/20260322003800/"
+         data-time="20260322003800" data-mag="3.8" data-int="2">
+        <div class="intensity-badge">
+          <div class="int-label">震度</div>
+          <div class="int-val">2</div>
+        </div>
+        <div class="left">
+          <p class="ev-title">
+            <span class="ev-mag">M3.8</span>福島県浜通り
+          </p>
+          <p class="ev-sub">2026-03-22 00:38 &nbsp;／&nbsp; 深さ 10 km</p>
+        </div>
+        <div class="ev-right">
+          <span class="ev-pref-item">福島（震度2）</span>
+          <span class="ev-pref-item">茨城（震度1）</span>
+        </div>
+      </a>
+
+      <!-- 震度2 -->
+      <a class="event" href="/eq/20260322001200/"
+         data-time="20260322001200" data-mag="2.9" data-int="2">
+        <div class="intensity-badge">
+          <div class="int-label">震度</div>
+          <div class="int-val">2</div>
+        </div>
+        <div class="left">
+          <p class="ev-title">
+            <span class="ev-mag">M2.9</span>茨城県南部
+          </p>
+          <p class="ev-sub">2026-03-22 00:12 &nbsp;／&nbsp; 深さ 50 km</p>
+        </div>
+        <div class="ev-right">
+          <span class="ev-pref-item">茨城（震度2）</span>
+        </div>
+      </a>
+
+      <!-- 震度1 -->
+      <a class="event" href="/eq/20260321235900/"
+         data-time="20260321235900" data-mag="2.3" data-int="1">
+        <div class="intensity-badge">
+          <div class="int-label">震度</div>
+          <div class="int-val">1</div>
+        </div>
+        <div class="left">
+          <p class="ev-title">
+            <span class="ev-mag">M2.3</span>北海道十勝地方中部
+          </p>
+          <p class="ev-sub">2026-03-21 23:59 &nbsp;／&nbsp; 深さ 70 km</p>
+        </div>
+        <div class="ev-right">
+          <span class="ev-pref-item">北海道（震度1）</span>
+        </div>
+      </a>
+
+      <!-- 震度3 -->
+      <a class="event" href="/eq/20260321234500/"
+         data-time="20260321234500" data-mag="4.0" data-int="3">
+        <div class="intensity-badge alert">
+          <div class="int-label">震度</div>
+          <div class="int-val">3</div>
+        </div>
+        <div class="left">
+          <p class="ev-title">
+            <span class="ev-mag">M4.0</span>長野県中部
+          </p>
+          <p class="ev-sub">2026-03-21 23:45 &nbsp;／&nbsp; 深さ 5 km</p>
+        </div>
+        <div class="ev-right">
+          <span class="ev-pref-item">長野（震度3）</span>
+          <span class="ev-pref-item">岐阜（震度1）</span>
+        </div>
+      </a>
+
+      <!-- 震度1 -->
+      <a class="event" href="/eq/20260321232100/"
+         data-time="20260321232100" data-mag="2.1" data-int="1">
+        <div class="intensity-badge">
+          <div class="int-label">震度</div>
+          <div class="int-val">1</div>
+        </div>
+        <div class="left">
+          <p class="ev-title">
+            <span class="ev-mag">M2.1</span>沖縄本島近海
+          </p>
+          <p class="ev-sub">2026-03-21 23:21 &nbsp;／&nbsp; 深さ 30 km</p>
+        </div>
+        <div class="ev-right">
+          <span class="ev-pref-item">沖縄（震度1）</span>
+        </div>
+      </a>
+
+    </div><!-- /#eq-list -->
+
+    <!-- 一覧に戻るボタン -->
+    <div class="btn-row mt">
+      <a class="btn" href="/">← ランキングへ戻る</a>
+    </div>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <div><b>地震ランキング</b> — 気象庁 防災情報XMLをもとに独自集計</div>
+      <div class="links">
+        <a href="/about/">このサイトについて</a>
+        <a href="/about/#method">集計方法</a>
+      </div>
+      <div style="margin-top:10px;">
+        ※本サイトの表示は参考情報です。正確な情報は気象庁等の発表をご確認ください。
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===== ソートスクリプト =====
+       事前生成HTMLでもクライアント側でソートできる。
+       各 .event 要素の data-time / data-mag / data-int 属性を使ってDOMを並び替える。
+  -->
+  <script>
+    function sortList(key, btn) {
+      // ボタンのactive切り替え
+      document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const list = document.getElementById('eq-list');
+      const items = Array.from(list.querySelectorAll('.event'));
+
+      items.sort((a, b) => {
+        switch (key) {
+          case 'time-desc':
+            return b.dataset.time.localeCompare(a.dataset.time);
+          case 'time-asc':
+            return a.dataset.time.localeCompare(b.dataset.time);
+          case 'mag-desc':
+            return parseFloat(b.dataset.mag) - parseFloat(a.dataset.mag);
+          case 'int-desc':
+            return parseInt(b.dataset.int, 10) - parseInt(a.dataset.int, 10);
+          default:
+            return 0;
+        }
+      });
+
+      // DOMを並び替え
+      items.forEach(el => list.appendChild(el));
+    }
+  </script>
+
+</body>
+</html>

@@ -18,9 +18,10 @@ type EarthquakeEvent struct {
 }
 
 type SimpleHTMLGenerator struct {
-	tmpl       *template.Template
-	detailTmpl *template.Template
-	aboutTmpl  *template.Template
+	tmpl        *template.Template
+	detailTmpl  *template.Template
+	aboutTmpl   *template.Template
+	historyTmpl *template.Template
 }
 
 // ---- hourly chart helpers ----
@@ -181,7 +182,20 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 		panic(fmt.Sprintf("about template parse error: %v", err))
 	}
 
-	return &SimpleHTMLGenerator{tmpl: tmpl, detailTmpl: detailTmpl, aboutTmpl: aboutTmpl}
+	// history.html
+	historyFuncMap := template.FuncMap{
+		"fmtTime": func(t time.Time, layout string) string {
+			return t.In(jst).Format(layout)
+		},
+		"intensityLevel": domain.IntensityLevel,
+	}
+	historyTmplPath := filepath.Join(templatePath, "history.html")
+	historyTmpl, err := template.New("history.html").Funcs(historyFuncMap).ParseFiles(basePath, historyTmplPath)
+	if err != nil {
+		panic(fmt.Sprintf("history template parse error: %v", err))
+	}
+
+	return &SimpleHTMLGenerator{tmpl: tmpl, detailTmpl: detailTmpl, aboutTmpl: aboutTmpl, historyTmpl: historyTmpl}
 }
 
 // TODO: 回数のランキングと最大震度のランキングを含むHTMLを生成できるように変更する
@@ -211,6 +225,85 @@ func (g *SimpleHTMLGenerator) Generate(
 	}
 	if err := g.tmpl.Execute(&buf, dataMap); err != nil {
 		return "", fmt.Errorf("template execute failed: %w", err)
+	}
+	return domain.PublishedHTML(buf.String()), nil
+}
+
+// GenerateHistory は地震履歴ページのHTMLを生成する。
+// tab は "6h", "today", "week", "month" のいずれか。
+// counts は各タブの件数（タブナビの件数バッジ表示用）。
+func (g *SimpleHTMLGenerator) GenerateHistory(
+	tab string,
+	earthquakes domain.EarthquakeRecordList,
+	counts map[string]int,
+	now time.Time,
+) (domain.PublishedHTML, error) {
+	jst := time.FixedZone("JST", 9*60*60)
+
+	// デフォルト表示順: 震度降順 → M値降順 → 時刻降順
+	sorted := make(domain.EarthquakeRecordList, len(earthquakes))
+	copy(sorted, earthquakes)
+	sort.Slice(sorted, func(i, j int) bool {
+		li := domain.IntensityLevel(sorted[i].MaxIntensity)
+		lj := domain.IntensityLevel(sorted[j].MaxIntensity)
+		if li != lj {
+			return li > lj
+		}
+		if sorted[i].Magnitude != sorted[j].Magnitude {
+			return sorted[i].Magnitude > sorted[j].Magnitude
+		}
+		return sorted[i].OccurredAt.After(sorted[j].OccurredAt)
+	})
+	earthquakes = sorted
+
+	// 統計計算
+	totalCount := len(earthquakes)
+	alertCount := 0
+	maxMag := 0.0
+	maxInt := "-"
+	maxIntLevel := 0
+	for _, eq := range earthquakes {
+		if eq.Magnitude > maxMag {
+			maxMag = eq.Magnitude
+		}
+		lv := domain.IntensityLevel(eq.MaxIntensity)
+		if lv > maxIntLevel {
+			maxIntLevel = lv
+			maxInt = eq.MaxIntensity
+		}
+		if lv >= 3 {
+			alertCount++
+		}
+	}
+
+	// タブごとのラベル・タイトル
+	tabLabel := map[string]string{
+		"6h":    "過去6時間",
+		"today": "今日（24時間）",
+		"week":  "今週（7日間）",
+		"month": "今月（30日間）",
+	}
+
+	var buf bytes.Buffer
+	dataMap := map[string]interface{}{
+		"BrandSub":    "地震発生履歴",
+		"Tab":         tab,
+		"TabTitle":    tabLabel[tab],
+		"Earthquakes": earthquakes,
+		"Count6h":     counts["6h"],
+		"CountToday":  counts["today"],
+		"CountWeek":   counts["week"],
+		"CountMonth":  counts["month"],
+		"TotalCount":  totalCount,
+		"AlertCount":  alertCount,
+		"MaxMag":      maxMag,
+		"MaxInt":      maxInt,
+		"MaxIntLevel": maxIntLevel,
+		"Now":         now.In(jst).Format(time.RFC3339),
+		"NowTime":     now,
+	}
+	if err := g.historyTmpl.Execute(&buf, dataMap); err != nil {
+		return "", fmt.Errorf("history template execute failed (tab=%s): %w", tab, err)
 	}
 	return domain.PublishedHTML(buf.String()), nil
 }
