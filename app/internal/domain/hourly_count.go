@@ -2,6 +2,7 @@ package domain
 
 import (
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -13,13 +14,23 @@ type HourlyPrefectureCount struct {
 	Counts []int `json:"counts"`
 }
 
-// HourlyEarthquakeData は過去1週間の1時間ごと・都道府県ごとの地震発生回数データ
-// グラフ用途: 横軸 = Hours、縦軸 = 各都道府県の Counts
+// HourlyEarthquakePoint は散布図用の1地震データ点。X=発生時刻(Unix ms)、Y=マグニチュード
+type HourlyEarthquakePoint struct {
+	X         int64   `json:"x"`         // Unix ミリ秒 (UTC)
+	Y         float64 `json:"y"`         // マグニチュード
+	Intensity string  `json:"intensity"` // 最大震度 ("1"〜"7","5-","5+","6-","6+","-")
+}
+
+// HourlyEarthquakeData は過去1週間の1時間ごとの地震データ
 type HourlyEarthquakeData struct {
 	// Hours は過去168時間のスロット（古い順）。Hours[0] が 167 時間前、Hours[167] が直近の時間帯
 	Hours []time.Time `json:"hours"`
-	// Prefs は全 47 都道府県のデータ（都道府県コード順）
+	// Prefs は全 47 都道府県のデータ（都道府県コード順）。都道府県ページ用
 	Prefs []HourlyPrefectureCount `json:"prefs"`
+	// OverallCounts は震源単位（レポート1件＝1回）の時間帯別発生回数
+	OverallCounts []int `json:"overall_counts"`
+	// Points は散布図用の個別地震データ点（M値が取得できるもののみ）
+	Points []HourlyEarthquakePoint `json:"points"`
 }
 
 const hourlySlots = 168 // 7日 × 24時間
@@ -49,6 +60,12 @@ func MakeHourlyEarthquakeData(reports ReportList, now time.Time) HourlyEarthquak
 		prefNameMap[code] = data.Name
 	}
 
+	// 震源単位（レポート1件＝1回）のカウント配列
+	overallCounts := make([]int, hourlySlots)
+
+	// 散布図用データ点
+	var points []HourlyEarthquakePoint
+
 	for _, report := range reports {
 		if report.Body.Earthquake == nil || report.Body.Intensity == nil {
 			continue
@@ -68,6 +85,26 @@ func MakeHourlyEarthquakeData(reports ReportList, now time.Time) HourlyEarthquak
 		slotIndex := int(reportHour.Sub(hours[0]).Hours())
 		if slotIndex < 0 || slotIndex >= hourlySlots {
 			continue
+		}
+
+		// 震源単位でカウント（レポート1件につき1増加）
+		overallCounts[slotIndex]++
+
+		// 散布図用: M値が取得できる場合はデータ点を追加
+		if report.Body.Earthquake.Magnitude != nil {
+			if mag, err := strconv.ParseFloat(report.Body.Earthquake.Magnitude.Value, 64); err == nil {
+				intensity := "-"
+				if report.Body.Intensity.Observation != nil {
+					if v := report.Body.Intensity.Observation.MaxInt; v != "" {
+						intensity = v
+					}
+				}
+				points = append(points, HourlyEarthquakePoint{
+					X:         occurredAt.UnixMilli(),
+					Y:         mag,
+					Intensity: intensity,
+				})
+			}
 		}
 
 		// 都道府県ごとにカウントを加算
@@ -93,7 +130,9 @@ func MakeHourlyEarthquakeData(reports ReportList, now time.Time) HourlyEarthquak
 	})
 
 	return HourlyEarthquakeData{
-		Hours: hours,
-		Prefs: prefs,
+		Hours:         hours,
+		Prefs:         prefs,
+		OverallCounts: overallCounts,
+		Points:        points,
 	}
 }

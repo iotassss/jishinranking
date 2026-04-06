@@ -34,6 +34,7 @@
     .ticker-track {
       display: flex; gap: 10px; padding: 7px 0;
       white-space: nowrap; animation: marquee 40s linear infinite;
+      width: max-content;
     }
     .ticker:hover .ticker-track { animation-play-state: paused; }
     @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
@@ -513,11 +514,11 @@
 
     <section id="weekly" class="card mt" aria-labelledby="sec-weekly">
       <div class="section-title">
-        <h2 id="sec-weekly">過去1週間の地震発生推移（1時間ごと・都道府県別）</h2>
-        <div class="meta">積み上げ棒グラフ</div>
+        <h2 id="sec-weekly">過去1週間の地震発生推移（1時間ごと）</h2>
+        <div class="meta">棒グラフ</div>
       </div>
       <div class="chart-container">
-        <canvas id="hourly-chart" aria-label="1時間ごとの都道府県別地震発生回数グラフ" role="img"></canvas>
+        <canvas id="hourly-chart" aria-label="1時間ごとの地震発生回数グラフ" role="img"></canvas>
       </div>
     </section>
 
@@ -609,27 +610,69 @@
 
   <script>
     window.Map = window.__NativeMap;
+    // ticker: clone items until track fills viewport × 2
+    (function(){
+      var track = document.querySelector('.ticker-track');
+      if (!track) return;
+      var base = Array.from(track.children);
+      if (!base.length) return;
+      var limit = 0;
+      while (track.scrollWidth < window.innerWidth * 2 && ++limit < 30) {
+        base.forEach(function(item){ track.appendChild(item.cloneNode(true)); });
+      }
+    })();
     (() => {
       const ctx = document.getElementById("hourly-chart");
       if (!ctx) return;
       const chartData = {{.HourlyChartData}};
-      if (!chartData.datasets || chartData.datasets.length === 0) {
+      if (!chartData.datasets || !chartData.datasets[0] || !chartData.datasets[0].data.length) {
         ctx.parentElement.innerHTML = "<p style=\"text-align:center;color:var(--muted);padding:2em 0;\">過去1週間の地震データがありません。</p>";
         return;
       }
       new Chart(ctx, {
-        type: "bar",
+        type: "scatter",
         data: chartData,
         options: {
           responsive: true,
           maintainAspectRatio: true,
           scales: {
-            x: { stacked: true, ticks: { maxRotation: 45, minRotation: 30, font: { size: 11 } } },
-            y: { stacked: true, beginAtZero: true, title: { display: true, text: "発生回数" }, ticks: { stepSize: 1 } }
+            x: {
+              type: "linear",
+              ticks: {
+                maxTicksLimit: 14,
+                maxRotation: 45,
+                minRotation: 30,
+                font: { size: 11 },
+                callback: function(value) {
+                  const d = new Date(value + 9 * 3600 * 1000);
+                  const M = d.getUTCMonth() + 1;
+                  const D = d.getUTCDate();
+                  const H = String(d.getUTCHours()).padStart(2, "0");
+                  return M + "/" + D + " " + H + ":00";
+                }
+              }
+            },
+            y: {
+              beginAtZero: false,
+              min: 0,
+              title: { display: true, text: "マグニチュード" },
+              ticks: { stepSize: 1 }
+            }
           },
           plugins: {
-            legend: { position: "bottom", labels: { boxWidth: 14, font: { size: 12 } } },
-            tooltip: { mode: "index", intersect: false }
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(item) {
+                  const d = new Date(item.parsed.x + 9 * 3600 * 1000);
+                  const M = d.getUTCMonth() + 1;
+                  const D = d.getUTCDate();
+                  const H = String(d.getUTCHours()).padStart(2, "0");
+                  const Min = String(d.getUTCMinutes()).padStart(2, "0");
+                  return "M" + item.parsed.y.toFixed(1) + "  " + M + "/" + D + " " + H + ":" + Min + " JST";
+                }
+              }
+            }
           }
         }
       });

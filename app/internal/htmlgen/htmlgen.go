@@ -26,18 +26,47 @@ type SimpleHTMLGenerator struct {
 	prefRankingTmpl *template.Template
 }
 
-// ---- hourly chart helpers ----
+// ---- hourly chart helpers (散布図) ----
 
-type hourlyChartDataJSON struct {
-	Labels   []string            `json:"labels"`
-	Datasets []hourlyDatasetJSON `json:"datasets"`
+type scatterPointJSON struct {
+	X int64   `json:"x"` // Unix ms
+	Y float64 `json:"y"` // マグニチュード
 }
 
-type hourlyDatasetJSON struct {
-	Label           string `json:"label"`
-	Data            []int  `json:"data"`
-	BackgroundColor string `json:"backgroundColor"`
-	Stack           string `json:"stack"`
+type scatterDatasetJSON struct {
+	Label                string             `json:"label"`
+	Data                 []scatterPointJSON `json:"data"`
+	PointStyle           string             `json:"pointStyle"`
+	PointRadius          []int              `json:"pointRadius"`
+	PointBorderWidth     []int              `json:"pointBorderWidth"`
+	PointBorderColor     []string           `json:"pointBorderColor"`
+	PointBackgroundColor []string           `json:"pointBackgroundColor"`
+}
+
+// intensityStyle はX印の見た目パラメータ（震度レベル 0〜9 に対応）
+type intensityStyle struct {
+	radius      int
+	borderWidth int
+	color       string // rgba()
+}
+
+// intensityStyleMap[i] は IntensityLevel()==i のときに使うスタイル
+// 震度小: 小さく薄く　震度大: 大きく濃く
+var intensityStyleMap = [10]intensityStyle{
+	{3, 1, "rgba(180,180,180,0.30)"}, // 0: -（不明）
+	{3, 1, "rgba(100,149,237,0.50)"}, // 1: 震度1
+	{4, 1, "rgba(100,149,237,0.62)"}, // 2: 震度2
+	{5, 1, "rgba(67,99,216,0.70)"},   // 3: 震度3
+	{6, 2, "rgba(67,99,216,0.80)"},   // 4: 震度4
+	{8, 2, "rgba(220,140,0,0.83)"},   // 5: 震度5弱
+	{9, 2, "rgba(220,90,0,0.87)"},    // 6: 震度5強
+	{11, 3, "rgba(200,30,0,0.91)"},   // 7: 震度6弱
+	{13, 3, "rgba(170,0,0,0.95)"},    // 8: 震度6強
+	{15, 4, "rgba(120,0,0,1.00)"},    // 9: 震度7
+}
+
+type scatterChartDataJSON struct {
+	Datasets []scatterDatasetJSON `json:"datasets"`
 }
 
 // hourlyChartColors は都道府県コード順（1=北海道〜47=沖縄）に対応した固定色パレット。
@@ -91,47 +120,46 @@ var hourlyChartColors = []string{
 	"#00bfff", // 47 沖縄
 }
 
-// makeHourlyChartData は HourlyEarthquakeData を Chart.js の積み上げ棒グラフ用 JSON に変換する。
-// 発生回数が多い都道府県から最大 10 件を個別に表示し、残りは「その他」に集約する。
+// makeHourlyChartData は HourlyEarthquakeData を Chart.js 散布図用 JSON に変換する。
+// 各地震を (発生時刻 Unix ms, マグニチュード) の点として描画し、
+// 最大震度が大きいほど X 印を大きく・太く・濃くする。
 func makeHourlyChartData(h domain.HourlyEarthquakeData) template.JS {
-	jst := time.FixedZone("JST", 9*60*60)
-	labels := make([]string, len(h.Hours))
-	for i, t := range h.Hours {
-		labels[i] = t.In(jst).Format("1/2 15:04")
-	}
+	n := len(h.Points)
+	pts := make([]scatterPointJSON, n)
+	radii := make([]int, n)
+	bws := make([]int, n)
+	colors := make([]string, n)
 
-	type prefTotal struct {
-		pref  domain.HourlyPrefectureCount
-		total int
-	}
-	var pts []prefTotal
-	for _, p := range h.Prefs {
-		total := 0
-		for _, c := range p.Counts {
-			total += c
+	for i, p := range h.Points {
+		pts[i] = scatterPointJSON{X: p.X, Y: p.Y}
+		level := domain.IntensityLevel(p.Intensity)
+		if level < 0 {
+			level = 0
+		} else if level >= len(intensityStyleMap) {
+			level = len(intensityStyleMap) - 1
 		}
-		if total > 0 {
-			pts = append(pts, prefTotal{p, total})
-		}
-	}
-	sort.Slice(pts, func(i, j int) bool {
-		return pts[i].total > pts[j].total
-	})
-
-	var datasets []hourlyDatasetJSON
-	for i, pt := range pts {
-		datasets = append(datasets, hourlyDatasetJSON{
-			Label:           pt.pref.PrefName,
-			Data:            pt.pref.Counts,
-			BackgroundColor: hourlyChartColors[i%len(hourlyChartColors)],
-			Stack:           "total",
-		})
+		s := intensityStyleMap[level]
+		radii[i] = s.radius
+		bws[i] = s.borderWidth
+		colors[i] = s.color
 	}
 
-	data := hourlyChartDataJSON{Labels: labels, Datasets: datasets}
+	data := scatterChartDataJSON{
+		Datasets: []scatterDatasetJSON{
+			{
+				Label:                "地震",
+				Data:                 pts,
+				PointStyle:           "crossRot",
+				PointRadius:          radii,
+				PointBorderWidth:     bws,
+				PointBorderColor:     colors,
+				PointBackgroundColor: colors,
+			},
+		},
+	}
 	b, err := json.Marshal(data)
 	if err != nil {
-		return template.JS(`{"labels":[],"datasets":[]}`)
+		return template.JS(`{"datasets":[]}`)
 	}
 	return template.JS(b)
 }
