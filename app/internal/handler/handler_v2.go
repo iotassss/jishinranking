@@ -140,10 +140,11 @@ func (h *Handler) ProcessV2(
 	// ==============================
 	// 地震発生頻度急上昇都道府県（10件）
 	// ==============================
-	// score = (24h回数 + 1) / (7日平均 + 1)
-	// 条件: (24h回数 ≥ 3) AND (score ≥ 2.0)
+	// score = 短期スコア(τ=14日) × log(1 + 急上昇倍率)
+	// 判定: 急上昇倍率 ≥ 2.0 AND 短期スコア ≥ 20.0
 
-	surgeRanking := domain.MakeSurgeRecordList(todayPrefectureMap, prefectureJishinDataMap, 3, 2.0, 10)
+	allMonthEarthquakes := thisMonthReports.FilterByTelegramCode(domain.TelegramCodeEarthquakeDetail).AllEarthquakesInPeriod(now, 30*24*time.Hour)
+	surgeRanking := domain.MakeSurgeRecordList(allMonthEarthquakes, now, 20.0, 2.0, 10)
 
 	// ==============================
 	// 1時間ごとの地震発生回数（過去1週間分）

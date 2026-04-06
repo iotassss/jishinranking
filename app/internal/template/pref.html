@@ -285,13 +285,13 @@
       <div class="section-title">
         <h3 id="sec-surge">急上昇スコア</h3>
         <div class="meta">
-          <span class="surge-meta-full">score = (24h回数+1) ÷ (7日平均+1)</span>
+          <span class="surge-meta-full">score = 短期スコア × log(1 + 急上昇倍率)</span>
           <span class="surge-meta-short">スコア算出方法</span>
         </div>
       </div>
 
       <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
-        <div class="surge-score">x{{printf "%.1f" .SurgeScore}}</div>
+        <div class="surge-score">{{printf "%.1f" .SurgeScore}}</div>
         <div>
           <div style="font-size:13px;color:var(--text-sub);">
             今日（24h）: <strong>{{.TodayCount}}回</strong>　7日平均: <strong>{{printf "%.1f" .WeekAvg}}回/日</strong>
@@ -305,7 +305,7 @@
       </div>
 
       <div class="compare-note" style="font-size:12px;">
-        急上昇スコアが <b>2.0</b> 以上かつ24h回数が <b>3回</b> 以上の場合にランキングに掲載されます。
+        急上昇倍率が <b>2.0</b> 以上かつ短期スコアが <b>20.0</b> 以上の場合にランキングに残載されます。
         現在の{{.PrefName}}は条件を満たしています。
       </div>
     </section>
