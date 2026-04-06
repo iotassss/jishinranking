@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>宮城県の地震情報｜地震ランキング</title>
+  <meta name="description" content="宮城県の地震発生状況（回数・密度・最大震度・週間推移）をまとめて確認できます。気象庁防災情報XMLをもとに自動集計。" />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://jishinranking.com/pref/04/" />
+
+  <!-- _base.html の base_css 相当 -->
+  <style>
+    :root {
+      --bg:          #ffffff;
+      --bg-sub:      #f7f7f7;
+      --text:        #111111;
+      --text-sub:    #333333;
+      --muted:       #6b7280;
+      --border:      #e5e7eb;
+      --shadow:      0 6px 18px rgba(0,0,0,.06);
+      --accent:      #d7000f;
+      --accent-weak: rgba(215,0,15,.08);
+      --s1-bg: rgba(15, 118, 110, 0.08);
+      --s1-bd: rgba(15, 118, 110, 0.25);
+      --s1-fg: #0f766e;
+      --s2-bg: rgba(180, 83, 9, 0.10);
+      --s2-bd: rgba(180, 83, 9, 0.25);
+      --s2-fg: #b45309;
+      --s3-bg: rgba(215, 0, 15, 0.08);
+      --s3-bd: rgba(215, 0, 15, 0.25);
+      --s3-fg: #d7000f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system,
+        "Hiragino Sans", "Noto Sans JP", "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+    }
+    a { color: var(--text); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { width: min(1100px, calc(100% - 32px)); margin: 0 auto; }
+
+    /* Header */
+    header { position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--border); }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; text-decoration: none; }
+    .brand:hover { text-decoration: none; }
+    .logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, #111, #444);
+      display: grid; place-items: center;
+      color: #fff; font-weight: 900; font-size: 13px;
+      flex: 0 0 auto;
+    }
+    .brand h1 { margin: 0; font-size: 18px; font-weight: 800; line-height: 1.2; }
+    .brand-sub { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+    nav.nav { display: flex; gap: 4px; align-items: center; flex: 0 0 auto; }
+    nav.nav a { font-size: 13px; color: var(--text-sub); padding: 6px 10px; border-radius: 8px; }
+    nav.nav a:hover { background: var(--bg-sub); text-decoration: none; }
+    @media (max-width: 900px) { nav.nav { display: none; } }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 14px; border-radius: 10px;
+      border: 1px solid var(--border); background: #fff;
+      font-size: 13px; font-weight: 700; color: var(--text-sub); text-decoration: none; cursor: pointer;
+    }
+    .btn:hover { background: var(--bg-sub); text-decoration: none; }
+    .btn.primary { border-color: rgba(215,0,15,.25); background: var(--accent-weak); color: var(--accent); }
+
+    /* Card */
+    .card { background: #fff; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); padding: 16px; }
+    .mt { margin-top: 16px; }
+
+    /* Pill */
+    .pill {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 4px 10px; border-radius: 999px;
+      border: 1px solid var(--border); background: #fff;
+      font-size: 12px; font-weight: 900; white-space: nowrap;
+    }
+    .pill.s1 { background: var(--s1-bg); border-color: var(--s1-bd); color: var(--s1-fg); }
+    .pill.s2 { background: var(--s2-bg); border-color: var(--s2-bd); color: var(--s2-fg); }
+    .pill.s3 { background: var(--s3-bg); border-color: var(--s3-bd); color: var(--s3-fg); }
+    .pill.gray { background: var(--bg-sub); color: var(--text-sub); }
+    .pill.alert { background: var(--s3-bg); border-color: var(--s3-bd); color: var(--s3-fg); }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--border); background: var(--bg-sub); padding: 22px 0; color: var(--muted); font-size: 12px; margin-top: 24px; }
+    footer .links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--text); text-decoration: underline; }
+
+    /* ===== このページ固有 ===== */
+
+    main { padding: 18px 0 48px; }
+
+    /* パンくず */
+    .breadcrumb { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .breadcrumb a { color: var(--muted); }
+    .breadcrumb a:hover { color: var(--text); text-decoration: underline; }
+
+    /* ページタイトル */
+    .page-title {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 12px; margin: 0 0 16px;
+    }
+    .page-title h2 { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: .01em; }
+    .page-title .meta { text-align: right; font-size: 12px; color: var(--muted); }
+
+    /* セクションタイトル */
+    .section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 12px; }
+    .section-title h3 { margin: 0; font-size: 15px; font-weight: 800; }
+    .section-title .meta { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+    /* KPI グリッド */
+    .kpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    @media (max-width: 860px) { .kpi { grid-template-columns: 1fr 1fr; } }
+    .kpi-item {
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 12px 14px; background: var(--bg-sub);
+    }
+    .kpi-item .label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .kpi-item .value { font-size: 20px; font-weight: 900; letter-spacing: .02em; line-height: 1.3; }
+    .kpi-item .value small { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 4px; }
+    .kpi-item .hint { margin-top: 4px; font-size: 12px; color: var(--text-sub); }
+    .kpi-item.highlight { border-color: rgba(215,0,15,.25); background: var(--accent-weak); }
+    .kpi-item.highlight .value { color: var(--accent); }
+
+    /* 1カラムグリッド */
+    .grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
+
+    /* 比較ノート */
+    .compare-note {
+      border: 1px solid var(--border); border-radius: 12px;
+      background: var(--bg-sub); padding: 14px;
+      font-size: 13px; color: var(--text-sub); line-height: 1.8;
+    }
+    .compare-note b { color: var(--text); }
+    .compare-note .red { color: var(--accent); font-weight: 900; }
+    .compare-note .green { color: var(--s1-fg); font-weight: 900; }
+
+    /* グラフエリア */
+    .chart-container { position: relative; width: 100%; height: 260px; }
+
+    /* テーブル */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 9px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
+    th { background: var(--bg-sub); color: var(--text-sub); font-weight: 700; font-size: 12px; }
+    tr:last-child td { border-bottom: none; }
+    td.center { text-align: center; }
+    td.right { text-align: right; }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover td { background: var(--bg-sub) !important; }
+
+    /* イベントカード */
+    .event-list { display: flex; flex-direction: column; gap: 8px; }
+    .event {
+      border: 1px solid var(--border); border-radius: 12px; padding: 11px 14px;
+      background: #fff; display: flex; justify-content: space-between; gap: 12px; align-items: center;
+      cursor: pointer; transition: background 0.12s;
+    }
+    .event:hover { background: var(--bg-sub); }
+    .event .left { min-width: 0; flex: 1; }
+    .event .ev-title { font-weight: 700; font-size: 13px; margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .event .ev-sub { font-size: 12px; color: var(--muted); margin: 0; }
+    .event .ev-right { flex: 0 0 auto; display: flex; gap: 6px; align-items: center; }
+
+    /* 急上昇バッジ */
+    .surge-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--accent-weak); border: 1px solid rgba(215,0,15,.2);
+      color: var(--accent); border-radius: 999px; padding: 3px 10px;
+      font-size: 12px; font-weight: 900;
+    }
+
+    /* 全国比較テーブル行 */
+    tr.pref-row-highlight td { background: rgba(215,0,15,.05); font-weight: 700; }
+
+    /* 更新バッジ */
+    .live-badge {
+      display: inline-block; margin-right: 4px; padding: 2px 7px;
+      border-radius: 999px; background: var(--accent); color: #fff;
+      font-size: 11px; font-weight: 700;
+    }
+
+    /* more-link */
+    .more-link {
+      margin-top: 12px; padding-top: 10px;
+      border-top: 1px solid var(--border);
+      text-align: right;
+    }
+    .more-link a { font-size: 13px; font-weight: 700; color: var(--accent); }
+    .more-link a:hover { text-decoration: underline; }
+
+    /* ランク色 */
+    tr.rank-gold   td { background: rgba(255,200,0,.12); }
+    tr.rank-silver td { background: rgba(160,160,160,.12); }
+    tr.rank-bronze td { background: rgba(180,110,40,.09); }
+    td.rank { font-weight: 900; font-size: 14px; width: 44px; }
+
+    /* ===== モバイル対応 (≤480px / iPhone SE 375px 想定) ===== */
+    @media (max-width: 480px) {
+      /* ヘッダー: サブテキストを非表示にして h1 だけ残す */
+      .brand-sub { display: none; }
+
+      /* カード余白を縮小 */
+      .card { padding: 14px 12px; }
+
+      /* パンくず: フォントを少し小さく */
+      .breadcrumb { font-size: 11px; }
+
+      /* ページタイトル: 縦積みに変更 */
+      .page-title { flex-direction: column; gap: 6px; }
+      .page-title h2 { font-size: 18px; }
+      .page-title .meta { text-align: left; white-space: normal; }
+
+      /* セクションタイトル: 長い meta を折り返し許可 */
+      .section-title { flex-wrap: wrap; gap: 2px 12px; }
+      .section-title .meta { white-space: normal; font-size: 11px; }
+
+      /* KPI: パディング・フォント縮小 */
+      .kpi-item { padding: 10px; }
+      .kpi-item .label { font-size: 11px; }
+      .kpi-item .value { font-size: 16px; }
+      .kpi-item .value small { font-size: 10px; margin-left: 2px; }
+      .kpi-item .hint { font-size: 11px; }
+
+      /* ボタン: フォント・パディングを縮小、2列に並べやすく */
+      .btn { font-size: 12px; padding: 8px 10px; }
+
+      /* イベントカード: 詳細›ボタンを非表示（カード全体クリッカブルなため） */
+      .event { padding: 10px 12px; }
+      .event .ev-right { display: none; }
+      /* ev-subの観測震度テキストが長いので省略 */
+      .event .ev-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+      /* テーブル横スクロールラッパー */
+      .table-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        /* スクロール可能な示唆 */
+        background:
+          linear-gradient(to right, #fff 30%, rgba(255,255,255,0)) left center / 24px 100% no-repeat,
+          linear-gradient(to left,  #fff 30%, rgba(255,255,255,0)) right center / 24px 100% no-repeat,
+          linear-gradient(to right, rgba(0,0,0,.06), rgba(0,0,0,0)) left center / 8px 100% no-repeat,
+          linear-gradient(to left,  rgba(0,0,0,.06), rgba(0,0,0,0)) right center / 8px 100% no-repeat,
+          #fff;
+        background-attachment: local, local, scroll, scroll, scroll;
+      }
+      .table-scroll table { border: none; border-radius: 0; min-width: 420px; }
+
+      /* 比較ノート: フォント縮小・行間調整 */
+      .compare-note { font-size: 12px; line-height: 1.75; padding: 12px; }
+
+      /* more-link */
+      .more-link a { font-size: 12px; }
+
+      /* 急上昇スコアの大きい数字 */
+      .surge-score { font-size: 28px !important; }
+
+      /* 急上昇セクションの meta: 長い計算式を短縮版に切り替え */
+      .surge-meta-full { display: none; }
+      .surge-meta-short { display: inline !important; }
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body>
+
+  <!-- ===== ヘッダー（common_header 相当） ===== -->
+  <header>
+    <div class="container">
+      <div class="topbar">
+        <a class="brand" href="/">
+          <div class="logo">JR</div>
+          <div>
+            <h1>地震ランキング</h1>
+            <p class="brand-sub">宮城県の地震情報</p>
+          </div>
+        </a>
+        <nav class="nav" aria-label="グローバルナビゲーション">
+          <a href="/">ホーム</a>
+          <a href="/#heatmap">ヒートマップ</a>
+          <a href="/eq/week/">地震履歴</a>
+          <a href="/about.html">このサイトについて</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== メインコンテンツ ===== -->
+  <main class="container">
+
+    <!-- ページタイトル -->
+    <div class="page-title">
+      <div>
+        <h2>宮城県の地震情報</h2>
+        <p style="margin:4px 0 0;font-size:13px;color:var(--muted);">
+          今週の発生状況・週間推移・最近の地震をまとめて確認できます
+        </p>
+      </div>
+      <div class="meta">
+        <div><span class="live-badge">● 更新</span>&nbsp;2026-03-22 14:20</div>
+      </div>
+    </div>
+
+    <!-- ===== KPIサマリー ===== -->
+    <section class="card" aria-labelledby="sec-kpi">
+      <div class="section-title">
+        <h3 id="sec-kpi">今週のサマリー</h3>
+        <div class="meta">過去7日間</div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi-item highlight">
+          <div class="label">全国順位（密度）</div>
+          <div class="value">1<small>位 / 47都道府県</small></div>
+            <div class="hint"><span style="font-size:12px;color:var(--muted);">密度: 5.22回/1000km²</span></div>
+        </div>
+        <div class="kpi-item">
+          <div class="label">地震発生回数</div>
+          <div class="value">38<small>回</small></div>
+          <div class="hint">今週（7日間）</div>
+          </div>
+        <div class="kpi-item">
+          <div class="label">最大震度（今週）</div>
+          <div class="value" style="font-size:16px;"><span class="pill s3" style="font-size:14px;padding:5px 12px;">震度4</span></div>
+          <div class="hint">2026-03-20 07:14</div>
+        </div>
+        <div class="kpi-item">
+          <div class="label">急上昇スコア</div>
+          <div class="value" style="color:var(--accent);">x3.2</div>
+          <div class="hint">本日 8回</div>
+        </div>
+      </div>
+
+      <div class="compare-note" style="margin-top:14px;">
+        今週の発生密度は <b>5.22 回/1000km²</b> で全国平1位。全国平均（<b>0.87</b> 回/1000km²）の約
+        <span class="red">6倍</span>。本日（24h）は <b>8回</b>で、7日平均の約 <span class="red">1.5倍</span>。
+        今週の最大震度は <span class="red">震度4</span>（3月20日 07:14）で、震度3以上が <b>3回</b> 観測されました。
+      </div>
+
+      <!-- <div class="btn-row">
+        <a class="btn primary" href="#chart">週間推移グラフ</a>
+        <a class="btn" href="#recent">最近の地震</a>
+        <a class="btn" href="#epicenter-map-section">震源地マップ</a>
+        <a class="btn" href="/eq/week/">地震履歴（全国）</a>
+      </div> -->
+    </section>
+
+
+
+    <!-- ===== 最近の地震（この県が観測された地震） ===== -->
+    <section id="recent" class="card mt" aria-labelledby="sec-recent">
+      <div class="section-title">
+        <h3 id="sec-recent">最近の地震（宮城県が観測された地震）</h3>
+        <div class="meta">過去7日間・新しい順</div>
+      </div>
+
+      <div class="event-list">
+
+        <div class="event" onclick="location.href='/eq/20260320070000/'">
+          <div class="left">
+            <p class="ev-title">
+              <span class="pill alert" style="margin-right:8px">震度4</span>
+              宮城県沖　M4.8
+            </p>
+            <p class="ev-sub">2026-03-20 07:14 / 宮城県での観測震度: <strong>4</strong></p>
+          </div>
+          <div class="ev-right">
+            <span class="pill gray">詳細 ›</span>
+          </div>
+        </div>
+
+        <div class="event" onclick="location.href='/eq/20260319153000/'">
+          <div class="left">
+            <p class="ev-title">
+              <span class="pill s2" style="margin-right:8px">震度3</span>
+              三陸沖　M5.1
+            </p>
+            <p class="ev-sub">2026-03-19 15:34 / 宮城県での観測震度: <strong>3</strong></p>
+          </div>
+          <div class="ev-right">
+            <span class="pill gray">詳細 ›</span>
+          </div>
+        </div>
+
+        <div class="event" onclick="location.href='/eq/20260319080000/'">
+          <div class="left">
+            <p class="ev-title">
+              <span class="pill s2" style="margin-right:8px">震度3</span>
+              宮城県北部　M3.9
+            </p>
+            <p class="ev-sub">2026-03-19 08:02 / 宮城県での観測震度: <strong>3</strong></p>
+          </div>
+          <div class="ev-right">
+            <span class="pill gray">詳細 ›</span>
+          </div>
+        </div>
+
+        <div class="event" onclick="location.href='/eq/20260318220000/'">
+          <div class="left">
+            <p class="ev-title">
+              <span class="pill" style="margin-right:8px">震度2</span>
+              宮城県沖　M3.4
+            </p>
+            <p class="ev-sub">2026-03-18 22:11 / 宮城県での観測震度: <strong>2</strong></p>
+          </div>
+          <div class="ev-right">
+            <span class="pill gray">詳細 ›</span>
+          </div>
+        </div>
+
+        <div class="event" onclick="location.href='/eq/20260317120000/'">
+          <div class="left">
+            <p class="ev-title">
+              <span class="pill" style="margin-right:8px">震度1</span>
+              福島県沖　M4.2
+            </p>
+            <p class="ev-sub">2026-03-17 12:45 / 宮城県での観測震度: <strong>1</strong></p>
+          </div>
+          <div class="ev-right">
+            <span class="pill gray">詳細 ›</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="more-link">
+        <a href="/eq/week/">今週の全地震履歴を見る &rsaquo;</a>
+      </div>
+    </section>
+
+    <!-- ===== 週間推移グラフ ===== -->
+    <section id="chart" class="card mt" aria-labelledby="sec-chart">
+      <div class="section-title">
+        <h3 id="sec-chart">発生回数（過去7日間）</h3>
+        <div class="meta">宮城県 / 1時間単位</div>
+      </div>
+      <div class="chart-container">
+        <canvas id="hourly-chart" aria-label="宮城県の1時間ごとの地震発生回数（過去7日間）" role="img"></canvas>
+      </div>
+      <p style="margin:8px 0 0;font-size:12px;color:var(--muted);">
+        ※ 棒グラフは1時間単位のカウント。横軸は日付のみ表示
+      </p>
+    </section>
+
+    <!-- ===== 震源地マップ ===== -->
+    <section id="epicenter-map-section" class="card mt" aria-labelledby="sec-map">
+      <div class="section-title">
+        <h3 id="sec-map">震源地マップ</h3>
+        <div class="meta">宮城県が観測した地震 / 過去7日間</div>
+      </div>
+      <div id="epicenter-map" style="width:100%;height:340px;border-radius:10px;overflow:hidden;"></div>
+      <p style="margin:8px 0 0;font-size:12px;color:var(--muted);">
+        ※ マーカーの大きさと色はマグニチュードを示します。タップ／クリックで詳細を確認できます。
+      </p>
+    </section>
+
+
+
+    <!-- ===== 急上昇情報 ===== -->
+    <section class="card mt" aria-labelledby="sec-surge">
+      <div class="section-title">
+        <h3 id="sec-surge">急上昇スコア</h3>
+        <div class="meta"><span class="surge-meta-full">score = (24h回数+1) ÷ (7日平均+1)</span><span class="surge-meta-short" style="display:none">スコア算出方法</span></div>
+      </div>
+
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+        <div class="surge-score" style="font-size:36px;font-weight:900;color:var(--accent);line-height:1;">x3.2</div>
+        <div>
+          <div style="font-size:13px;color:var(--text-sub);">
+            今日（24h）: <strong>8回</strong>　7日平均: <strong>5.4回/日</strong>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px;">
+            全国急上昇ランキング <span class="surge-badge">1位</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="compare-note" style="font-size:12px;">
+        急上昇スコアが <b>2.0</b> 以上かつ24h回数が <b>3回</b> 以上の場合にランキングに掲載されます。
+        現在の宮城県は条件を満たし、全国で最も地震頻度が急増している都道府県です。
+      </div>
+    </section>
+
+    <!-- ===== CTAセクション ===== -->
+    <section class="card mt" aria-labelledby="sec-cta">
+      <div class="section-title">
+        <h3 id="sec-cta">次に見る</h3>
+      </div>
+      <div class="btn-row">
+        <a class="btn primary" href="/">全国ランキングへ</a>
+        <a class="btn" href="/#heatmap">ヒートマップへ</a>
+        <a class="btn" href="/eq/week/">今週の地震履歴</a>
+        <a class="btn" href="/about.html">このサイトについて</a>
+      </div>
+      <p style="margin:10px 0 0;font-size:12px;color:var(--muted);">
+        ※本ページの表示は参考情報です。正確な情報は<a href="https://www.jma.go.jp/" target="_blank" rel="noopener noreferrer" style="color:var(--muted);text-decoration:underline;">気象庁公式サイト</a>をご確認ください。
+      </p>
+    </section>
+
+  </main>
+
+  <!-- ===== フッター（common_footer 相当） ===== -->
+  <footer>
+    <div class="container">
+      <div><strong>地震ランキング</strong> — 気象庁 防災情報XMLをもとに独自集計</div>
+      <div class="links">
+        <a href="/about.html">このサイトについて</a>
+        <a href="/method">集計方法</a>
+        <a href="/contact">お問い合わせ</a>
+        <a href="/terms">利用規約</a>
+        <a href="https://xml.kishou.go.jp/xmlpull.html" target="_blank" rel="noopener noreferrer">気象庁XML</a>
+      </div>
+      <div style="margin-top:10px">
+        ※本サイトは気象庁の公式サイトではありません。正確な情報は
+        <a href="https://www.jma.go.jp/" target="_blank" rel="noopener noreferrer">気象庁公式サイト</a>をご確認ください。
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===== グラフ描画（Chart.js） ===== -->
+  <script>
+    (() => {
+      const ctx = document.getElementById("hourly-chart");
+      if (!ctx) return;
+
+      // ダミーデータ: 過去7日間（168時間）のうち24時間分を間引いて表示
+      const now = new Date(2026, 2, 22, 14, 0, 0); // 2026-03-22 14:00 JST
+      const labels = [];
+      const data   = [];
+
+      for (let i = 167; i >= 0; i--) {
+        const t = new Date(now.getTime() - i * 3600 * 1000);
+        // 日付が変わるタイミング（0時）にのみ日付ラベルを出す
+        if (t.getHours() === 0) {
+          const mm = String(t.getMonth() + 1).padStart(2, "0");
+          const dd = String(t.getDate()).padStart(2, "0");
+          labels.push(`${mm}/${dd}`);
+        } else {
+          labels.push("");
+        }
+        // ランダムっぽいダミー回数（宮城県らしく多め）
+        const seed = Math.sin(i * 1.7 + 3) * 0.5 + 0.5;
+        data.push(Math.floor(seed * 4));
+      }
+
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            label: "宮城県 発生回数",
+            data,
+            backgroundColor: "rgba(215, 0, 15, 0.6)",
+            borderColor:     "rgba(215, 0, 15, 0.9)",
+            borderWidth: 1,
+            borderRadius: 2,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: {
+                maxRotation: 0,
+                minRotation: 0,
+                font: { size: 11 },
+                autoSkip: false,
+              }
+            },
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: "発生回数" },
+              ticks: { stepSize: 1 }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: (items) => {
+                  const idx = items[0].dataIndex;
+                  const t = new Date(now.getTime() - (167 - idx) * 3600 * 1000);
+                  const mm = String(t.getMonth() + 1).padStart(2, "0");
+                  const dd = String(t.getDate()).padStart(2, "0");
+                  const hh = String(t.getHours()).padStart(2, "0");
+                  return `${mm}/${dd} ${hh}:00〜`;
+                },
+                label: (item) => ` ${item.raw}回`,
+              }
+            }
+          }
+        }
+      });
+    })();
+  </script>
+
+  <!-- ===== 震源地マップ描画（Leaflet） ===== -->
+  <script>
+    (() => {
+      const mapEl = document.getElementById("epicenter-map");
+      if (!mapEl || typeof L === "undefined") return;
+
+      const map = L.map("epicenter-map").setView([38.5, 141.6], 7);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 18,
+      }).addTo(map);
+
+      // 震源データ: [lat, lng, magnitude, 宮城での観測震度, 震源名, 発生時刻, 詳細URL]
+      const earthquakes = [
+        [38.41, 141.89, 4.8, 4, "宮城県沖",  "2026-03-20 07:14", "/eq/20260320070000/"],
+        [39.51, 143.02, 5.1, 3, "三陸沖",    "2026-03-19 15:34", "/eq/20260319153000/"],
+        [38.87, 141.08, 3.9, 3, "宮城県北部","2026-03-19 08:02", "/eq/20260319080000/"],
+        [38.21, 141.63, 3.4, 2, "宮城県沖",  "2026-03-18 22:11", "/eq/20260318220000/"],
+        [37.24, 141.52, 4.2, 1, "福島県沖",  "2026-03-17 12:45", "/eq/20260317120000/"],
+      ];
+
+      const magnitudeColor = (m) => {
+        if (m >= 5.0) return "#7c3aed";
+        if (m >= 4.0) return "#d7000f";
+        if (m >= 3.0) return "#b45309";
+        return "#0f766e";
+      };
+
+      earthquakes.forEach(([lat, lng, mag, intensity, name, time, url]) => {
+        const color = magnitudeColor(mag);
+        const radius = 6 + mag * 2;
+        const marker = L.circleMarker([lat, lng], {
+          radius,
+          fillColor: color,
+          color: "#fff",
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.82,
+        }).addTo(map);
+
+        marker.bindPopup(
+          `<strong style="font-size:13px;">${name}</strong><br/>` +
+          `<span style="color:${color};font-weight:700;font-size:14px;">M${mag}</span>&nbsp;&nbsp;震度${intensity}（宮城県）<br/>` +
+          `<small style="color:#666;">${time}</small><br/>` +
+          `<a href="${url}" style="color:#d7000f;font-weight:700;">詳細を見る →</a>`
+        );
+      });
+
+      // 凡例
+      const legend = L.control({ position: "bottomright" });
+      legend.onAdd = () => {
+        const div = L.DomUtil.create("div");
+        div.style.cssText = "background:#fff;padding:8px 10px;border-radius:8px;font-size:11px;line-height:1.8;box-shadow:0 2px 8px rgba(0,0,0,.15);";
+        div.innerHTML =
+          "<strong style='font-size:12px;'>マグニチュード</strong><br/>" +
+          "<span style='color:#7c3aed;'>●</span> M5.0以上<br/>" +
+          "<span style='color:#d7000f;'>●</span> M4.0〜M4.9<br/>" +
+          "<span style='color:#b45309;'>●</span> M3.0〜M3.9<br/>" +
+          "<span style='color:#0f766e;'>●</span> M3.0未満";
+        return div;
+      };
+      legend.addTo(map);
+    })();
+  </script>
+
+</body>
+</html>

@@ -178,7 +178,7 @@
       </div>
       <div class="stat-item">
         <div class="stat-label">最大震度</div>
-        <div class="stat-val{{if gt .MaxIntLevel 2}} stat-alert{{end}}">{{if eq .MaxInt "-"}}—{{else}}{{.MaxInt}}{{end}}</div>
+        <div class="stat-val{{if gt .MaxIntLevel 2}} stat-alert{{end}}">{{if eq .MaxInt "-"}}—{{else}}{{intensityDisplay .MaxInt}}{{end}}</div>
       </div>
     </div>
 
@@ -201,7 +201,7 @@
          data-int="{{intensityLevel .MaxIntensity}}">
         <div class="intensity-badge{{if ge .MaxIntensity "3"}} alert{{end}}">
           <div class="int-label">震度</div>
-          <div class="int-val">{{.MaxIntensity}}</div>
+          <div class="int-val">{{intensityDisplay .MaxIntensity}}</div>
         </div>
         <div class="left">
           <p class="ev-title"><span class="ev-mag">M{{printf "%.1f" .Magnitude}}</span>{{.Hypocenter}}</p>
@@ -209,7 +209,7 @@
         </div>
         {{if .ObservedPrefs}}
         <div class="ev-right">
-          {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<span class="ev-pref-item">{{$p.Name}}（{{$p.MaxInt}}）</span>{{end}}{{end}}
+          {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<span class="ev-pref-item">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</span>{{end}}{{end}}
         </div>
         {{end}}
       </a>

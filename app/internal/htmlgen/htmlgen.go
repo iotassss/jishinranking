@@ -22,6 +22,7 @@ type SimpleHTMLGenerator struct {
 	detailTmpl  *template.Template
 	aboutTmpl   *template.Template
 	historyTmpl *template.Template
+	prefTmpl    *template.Template
 }
 
 // ---- hourly chart helpers ----
@@ -141,8 +142,9 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 	tmplPath := filepath.Join(templatePath, "index.html")
 	basePath := filepath.Join(templatePath, "_base.html")
 	funcMap := template.FuncMap{
-		"add": func(a, b int) int { return a + b },
-		"mul": func(a, b float64) float64 { return a * b },
+		"add":              func(a, b int) int { return a + b },
+		"mul":              func(a, b float64) float64 { return a * b },
+		"intensityDisplay": domain.IntensityDisplay,
 	}
 	tmpl, err := template.New("index.html").Funcs(funcMap).ParseFiles(basePath, tmplPath)
 	if err != nil {
@@ -151,7 +153,8 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 
 	// detail.html
 	detailFuncMap := template.FuncMap{
-		"add": func(a, b int) int { return a + b },
+		"add":              func(a, b int) int { return a + b },
+		"intensityDisplay": domain.IntensityDisplay,
 		"fmtTime": func(t time.Time, layout string) string {
 			return t.In(jst).Format(layout)
 		},
@@ -187,7 +190,8 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 		"fmtTime": func(t time.Time, layout string) string {
 			return t.In(jst).Format(layout)
 		},
-		"intensityLevel": domain.IntensityLevel,
+		"intensityLevel":   domain.IntensityLevel,
+		"intensityDisplay": domain.IntensityDisplay,
 	}
 	historyTmplPath := filepath.Join(templatePath, "history.html")
 	historyTmpl, err := template.New("history.html").Funcs(historyFuncMap).ParseFiles(basePath, historyTmplPath)
@@ -195,10 +199,40 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 		panic(fmt.Sprintf("history template parse error: %v", err))
 	}
 
-	return &SimpleHTMLGenerator{tmpl: tmpl, detailTmpl: detailTmpl, aboutTmpl: aboutTmpl, historyTmpl: historyTmpl}
+	// pref.html
+	prefFuncMap := template.FuncMap{
+		"fmtTime": func(t time.Time, layout string) string {
+			return t.In(jst).Format(layout)
+		},
+		"intensityClass":   domain.IntensityPillClassFor,
+		"intensityDisplay": domain.IntensityDisplay,
+		"prefMaxIntFor": func(eq domain.EarthquakeRecord, prefCode string) string {
+			for _, p := range eq.ObservedPrefs {
+				if p.Code == prefCode {
+					return p.MaxInt
+				}
+			}
+			return "-"
+		},
+		"divf": func(a, b float64) float64 {
+			if b == 0 {
+				return 0
+			}
+			return a / b
+		},
+		"addf": func(a, b float64) float64 { return a + b },
+		"itof": func(i int) float64 { return float64(i) },
+		"not":  func(b bool) bool { return !b },
+	}
+	prefTmplPath := filepath.Join(templatePath, "pref.html")
+	prefTmpl, err := template.New("pref.html").Funcs(prefFuncMap).ParseFiles(basePath, prefTmplPath)
+	if err != nil {
+		panic(fmt.Sprintf("pref template parse error: %v", err))
+	}
+
+	return &SimpleHTMLGenerator{tmpl: tmpl, detailTmpl: detailTmpl, aboutTmpl: aboutTmpl, historyTmpl: historyTmpl, prefTmpl: prefTmpl}
 }
 
-// TODO: 回数のランキングと最大震度のランキングを含むHTMLを生成できるように変更する
 // Generate: 地震イベントJSONからHTMLランキング表を生成
 // func (g *SimpleHTMLGenerator) Generate(data []byte) ([]byte, error) {
 func (g *SimpleHTMLGenerator) Generate(
@@ -346,6 +380,74 @@ func (g *SimpleHTMLGenerator) GenerateDetail(detail domain.EarthquakeDetail) (do
 	}
 	if err := g.detailTmpl.Execute(&buf, dataMap); err != nil {
 		return "", fmt.Errorf("detail template execute failed: %w", err)
+	}
+	return domain.PublishedHTML(buf.String()), nil
+}
+
+// GeneratePref は都道府県別ページのHTMLを生成する。
+func (g *SimpleHTMLGenerator) GeneratePref(data domain.PrefPageData) (domain.PublishedHTML, error) {
+	jst := time.FixedZone("JST", 9*60*60)
+
+	// 1時間ごとのChart.js用ラベルを生成（日付が変わる0時のみ日付、それ以外は空文字）
+	hourlyLabels := make([]string, len(data.HourlyHours))
+	hourlyTooltipLabels := make([]string, len(data.HourlyHours))
+	for i, t := range data.HourlyHours {
+		jt := t.In(jst)
+		if jt.Hour() == 0 {
+			hourlyLabels[i] = jt.Format("1/2")
+		} else {
+			hourlyLabels[i] = ""
+		}
+		hourlyTooltipLabels[i] = jt.Format("1/2 15:04") + "〜"
+	}
+
+	// JSON化（template.JS でエスケープなし出力）
+	labelsJSON, _ := json.Marshal(hourlyLabels)
+	countsJSON, _ := json.Marshal(data.HourlyCounts)
+	tooltipJSON, _ := json.Marshal(hourlyTooltipLabels)
+
+	// 震源地マップ用JSON: [lat, lng, magnitude, 観測震度, 震源名, 時刻文字列, URL]
+	type epicenterEntry [7]interface{}
+	epicenterEntries := make([]epicenterEntry, 0, len(data.Epicenters))
+	for _, ep := range data.Epicenters {
+		epicenterEntries = append(epicenterEntries, epicenterEntry{
+			ep.Lat,
+			ep.Lng,
+			ep.Magnitude,
+			ep.PrefMaxInt,
+			ep.Hypocenter,
+			ep.OccurredAt.In(jst).Format("2006-01-02 15:04"),
+			ep.DetailURL,
+		})
+	}
+	epicenterJSON, _ := json.Marshal(epicenterEntries)
+
+	var buf bytes.Buffer
+	dataMap := map[string]interface{}{
+		"BrandSub":              data.PrefName + "の地震情報",
+		"PrefCode":              data.PrefCode,
+		"PrefName":              data.PrefName,
+		"WeekRank":              data.WeekRank,
+		"WeekCount":             data.WeekCount,
+		"WeekRatio":             data.WeekRatio,
+		"WeekAvg":               data.WeekAvg,
+		"MaxIntensity":          data.MaxIntensity,
+		"MaxIntensityAt":        data.MaxIntensityAt,
+		"TodayCount":            data.TodayCount,
+		"SurgeScore":            data.SurgeScore,
+		"SurgeRank":             data.SurgeRank,
+		"NationalAvgRatio":      data.NationalAvgRatio,
+		"RecentEarthquakes":     data.RecentEarthquakes,
+		"HourlyLabelsJS":        template.JS(labelsJSON),
+		"HourlyCountsJS":        template.JS(countsJSON),
+		"HourlyTooltipLabelsJS": template.JS(tooltipJSON),
+		"EpicenterJS":           template.JS(epicenterJSON),
+		"UpdatedAt":             data.UpdatedAt,
+		"WeekFrom":              data.WeekFrom,
+		"WeekTo":                data.WeekTo,
+	}
+	if err := g.prefTmpl.Execute(&buf, dataMap); err != nil {
+		return "", fmt.Errorf("pref template execute failed (pref=%s): %w", data.PrefCode, err)
 	}
 	return domain.PublishedHTML(buf.String()), nil
 }

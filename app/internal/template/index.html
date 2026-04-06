@@ -110,6 +110,8 @@
       background: var(--bg-sub); border: 1px solid var(--border);
       border-radius: 6px; padding: 1px 7px; line-height: 1.6;
     }
+    a.ev-pref-item { text-decoration: none; }
+    a.ev-pref-item:hover { background: var(--border); text-decoration: none; }
     @media (max-width: 600px) {
       .event .ev-right { display: none; }
     }
@@ -179,13 +181,13 @@
   <div class="ticker" aria-label="最新情報ティッカー（ホバーで停止）">
     <div class="ticker-track">
       {{- range .LatestEarthquakes}}
-      <span class="tick"><strong>直近</strong> 震度{{.MaxIntensity}} M{{printf "%.1f" .Magnitude}}（{{.Hypocenter}}）</span>
+      <span class="tick"><strong>直近</strong> 震度{{intensityDisplay .MaxIntensity}} M{{printf "%.1f" .Magnitude}}（{{.Hypocenter}}）</span>
       {{- end}}
       {{- range .SurgeRanking}}
       <span class="tick"><strong>急上昇</strong> {{.PrefName}} <span class="badge-up">x{{printf "%.1f" .Score}}</span></span>
       {{- end}}
       {{- range .LatestEarthquakes}}
-      <span class="tick"><strong>直近</strong> 震度{{.MaxIntensity}} M{{printf "%.1f" .Magnitude}}（{{.Hypocenter}}）</span>
+      <span class="tick"><strong>直近</strong> 震度{{intensityDisplay .MaxIntensity}} M{{printf "%.1f" .Magnitude}}（{{.Hypocenter}}）</span>
       {{- end}}
       {{- range .SurgeRanking}}
       <span class="tick"><strong>急上昇</strong> {{.PrefName}} <span class="badge-up">x{{printf "%.1f" .Score}}</span></span>
@@ -285,12 +287,12 @@
           <tbody>
             {{range $i, $r := .WeekPrefectureRanking -}}
             {{if lt $i 10}}
-            <tr class="{{if eq $r.Rank 1}}rank-gold{{else if eq $r.Rank 2}}rank-silver{{else if eq $r.Rank 3}}rank-bronze{{end}}">
+            <tr class="{{if eq $r.Rank 1}}rank-gold{{else if eq $r.Rank 2}}rank-silver{{else if eq $r.Rank 3}}rank-bronze{{end}} clickable" onclick="location.href='/pref/{{$r.PrefCode}}/'">
               <td class="rank">{{$r.Rank}}</td>
               <td>{{$r.PrefName}}</td>
               <td class="metric">{{printf "%.3f" $r.Ratio}}</td>
               <td>{{$r.Count}}</td>
-              <td>{{$r.Intensity}}</td>
+              <td>{{intensityDisplay $r.Intensity}}</td>
             </tr>
             {{end -}}
             {{end}}
@@ -309,12 +311,12 @@
         {{range .LatestEarthquakes}}
         <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
           <div class="left">
-            <p class="ev-title"><span class="pill{{if ge .MaxIntensity "3"}} alert{{end}}" style="margin-right:8px">震度{{.MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
+            <p class="ev-title"><span class="pill{{if ge .MaxIntensity "3"}} alert{{end}}" style="margin-right:8px">震度{{intensityDisplay .MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
             <p class="ev-sub">{{.OccurredAt.Format "2006-01-02 15:04"}}</p>
           </div>
           {{if .ObservedPrefs}}
           <div class="ev-right">
-            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<span class="ev-pref-item">{{$p.Name}}（{{$p.MaxInt}}）</span>{{end}}{{end}}
+            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{$p.Code}}/" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
           </div>
           {{end}}
         </div>
@@ -338,12 +340,12 @@
         {{range .TodayBigEarthquakes}}
         <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
           <div class="left">
-            <p class="ev-title"><span class="pill{{if ge .MaxIntensity "3"}} alert{{end}}" style="margin-right:8px">震度{{.MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
+            <p class="ev-title"><span class="pill{{if ge .MaxIntensity "3"}} alert{{end}}" style="margin-right:8px">震度{{intensityDisplay .MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
             <p class="ev-sub">{{.OccurredAt.Format "2006-01-02 15:04"}}</p>
           </div>
           {{if .ObservedPrefs}}
           <div class="ev-right">
-            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<span class="ev-pref-item">{{$p.Name}}（{{$p.MaxInt}}）</span>{{end}}{{end}}
+            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{$p.Code}}/" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
           </div>
           {{end}}
         </div>
@@ -367,12 +369,12 @@
         {{range .WeekBigEarthquakes}}
         <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
           <div class="left">
-            <p class="ev-title"><span class="pill{{if ge .MaxIntensity "3"}} alert{{end}}" style="margin-right:8px">震度{{.MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
+            <p class="ev-title"><span class="pill{{if ge .MaxIntensity "3"}} alert{{end}}" style="margin-right:8px">震度{{intensityDisplay .MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
             <p class="ev-sub">{{.OccurredAt.Format "2006-01-02 15:04"}}</p>
           </div>
           {{if .ObservedPrefs}}
           <div class="ev-right">
-            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<span class="ev-pref-item">{{$p.Name}}（{{$p.MaxInt}}）</span>{{end}}{{end}}
+            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{$p.Code}}/" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
           </div>
           {{end}}
         </div>
@@ -396,12 +398,12 @@
         {{range .MonthBigEarthquakes}}
         <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
           <div class="left">
-            <p class="ev-title"><span class="pill{{if ge .MaxIntensity "3"}} alert{{end}}" style="margin-right:8px">震度{{.MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
+            <p class="ev-title"><span class="pill{{if ge .MaxIntensity "3"}} alert{{end}}" style="margin-right:8px">震度{{intensityDisplay .MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
             <p class="ev-sub">{{.OccurredAt.Format "2006-01-02 15:04"}}</p>
           </div>
           {{if .ObservedPrefs}}
           <div class="ev-right">
-            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<span class="ev-pref-item">{{$p.Name}}（{{$p.MaxInt}}）</span>{{end}}{{end}}
+            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{$p.Code}}/" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
           </div>
           {{end}}
         </div>
@@ -429,7 +431,7 @@
         </thead>
         <tbody>
           {{range .SurgeRanking}}
-          <tr class="{{if eq .Rank 1}}rank-gold{{else if eq .Rank 2}}rank-silver{{else if eq .Rank 3}}rank-bronze{{end}}">
+          <tr class="{{if eq .Rank 1}}rank-gold{{else if eq .Rank 2}}rank-silver{{else if eq .Rank 3}}rank-bronze{{end}} clickable" onclick="location.href='/pref/{{.PrefCode}}/'">
             <td class="rank">{{.Rank}}</td>
             <td>{{.PrefName}}</td>
             <td>{{.TodayCount}}</td>
@@ -457,12 +459,12 @@
         </thead>
         <tbody>
           {{range .TodayPrefectureRanking}}
-          <tr class="{{if eq .Rank 1}}rank-gold{{else if eq .Rank 2}}rank-silver{{else if eq .Rank 3}}rank-bronze{{end}}">
+          <tr class="{{if eq .Rank 1}}rank-gold{{else if eq .Rank 2}}rank-silver{{else if eq .Rank 3}}rank-bronze{{end}} clickable" onclick="location.href='/pref/{{.PrefCode}}/'">
             <td class="rank">{{.Rank}}</td>
             <td>{{.PrefName}}</td>
             <td>{{.Count}}</td>
             <td>{{printf "%.3f" .Ratio}}</td>
-            <td>{{.Intensity}}</td>
+            <td>{{intensityDisplay .Intensity}}</td>
           </tr>
           {{end}}
         </tbody>
@@ -482,11 +484,11 @@
         </thead>
         <tbody>
           {{range .Ranking}}
-          <tr class="{{if eq .Rank 1}}rank-gold{{else if eq .Rank 2}}rank-silver{{else if eq .Rank 3}}rank-bronze{{end}}">
+          <tr class="{{if eq .Rank 1}}rank-gold{{else if eq .Rank 2}}rank-silver{{else if eq .Rank 3}}rank-bronze{{end}} clickable" onclick="location.href='/pref/{{.PrefCode}}/'">
             <td class="rank">{{.Rank}}</td>
             <td>{{.PrefName}}</td>
             <td>{{.Count}}</td>
-            <td>{{.Intensity}}</td>
+            <td>{{intensityDisplay .Intensity}}</td>
           </tr>
           {{end}}
         </tbody>
@@ -566,6 +568,10 @@
         movesIslands: true,
         borderLineColor: "#d1d5db",
         lang: "ja",
+        onClick: function(area) {
+          var code = String(area.code).padStart(2, "0");
+          location.href = "/pref/" + code + "/";
+        },
       });
     })();
   </script>

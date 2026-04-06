@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{.PrefName}}の地震情報｜地震ランキング</title>
+  <meta name="description" content="{{.PrefName}}の地震発生状況（回数・密度・最大震度・週間推移）をまとめて確認できます。気象庁防災情報XMLをもとに自動集計。" />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://jishinranking.com/pref/{{.PrefCode}}/" />
+  <link rel="icon" href="/jishinranking_32px.png?v=1" type="image/png" />
+  {{template "base_css" .}}
+  <style>
+    /* ===== pref.html 固有スタイル ===== */
+    main { padding: 18px 0 48px; }
+
+    /* パンくず */
+    .breadcrumb { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .breadcrumb a { color: var(--muted); }
+    .breadcrumb a:hover { color: var(--text); text-decoration: underline; }
+
+    /* ページタイトル */
+    .page-title {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 12px; margin: 0 0 16px;
+    }
+    .page-title h2 { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: .01em; }
+    .page-title .meta { text-align: right; font-size: 12px; color: var(--muted); }
+
+    /* セクションタイトル */
+    .section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 12px; }
+    .section-title h3 { margin: 0; font-size: 15px; font-weight: 800; }
+    .section-title .meta { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+    /* KPI グリッド */
+    .kpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    @media (max-width: 860px) { .kpi { grid-template-columns: 1fr 1fr; } }
+    .kpi-item {
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 12px 14px; background: var(--bg-sub);
+    }
+    .kpi-item .label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .kpi-item .value { font-size: 20px; font-weight: 900; letter-spacing: .02em; line-height: 1.3; }
+    .kpi-item .value small { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 4px; }
+    .kpi-item .hint { margin-top: 4px; font-size: 12px; color: var(--text-sub); }
+    .kpi-item.highlight { border-color: rgba(215,0,15,.25); background: var(--accent-weak); }
+    .kpi-item.highlight .value { color: var(--accent); }
+
+    /* 比較ノート */
+    .compare-note {
+      border: 1px solid var(--border); border-radius: 12px;
+      background: var(--bg-sub); padding: 14px;
+      font-size: 13px; color: var(--text-sub); line-height: 1.8;
+    }
+    .compare-note b { color: var(--text); }
+    .compare-note .red { color: var(--accent); font-weight: 900; }
+    .compare-note .green { color: var(--s1-fg); font-weight: 900; }
+
+    /* グラフエリア */
+    .chart-container { position: relative; width: 100%; height: 260px; }
+
+    /* イベントカード */
+    .event-list { display: flex; flex-direction: column; gap: 8px; }
+    .event {
+      border: 1px solid var(--border); border-radius: 12px; padding: 11px 14px;
+      background: #fff; display: flex; justify-content: space-between; gap: 12px; align-items: center;
+      cursor: pointer; transition: background 0.12s;
+    }
+    .event:hover { background: var(--bg-sub); }
+    .event .left { min-width: 0; flex: 1; }
+    .event .ev-title { font-weight: 700; font-size: 13px; margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .event .ev-sub { font-size: 12px; color: var(--muted); margin: 0; }
+    .event .ev-right { flex: 0 0 auto; display: flex; gap: 6px; align-items: center; }
+
+    /* 急上昇バッジ */
+    .surge-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--accent-weak); border: 1px solid rgba(215,0,15,.2);
+      color: var(--accent); border-radius: 999px; padding: 3px 10px;
+      font-size: 12px; font-weight: 900;
+    }
+
+    /* 更新バッジ */
+    .live-badge {
+      display: inline-block; margin-right: 4px; padding: 2px 7px;
+      border-radius: 999px; background: var(--accent); color: #fff;
+      font-size: 11px; font-weight: 700;
+    }
+
+    /* more-link */
+    .more-link {
+      margin-top: 12px; padding-top: 10px;
+      border-top: 1px solid var(--border);
+      text-align: right;
+    }
+    .more-link a { font-size: 13px; font-weight: 700; color: var(--accent); }
+    .more-link a:hover { text-decoration: underline; }
+
+    /* 急上昇スコアの大きい数字 */
+    .surge-score { font-size: 36px; font-weight: 900; color: var(--accent); line-height: 1; }
+
+    /* 急上昇セクションのメタ短縮版（スマホ用） */
+    .surge-meta-short { display: none; }
+
+    /* ===== モバイル対応 (≤480px) ===== */
+    @media (max-width: 480px) {
+      .brand-sub { display: none; }
+      .card { padding: 14px 12px; }
+      .breadcrumb { font-size: 11px; }
+      .page-title { flex-direction: column; gap: 6px; }
+      .page-title h2 { font-size: 18px; }
+      .page-title .meta { text-align: left; white-space: normal; }
+      .section-title { flex-wrap: wrap; gap: 2px 12px; }
+      .section-title .meta { white-space: normal; font-size: 11px; }
+      .kpi-item { padding: 10px; }
+      .kpi-item .label { font-size: 11px; }
+      .kpi-item .value { font-size: 16px; }
+      .kpi-item .value small { font-size: 10px; margin-left: 2px; }
+      .kpi-item .hint { font-size: 11px; }
+      .btn { font-size: 12px; padding: 8px 10px; }
+      .event { padding: 10px 12px; }
+      .event .ev-right { display: none; }
+      .event .ev-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .compare-note { font-size: 12px; line-height: 1.75; padding: 12px; }
+      .more-link a { font-size: 12px; }
+      .surge-score { font-size: 28px !important; }
+      .surge-meta-full { display: none; }
+      .surge-meta-short { display: inline; }
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body>
+
+  {{template "common_header" .}}
+
+  <main class="container">
+
+    <!-- パンくず -->
+    <nav class="breadcrumb" aria-label="パンくず">
+      <a href="/">ホーム</a> &rsaquo; <a href="/all">47都道府県</a> &rsaquo; {{.PrefName}}
+    </nav>
+
+    <!-- ページタイトル -->
+    <div class="page-title">
+      <div>
+        <h2>{{.PrefName}}の地震情報</h2>
+        <p style="margin:4px 0 0;font-size:13px;color:var(--muted);">
+          今週の発生状況・週間推移・最近の地震をまとめて確認できます
+        </p>
+      </div>
+      <div class="meta">
+        <div><span class="live-badge">● 更新</span>&nbsp;{{fmtTime .UpdatedAt "2006-01-02 15:04"}}</div>
+      </div>
+    </div>
+
+    <!-- ===== KPIサマリー ===== -->
+    <section class="card" aria-labelledby="sec-kpi">
+      <div class="section-title">
+        <h3 id="sec-kpi">今週のサマリー</h3>
+        <div class="meta">{{fmtTime .WeekFrom "1/2"}} 〜 {{fmtTime .WeekTo "1/2"}}</div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi-item highlight">
+          <div class="label">全国順位（密度）</div>
+          <div class="value">{{.WeekRank}}<small>位 / 47都道府県</small></div>
+          <div class="hint"><span style="font-size:12px;color:var(--muted);">密度: {{printf "%.2f" .WeekRatio}}回/1000km²</span></div>
+        </div>
+        <div class="kpi-item">
+          <div class="label">地震発生回数</div>
+          <div class="value">{{.WeekCount}}<small>回</small></div>
+          <div class="hint">今週（7日間）</div>
+        </div>
+        <div class="kpi-item">
+          <div class="label">最大震度（今週）</div>
+          {{if eq .MaxIntensity "-"}}
+            <div class="value" style="font-size:16px;"><span class="pill gray" style="font-size:14px;padding:5px 12px;">—</span></div>
+            <div class="hint">観測なし</div>
+          {{else}}
+            <div class="value" style="font-size:16px;"><span class="pill {{intensityClass .MaxIntensity}}" style="font-size:14px;padding:5px 12px;">震度{{intensityDisplay .MaxIntensity}}</span></div>
+            <div class="hint">{{fmtTime .MaxIntensityAt "2006-01-02 15:04"}}</div>
+          {{end}}
+        </div>
+        {{if gt .SurgeScore 0.0}}
+        <div class="kpi-item">
+          <div class="label">急上昇スコア</div>
+          <div class="value" style="color:var(--accent);">x{{printf "%.1f" .SurgeScore}}</div>
+          <div class="hint">本日 {{.TodayCount}}回</div>
+        </div>
+        {{else}}
+        <div class="kpi-item">
+          <div class="label">本日の発生回数</div>
+          <div class="value">{{.TodayCount}}<small>回</small></div>
+          <div class="hint">7日平均: {{printf "%.1f" .WeekAvg}}回/日</div>
+        </div>
+        {{end}}
+      </div>
+
+      <div class="compare-note" style="margin-top:14px;">
+        今週の発生密度は <b>{{printf "%.2f" .WeekRatio}} 回/1000km²</b> で全国{{.WeekRank}}位。
+        {{if gt .NationalAvgRatio 0.0}}
+          全国平均（<b>{{printf "%.2f" .NationalAvgRatio}}</b> 回/1000km²）の約
+          {{if gt .WeekRatio .NationalAvgRatio}}
+            <span class="red">{{printf "%.1f" (divf .WeekRatio .NationalAvgRatio)}}倍</span>。
+          {{else}}
+            <span class="green">{{printf "%.1f" (divf .NationalAvgRatio .WeekRatio)}}分の1</span>。
+          {{end}}
+        {{end}}
+        本日（24h）は <b>{{.TodayCount}}回</b>、7日平均は <b>{{printf "%.1f" .WeekAvg}}回/日</b>。
+        {{if ne .MaxIntensity "-"}}
+          今週の最大震度は <span class="red">震度{{intensityDisplay .MaxIntensity}}</span>（{{fmtTime .MaxIntensityAt "1月2日 15:04"}}）。
+        {{end}}
+      </div>
+    </section>
+
+    <!-- ===== 最近の地震 ===== -->
+    <section id="recent" class="card mt" aria-labelledby="sec-recent">
+      <div class="section-title">
+        <h3 id="sec-recent">最近の地震（{{.PrefName}}が観測された地震）</h3>
+        <div class="meta">過去7日間・新しい順</div>
+      </div>
+
+      {{if .RecentEarthquakes}}
+      <div class="event-list">
+        {{range .RecentEarthquakes}}
+        {{$prefMaxInt := prefMaxIntFor . $.PrefCode}}
+        <div class="event" onclick="location.href='{{.DetailURL}}'">
+          <div class="left">
+            <p class="ev-title">
+              <span class="pill {{intensityClass $prefMaxInt}}" style="margin-right:8px">震度{{intensityDisplay $prefMaxInt}}</span>
+              {{.Hypocenter}}&nbsp;&nbsp;M{{printf "%.1f" .Magnitude}}
+            </p>
+            <p class="ev-sub">{{fmtTime .OccurredAt "2006-01-02 15:04"}} / {{$.PrefName}}での観測震度: <strong>{{intensityDisplay $prefMaxInt}}</strong></p>
+          </div>
+          <div class="ev-right">
+            <span class="pill gray">詳細 ›</span>
+          </div>
+        </div>
+        {{end}}
+      </div>
+      {{else}}
+      <p style="font-size:13px;color:var(--muted);margin:0;">今週の該当地震はありません。</p>
+      {{end}}
+
+      <div class="more-link">
+        <a href="/eq/week/">今週の全地震履歴を見る &rsaquo;</a>
+      </div>
+    </section>
+
+    <!-- ===== 週間推移グラフ ===== -->
+    <section id="chart" class="card mt" aria-labelledby="sec-chart">
+      <div class="section-title">
+        <h3 id="sec-chart">発生回数（過去7日間）</h3>
+        <div class="meta">{{.PrefName}} / 1時間単位</div>
+      </div>
+      <div class="chart-container">
+        <canvas id="hourly-chart" aria-label="{{.PrefName}}の1時間ごとの地震発生回数（過去7日間）" role="img"></canvas>
+      </div>
+      <p style="margin:8px 0 0;font-size:12px;color:var(--muted);">
+        ※ 棒グラフは1時間単位のカウント。横軸は日付のみ表示
+      </p>
+    </section>
+
+    <!-- ===== 震源地マップ ===== -->
+    {{if .RecentEarthquakes}}
+    <section id="epicenter-map-section" class="card mt" aria-labelledby="sec-map">
+      <div class="section-title">
+        <h3 id="sec-map">震源地マップ</h3>
+        <div class="meta">{{.PrefName}}が観測した地震 / 過去7日間</div>
+      </div>
+      <div id="epicenter-map" style="width:100%;height:340px;border-radius:10px;overflow:hidden;"></div>
+      <p style="margin:8px 0 0;font-size:12px;color:var(--muted);">
+        ※ マーカーの大きさと色はマグニチュードを示します。タップ／クリックで詳細を確認できます。
+      </p>
+    </section>
+    {{end}}
+
+    <!-- ===== 急上昇情報 ===== -->
+    {{if gt .SurgeScore 0.0}}
+    <section class="card mt" aria-labelledby="sec-surge">
+      <div class="section-title">
+        <h3 id="sec-surge">急上昇スコア</h3>
+        <div class="meta">
+          <span class="surge-meta-full">score = (24h回数+1) ÷ (7日平均+1)</span>
+          <span class="surge-meta-short">スコア算出方法</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+        <div class="surge-score">x{{printf "%.1f" .SurgeScore}}</div>
+        <div>
+          <div style="font-size:13px;color:var(--text-sub);">
+            今日（24h）: <strong>{{.TodayCount}}回</strong>　7日平均: <strong>{{printf "%.1f" .WeekAvg}}回/日</strong>
+          </div>
+          {{if gt .SurgeRank 0}}
+          <div style="font-size:12px;color:var(--muted);margin-top:4px;">
+            全国急上昇ランキング <span class="surge-badge">{{.SurgeRank}}位</span>
+          </div>
+          {{end}}
+        </div>
+      </div>
+
+      <div class="compare-note" style="font-size:12px;">
+        急上昇スコアが <b>2.0</b> 以上かつ24h回数が <b>3回</b> 以上の場合にランキングに掲載されます。
+        現在の{{.PrefName}}は条件を満たしています。
+      </div>
+    </section>
+    {{end}}
+
+    <!-- ===== CTAセクション ===== -->
+    <section class="card mt" aria-labelledby="sec-cta">
+      <div class="section-title">
+        <h3 id="sec-cta">次に見る</h3>
+      </div>
+      <div class="btn-row">
+        <a class="btn primary" href="/">全国ランキングへ</a>
+        <a class="btn" href="/#heatmap">ヒートマップへ</a>
+        <a class="btn" href="/eq/week/">今週の地震履歴</a>
+        <a class="btn" href="/about.html">このサイトについて</a>
+      </div>
+      <p style="margin:10px 0 0;font-size:12px;color:var(--muted);">
+        ※本ページの表示は参考情報です。正確な情報は<a href="https://www.jma.go.jp/" target="_blank" rel="noopener noreferrer" style="color:var(--muted);text-decoration:underline;">気象庁公式サイト</a>をご確認ください。
+      </p>
+    </section>
+
+  </main>
+
+  {{template "common_footer" .}}
+
+  <!-- ===== グラフ描画（Chart.js） ===== -->
+  <script>
+    (() => {
+      const ctx = document.getElementById("hourly-chart");
+      if (!ctx) return;
+
+      const rawLabels = {{.HourlyLabelsJS}};
+      const rawData   = {{.HourlyCountsJS}};
+
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: rawLabels,
+          datasets: [{
+            label: "{{.PrefName}} 発生回数",
+            data: rawData,
+            backgroundColor: "rgba(215, 0, 15, 0.6)",
+            borderColor:     "rgba(215, 0, 15, 0.9)",
+            borderWidth: 1,
+            borderRadius: 2,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: {
+                maxRotation: 0,
+                minRotation: 0,
+                font: { size: 11 },
+                autoSkip: false,
+              }
+            },
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: "発生回数" },
+              ticks: { stepSize: 1 }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: (items) => {
+                  const idx = items[0].dataIndex;
+                  return {{.HourlyTooltipLabelsJS}}[idx] || rawLabels[idx];
+                },
+                label: (item) => ` ${item.raw}回`,
+              }
+            }
+          }
+        }
+      });
+    })();
+  </script>
+
+  <!-- ===== 震源地マップ描画（Leaflet） ===== -->
+  {{if .RecentEarthquakes}}
+  <script>
+    (() => {
+      const mapEl = document.getElementById("epicenter-map");
+      if (!mapEl || typeof L === "undefined") return;
+
+      // 震源データ: [lat, lng, magnitude, 観測震度, 震源名, 発生時刻文字列, 詳細URL]
+      const earthquakes = {{.EpicenterJS}};
+
+      if (earthquakes.length === 0) return;
+
+      // 地図の中心を最初の地震の座標に設定（座標あり優先）
+      const withCoords = earthquakes.filter(e => e[0] !== 0 && e[1] !== 0);
+      const center = withCoords.length > 0
+        ? [withCoords[0][0], withCoords[0][1]]
+        : [36.5, 138.0]; // 日本中心付近をデフォルト
+
+      const map = L.map("epicenter-map").setView(center, 7);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 18,
+      }).addTo(map);
+
+      const MARKER_COLOR = "#d7000f";
+
+      const magnitudeOpacity = (m) => {
+        if (m >= 5.0) return 1.0;
+        if (m >= 4.0) return 0.75;
+        if (m >= 3.0) return 0.50;
+        return 0.30;
+      };
+
+      earthquakes.forEach(([lat, lng, mag, intensity, name, time, url]) => {
+        if (lat === 0 && lng === 0) return; // 座標不明はスキップ
+        const radius = 6 + mag * 2;
+        const marker = L.circleMarker([lat, lng], {
+          radius,
+          fillColor: MARKER_COLOR,
+          color: "#fff",
+          weight: 2,
+          opacity: 1,
+          fillOpacity: magnitudeOpacity(mag),
+        }).addTo(map);
+
+        marker.bindPopup(
+          `<strong style="font-size:13px;">${name}</strong><br/>` +
+          `<span style="color:${MARKER_COLOR};font-weight:700;font-size:14px;">M${mag.toFixed(1)}</span>&nbsp;&nbsp;震度${intensity}（{{.PrefName}}）<br/>` +
+          `<small style="color:#666;">${time}</small><br/>` +
+          `<a href="${url}" style="color:#d7000f;font-weight:700;">詳細を見る →</a>`
+        );
+      });
+
+      // 凡例
+      const legend = L.control({ position: "bottomright" });
+      legend.onAdd = () => {
+        const div = L.DomUtil.create("div");
+        div.style.cssText = "background:#fff;padding:8px 10px;border-radius:8px;font-size:11px;line-height:1.8;box-shadow:0 2px 8px rgba(0,0,0,.15);";
+        div.innerHTML =
+          "<strong style='font-size:12px;'>マグニチュード</strong><br/>" +
+          "<span style='color:rgba(215,0,15,1.0);'>●</span> M5.0以上<br/>" +
+          "<span style='color:rgba(215,0,15,0.75);'>●</span> M4.0〜M4.9<br/>" +
+          "<span style='color:rgba(215,0,15,0.50);'>●</span> M3.0〜M3.9<br/>" +
+          "<span style='color:rgba(215,0,15,0.30);'>●</span> M3.0未満";
+        return div;
+      };
+      legend.addTo(map);
+    })();
+  </script>
+  {{end}}
+
+</body>
+</html>

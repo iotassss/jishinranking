@@ -183,7 +183,7 @@
       <div class="eq-main">
         <div class="eq-main-mag">
           <div class="eq-main-label">最大震度</div>
-          <div class="eq-main-num">{{if ne .MaxIntensity "-"}}{{.MaxIntensity}}{{else}}―{{end}}</div>
+          <div class="eq-main-num">{{if ne .MaxIntensity "-"}}{{intensityDisplay .MaxIntensity}}{{else}}―{{end}}</div>
         </div>
         <div class="eq-main-divider"></div>
         <div class="eq-main-mag eq-main-mag--sub">
@@ -209,7 +209,7 @@
         <div class="fact"><span>見出し</span><b>「{{.HeadlineText}}」</b></div>
         {{end}}
         {{if .ObservedPrefs}}
-        <div class="fact"><span>観測都県</span><b>{{index .ObservedPrefs 0 | prefName}}（震度{{index .ObservedPrefs 0 | prefMaxInt}}）{{if gt (len .ObservedPrefs) 1}}ほか{{add (len .ObservedPrefs) -1}}都県{{end}}</b></div>
+        <div class="fact"><span>観測都県</span><b>{{with index .ObservedPrefs 0}}<a href="/pref/{{.Code}}/">{{.Name}}</a>（震度{{intensityDisplay .MaxInt}}）{{end}}{{if gt (len .ObservedPrefs) 1}}ほか{{add (len .ObservedPrefs) -1}}都県{{end}}</b></div>
         {{end}}
         <div class="fact"><span>データ出典</span><b><a href="https://xml.kishou.go.jp/xmlpull.html" target="_blank" rel="noopener noreferrer">気象庁 防災情報XML（VXSE53）</a></b></div>
       </div>
@@ -239,8 +239,8 @@
           <tbody>
             {{range .ObservedPrefs}}
             <tr>
-              <td>{{.Name}}</td>
-              <td class="center"><span class="pill {{intensityClass .MaxInt}}">震度{{.MaxInt}}</span></td>
+              <td><a href="/pref/{{.Code}}/">{{.Name}}</a></td>
+              <td class="center"><span class="pill {{intensityClass .MaxInt}}">震度{{intensityDisplay .MaxInt}}</span></td>
               <td>{{joinStrings .AreaNames "・"}}</td>
             </tr>
             {{end}}
@@ -261,7 +261,7 @@
           <div class="maphead">
             <div>震源：{{.Hypocenter}}</div>
             {{if ne .MaxIntensity "-"}}
-            <div>最大震度：<span class="pill {{intensityClass .MaxIntensity}}" style="padding:4px 10px;">{{.MaxIntensity}}</span></div>
+            <div>最大震度：<span class="pill {{intensityClass .MaxIntensity}}" style="padding:4px 10px;">{{intensityDisplay .MaxIntensity}}</span></div>
             {{end}}
           </div>
           {{if .CoordinateKnown}}

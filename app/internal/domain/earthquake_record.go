@@ -8,13 +8,16 @@ import (
 )
 
 type EarthquakeRecord struct {
-	EventID       string                `json:"event_id"`
-	OccurredAt    time.Time             `json:"occurred_at"`
-	Hypocenter    string                `json:"hypocenter"`
-	Magnitude     float64               `json:"magnitude"`
-	MaxIntensity  string                `json:"max_intensity"`
-	DetailURL     string                `json:"detail_url"`
-	ObservedPrefs []PrefIntensityDetail `json:"observed_prefs"`
+	EventID         string                `json:"event_id"`
+	OccurredAt      time.Time             `json:"occurred_at"`
+	Hypocenter      string                `json:"hypocenter"`
+	Latitude        float64               `json:"latitude"`
+	Longitude       float64               `json:"longitude"`
+	CoordinateKnown bool                  `json:"coordinate_known"`
+	Magnitude       float64               `json:"magnitude"`
+	MaxIntensity    string                `json:"max_intensity"`
+	DetailURL       string                `json:"detail_url"`
+	ObservedPrefs   []PrefIntensityDetail `json:"observed_prefs"`
 }
 
 type EarthquakeRecordList []EarthquakeRecord
@@ -137,31 +140,32 @@ func IntensityLevel(s string) int {
 	return intensityToInt(s)
 }
 
+// IntensityDisplay は震度文字列を表示用の日本語形式に変換する。
+// JMA XML の "5-"→"5弱", "5+"→"5強", "6-"→"6弱", "6+"→"6強"。
+// それ以外の値はそのまま返す。
+func IntensityDisplay(s string) string {
+	switch s {
+	case "5-":
+		return "5弱"
+	case "5+":
+		return "5強"
+	case "6-":
+		return "6弱"
+	case "6+":
+		return "6強"
+	default:
+		return s
+	}
+}
+
 // intensityToInt は最大震度の文字列を比較用の整数に変換する。
+// JMA XML の表記（"5-"=震度5弱, "5+"=震度5強, "6-"=震度6弱, "6+"=震度6強）に対応する。
 // 大きいほど強い震度を表す。
 func intensityToInt(s string) int {
-	switch s {
-	case "7":
-		return 9
-	case "6強":
-		return 8
-	case "6弱":
-		return 7
-	case "5強":
-		return 6
-	case "5弱":
-		return 5
-	case "4":
-		return 4
-	case "3":
-		return 3
-	case "2":
-		return 2
-	case "1":
-		return 1
-	default:
-		return 0
+	if v, ok := intensityOrder[s]; ok {
+		return v
 	}
+	return 0
 }
 
 func makeEarthquakeRecord(report Report) (EarthquakeRecord, bool) {
@@ -214,13 +218,26 @@ func makeEarthquakeRecord(report Report) (EarthquakeRecord, bool) {
 		})
 	}
 
+	var lat, lng float64
+	coordinateKnown := false
+	if report.Body.Earthquake.Hypocenter != nil && report.Body.Earthquake.Hypocenter.Area != nil {
+		if coord := strings.TrimSpace(report.Body.Earthquake.Hypocenter.Area.Coordinate); coord != "" {
+			if la, lo, _, ok := parseCoordinate(coord); ok {
+				lat, lng, coordinateKnown = la, lo, true
+			}
+		}
+	}
+
 	return EarthquakeRecord{
-		EventID:       strings.TrimSpace(report.Head.EventID),
-		OccurredAt:    occurredAt,
-		Hypocenter:    hypocenter,
-		Magnitude:     magnitude,
-		MaxIntensity:  maxIntensity,
-		DetailURL:     report.Metadata.URL,
-		ObservedPrefs: prefs,
+		EventID:         strings.TrimSpace(report.Head.EventID),
+		OccurredAt:      occurredAt,
+		Hypocenter:      hypocenter,
+		Latitude:        lat,
+		Longitude:       lng,
+		CoordinateKnown: coordinateKnown,
+		Magnitude:       magnitude,
+		MaxIntensity:    maxIntensity,
+		DetailURL:       report.Metadata.URL,
+		ObservedPrefs:   prefs,
 	}, true
 }

@@ -78,7 +78,7 @@ func BuildSummary(
 	if intensity3Count > 0 && maxIntensityPref != "" {
 		parts = append(parts, fmt.Sprintf(
 			"震度3以上を観測した都道府県は%d件で、最大震度%sは%sで記録されました。",
-			intensity3Count, maxIntensityVal, maxIntensityPref,
+			intensity3Count, IntensityDisplay(maxIntensityVal), maxIntensityPref,
 		))
 	} else if intensity3Count == 0 && len(weekPrefectureRanking) > 0 {
 		parts = append(parts, "集計期間中に震度3以上の揺れは観測されませんでした。")
@@ -98,7 +98,7 @@ func BuildSummary(
 		eq := latestEarthquakes[0]
 		parts = append(parts, fmt.Sprintf(
 			"直近6時間では%sを震源とする震度%s・M%.1fの地震が観測されています（%s）。",
-			eq.Hypocenter, eq.MaxIntensity, eq.Magnitude, eq.OccurredAt.In(jst).Format("01/02 15:04"),
+			eq.Hypocenter, IntensityDisplay(eq.MaxIntensity), eq.Magnitude, eq.OccurredAt.In(jst).Format("01/02 15:04"),
 		))
 	}
 

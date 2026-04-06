@@ -276,5 +276,41 @@ func (h *Handler) ProcessV2(
 		slog.Warn("eq/index.html redirect save failed", "err", err)
 	}
 
+	// ==============================
+	// 都道府県別ページ生成・保存 (/pref/01/ 〜 /pref/47/)
+	// ==============================
+
+	// 全国平均密度を計算（全都道府県の密度平均）
+	nationalAvgRatio := domain.CalcNationalAvgRatio(weekPrefectureRanking)
+
+	// 今週全地震リスト（都道府県フィルタ用）
+	allWeekEarthquakes := thisWeekReports.FilterByTelegramCode(domain.TelegramCodeEarthquakeDetail).AllEarthquakesInPeriod(now, 7*24*time.Hour)
+
+	prefSuccessCount := 0
+	for _, prefCode := range domain.PrefCodeList {
+		prefData := domain.MakePrefPageData(
+			prefCode,
+			weekPrefectureRanking,
+			todayPrefectureRanking,
+			surgeRanking,
+			hourlyEarthquake,
+			allWeekEarthquakes,
+			nationalAvgRatio,
+			now, oneWeekAgo, now,
+		)
+		prefHTML, err := h.htmlGenerator.GeneratePref(prefData)
+		if err != nil {
+			slog.Warn("pref HTML generation failed", "prefCode", prefCode, "err", err)
+			continue
+		}
+		prefKey := fmt.Sprintf("pref/%s/index.html", prefCode)
+		if err := h.htmlRepo.Save(ctx, prefKey, prefHTML); err != nil {
+			slog.Warn("pref HTML save failed", "prefCode", prefCode, "err", err)
+			continue
+		}
+		prefSuccessCount++
+	}
+	slog.Info("Prefecture pages generated", "success", prefSuccessCount, "total", len(domain.PrefCodeList))
+
 	return nil
 }
