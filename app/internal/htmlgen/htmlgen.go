@@ -18,11 +18,12 @@ type EarthquakeEvent struct {
 }
 
 type SimpleHTMLGenerator struct {
-	tmpl        *template.Template
-	detailTmpl  *template.Template
-	aboutTmpl   *template.Template
-	historyTmpl *template.Template
-	prefTmpl    *template.Template
+	tmpl            *template.Template
+	detailTmpl      *template.Template
+	aboutTmpl       *template.Template
+	historyTmpl     *template.Template
+	prefTmpl        *template.Template
+	prefRankingTmpl *template.Template
 }
 
 // ---- hourly chart helpers ----
@@ -230,7 +231,21 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 		panic(fmt.Sprintf("pref template parse error: %v", err))
 	}
 
-	return &SimpleHTMLGenerator{tmpl: tmpl, detailTmpl: detailTmpl, aboutTmpl: aboutTmpl, historyTmpl: historyTmpl, prefTmpl: prefTmpl}
+	// pref_ranking.html
+	prefRankingFuncMap := template.FuncMap{
+		"fmtTime": func(t time.Time, layout string) string {
+			return t.In(jst).Format(layout)
+		},
+		"intensityDisplay": domain.IntensityDisplay,
+		"intensityLevel":   domain.IntensityLevel,
+	}
+	prefRankingTmplPath := filepath.Join(templatePath, "pref_ranking.html")
+	prefRankingTmpl, err := template.New("pref_ranking.html").Funcs(prefRankingFuncMap).ParseFiles(basePath, prefRankingTmplPath)
+	if err != nil {
+		panic(fmt.Sprintf("pref_ranking template parse error: %v", err))
+	}
+
+	return &SimpleHTMLGenerator{tmpl: tmpl, detailTmpl: detailTmpl, aboutTmpl: aboutTmpl, historyTmpl: historyTmpl, prefTmpl: prefTmpl, prefRankingTmpl: prefRankingTmpl}
 }
 
 // Generate: 地震イベントJSONからHTMLランキング表を生成
@@ -448,6 +463,27 @@ func (g *SimpleHTMLGenerator) GeneratePref(data domain.PrefPageData) (domain.Pub
 	}
 	if err := g.prefTmpl.Execute(&buf, dataMap); err != nil {
 		return "", fmt.Errorf("pref template execute failed (pref=%s): %w", data.PrefCode, err)
+	}
+	return domain.PublishedHTML(buf.String()), nil
+}
+
+// GeneratePrefRanking は全47都道府県ランキングページのHTMLを生成する。
+func (g *SimpleHTMLGenerator) GeneratePrefRanking(
+	todayRanking domain.RankingRecordList,
+	weekRanking domain.RankingRecordList,
+	now time.Time,
+) (domain.PublishedHTML, error) {
+	jst := time.FixedZone("JST", 9*60*60)
+	var buf bytes.Buffer
+	dataMap := map[string]interface{}{
+		"BrandSub":     "都道府県別 地震ランキング",
+		"TodayRanking": todayRanking,
+		"WeekRanking":  weekRanking,
+		"Now":          now.In(jst).Format(time.RFC3339),
+		"NowTime":      now,
+	}
+	if err := g.prefRankingTmpl.Execute(&buf, dataMap); err != nil {
+		return "", fmt.Errorf("pref_ranking template execute failed: %w", err)
 	}
 	return domain.PublishedHTML(buf.String()), nil
 }

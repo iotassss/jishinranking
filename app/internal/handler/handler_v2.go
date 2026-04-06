@@ -312,5 +312,17 @@ func (h *Handler) ProcessV2(
 	}
 	slog.Info("Prefecture pages generated", "success", prefSuccessCount, "total", len(domain.PrefCodeList))
 
+	// ==============================
+	// 都道府県別ランキング一覧ページ生成・保存 (/pref/ranking/)
+	// ==============================
+	prefRankingHTML, err := h.htmlGenerator.GeneratePrefRanking(todayPrefectureRanking, weekPrefectureRanking, now)
+	if err != nil {
+		slog.Warn("pref ranking HTML generation failed", "err", err)
+	} else if err := h.htmlRepo.Save(ctx, "pref/ranking/index.html", prefRankingHTML); err != nil {
+		slog.Warn("pref ranking HTML save failed", "err", err)
+	} else {
+		slog.Info("Prefecture ranking page generated")
+	}
+
 	return nil
 }

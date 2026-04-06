@@ -127,6 +127,8 @@
 
     /* Misc */
     .empty-notice { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
+    .heading-link { color: inherit; text-decoration: none; }
+    .heading-link:hover { text-decoration: underline; color: var(--accent); }
     .more-link {
       margin-top: 12px; padding-top: 10px;
       border-top: 1px solid var(--border);
@@ -214,7 +216,7 @@
           <div class="hint">集計期間: {{.ReportPeriod}}</div>
         </div>
         <div class="kv-item">
-          <div class="label">今週 最多密度</div>
+          <div class="label">今週 面積あたりの地震の多さ</div>
           {{- if .WeekPrefectureRanking}}
           {{- with index .WeekPrefectureRanking 0}}
           <div class="value">{{.PrefName}}<small>{{printf "%.2f" .Ratio}} 回/1000km²</small></div>
@@ -332,7 +334,7 @@
 
     <section class="card mt" aria-labelledby="sec-today-big">
       <div class="section-title">
-        <h2 id="sec-today-big">本日の大きい地震（過去24時間・最大震度2以上）</h2>
+        <h2 id="sec-today-big"><a class="heading-link" href="/eq/today/">本日の大きい地震（過去24時間・最大震度2以上）</a></h2>
         <div class="meta">震度の大きい順</div>
       </div>
       {{if .TodayBigEarthquakes}}
@@ -361,7 +363,7 @@
 
     <section class="card mt" aria-labelledby="sec-week-big">
       <div class="section-title">
-        <h2 id="sec-week-big">今週の大きい地震（過去168時間・最大震度3以上）</h2>
+        <h2 id="sec-week-big"><a class="heading-link" href="/eq/week/">今週の大きい地震（過去168時間・最大震度3以上）</a></h2>
         <div class="meta">震度の大きい順</div>
       </div>
       {{if .WeekBigEarthquakes}}
@@ -390,7 +392,7 @@
 
     <section class="card mt" aria-labelledby="sec-month-big">
       <div class="section-title">
-        <h2 id="sec-month-big">今月の大きい地震（過去720時間・最大震度4以上）</h2>
+        <h2 id="sec-month-big"><a class="heading-link" href="/eq/month/">今月の大きい地震（過去720時間・最大震度4以上）</a></h2>
         <div class="meta">震度の大きい順</div>
       </div>
       {{if .MonthBigEarthquakes}}
@@ -448,8 +450,8 @@
 
     <section class="card mt" aria-labelledby="sec-today-pref">
       <div class="section-title">
-        <h2 id="sec-today-pref">本日の都道府県別地震ランキング（回/1,000km²）</h2>
-        <div class="meta">過去24時間</div>
+        <h2 id="sec-today-pref"><a class="heading-link" href="/pref/ranking/">本日の都道府県別地震ランキング（回/1,000km²）</a></h2>
+        <div class="meta">過去24時間・上位5件</div>
       </div>
       <table aria-label="本日の都道府県別地震ランキング">
         <thead>
@@ -458,41 +460,52 @@
           </tr>
         </thead>
         <tbody>
-          {{range .TodayPrefectureRanking}}
-          <tr class="{{if eq .Rank 1}}rank-gold{{else if eq .Rank 2}}rank-silver{{else if eq .Rank 3}}rank-bronze{{end}} clickable" onclick="location.href='/pref/{{.PrefCode}}/'">
-            <td class="rank">{{.Rank}}</td>
-            <td>{{.PrefName}}</td>
-            <td>{{.Count}}</td>
-            <td>{{printf "%.3f" .Ratio}}</td>
-            <td>{{intensityDisplay .Intensity}}</td>
+          {{range $i, $r := .TodayPrefectureRanking -}}
+          {{if lt $i 5}}
+          <tr class="{{if eq $r.Rank 1}}rank-gold{{else if eq $r.Rank 2}}rank-silver{{else if eq $r.Rank 3}}rank-bronze{{end}} clickable" onclick="location.href='/pref/{{$r.PrefCode}}/'">
+            <td class="rank">{{$r.Rank}}</td>
+            <td>{{$r.PrefName}}</td>
+            <td>{{$r.Count}}</td>
+            <td class="metric">{{printf "%.3f" $r.Ratio}}</td>
+            <td>{{intensityDisplay $r.Intensity}}</td>
           </tr>
+          {{end -}}
           {{end}}
         </tbody>
       </table>
+      <div class="more-link">
+        <a href="/pref/ranking/">全47都道府県のランキングを見る &rsaquo;</a>
+      </div>
     </section>
 
-    <section class="card mt" aria-labelledby="sec-all-ranking">
+    <section class="card mt" aria-labelledby="sec-week-pref">
       <div class="section-title">
-        <h2 id="sec-all-ranking">都道府県別 地震ランキング（過去1週間・回数順）</h2>
-        <div class="meta">47都道府県</div>
+        <h2 id="sec-week-pref"><a class="heading-link" href="/pref/ranking/">今週の都道府県別地震ランキング（回/1,000km²）</a></h2>
+        <div class="meta">過去7日間・上位5件</div>
       </div>
-      <table aria-label="47都道府県 地震ランキング">
+      <table aria-label="今週の都道府県別地震ランキング">
         <thead>
           <tr>
-            <th style="width:44px">順位</th><th>都道府県</th><th>発生回数</th><th>最大震度</th>
+            <th style="width:44px">順位</th><th>都道府県</th><th>発生回数</th><th>回/1000km²</th><th>最大震度</th>
           </tr>
         </thead>
         <tbody>
-          {{range .Ranking}}
-          <tr class="{{if eq .Rank 1}}rank-gold{{else if eq .Rank 2}}rank-silver{{else if eq .Rank 3}}rank-bronze{{end}} clickable" onclick="location.href='/pref/{{.PrefCode}}/'">
-            <td class="rank">{{.Rank}}</td>
-            <td>{{.PrefName}}</td>
-            <td>{{.Count}}</td>
-            <td>{{intensityDisplay .Intensity}}</td>
+          {{range $i, $r := .WeekPrefectureRanking -}}
+          {{if lt $i 5}}
+          <tr class="{{if eq $r.Rank 1}}rank-gold{{else if eq $r.Rank 2}}rank-silver{{else if eq $r.Rank 3}}rank-bronze{{end}} clickable" onclick="location.href='/pref/{{$r.PrefCode}}/'">
+            <td class="rank">{{$r.Rank}}</td>
+            <td>{{$r.PrefName}}</td>
+            <td>{{$r.Count}}</td>
+            <td class="metric">{{printf "%.3f" $r.Ratio}}</td>
+            <td>{{intensityDisplay $r.Intensity}}</td>
           </tr>
+          {{end -}}
           {{end}}
         </tbody>
       </table>
+      <div class="more-link">
+        <a href="/pref/ranking/">全47都道府県のランキングを見る &rsaquo;</a>
+      </div>
       <p style="margin:10px 0 0;font-size:12px;color:var(--muted)">
         出典: <a href="https://xml.kishou.go.jp/xmlpull.html" target="_blank" rel="noopener noreferrer" style="color:var(--muted)">気象庁防災情報XMLフォーマット形式電文</a>
       </p>
