@@ -50,14 +50,16 @@ func (d EarthquakeDetail) IntensityPillClass() string {
 // IntensityPillClassFor は震度文字列からCSS pill classを返す。
 func IntensityPillClassFor(s string) string {
 	switch s {
-	case "1":
+	case "1", "2":
 		return "gray"
-	case "2":
-		return "s1"
 	case "3", "4":
+		return "s1"
+	case "5-", "5+":
 		return "s2"
-	default: // 5-, 5+, 6-, 6+, 7
+	case "6-", "6+":
 		return "s3"
+	default: // 7
+		return "s4"
 	}
 }
 

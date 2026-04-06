@@ -314,7 +314,7 @@
         {{range .LatestEarthquakes}}
         <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
           <div class="left">
-            <p class="ev-title"><span class="pill{{if ge .MaxIntensity "3"}} alert{{end}}" style="margin-right:8px">震度{{intensityDisplay .MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
+            <p class="ev-title"><span class="pill {{intensityClass .MaxIntensity}}" style="margin-right:8px">震度{{intensityDisplay .MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
             <p class="ev-sub">{{.OccurredAt.Format "2006-01-02 15:04"}}</p>
           </div>
           {{if .ObservedPrefs}}
@@ -343,7 +343,7 @@
         {{range .TodayBigEarthquakes}}
         <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
           <div class="left">
-            <p class="ev-title"><span class="pill{{if ge .MaxIntensity "3"}} alert{{end}}" style="margin-right:8px">震度{{intensityDisplay .MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
+            <p class="ev-title"><span class="pill {{intensityClass .MaxIntensity}}" style="margin-right:8px">震度{{intensityDisplay .MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
             <p class="ev-sub">{{.OccurredAt.Format "2006-01-02 15:04"}}</p>
           </div>
           {{if .ObservedPrefs}}
@@ -372,7 +372,7 @@
         {{range .WeekBigEarthquakes}}
         <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
           <div class="left">
-            <p class="ev-title"><span class="pill{{if ge .MaxIntensity "3"}} alert{{end}}" style="margin-right:8px">震度{{intensityDisplay .MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
+            <p class="ev-title"><span class="pill {{intensityClass .MaxIntensity}}" style="margin-right:8px">震度{{intensityDisplay .MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
             <p class="ev-sub">{{.OccurredAt.Format "2006-01-02 15:04"}}</p>
           </div>
           {{if .ObservedPrefs}}
@@ -401,7 +401,7 @@
         {{range .MonthBigEarthquakes}}
         <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
           <div class="left">
-            <p class="ev-title"><span class="pill{{if ge .MaxIntensity "3"}} alert{{end}}" style="margin-right:8px">震度{{intensityDisplay .MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
+            <p class="ev-title"><span class="pill {{intensityClass .MaxIntensity}}" style="margin-right:8px">震度{{intensityDisplay .MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
             <p class="ev-sub">{{.OccurredAt.Format "2006-01-02 15:04"}}</p>
           </div>
           {{if .ObservedPrefs}}

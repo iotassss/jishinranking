@@ -174,6 +174,7 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 		"add":              func(a, b int) int { return a + b },
 		"mul":              func(a, b float64) float64 { return a * b },
 		"intensityDisplay": domain.IntensityDisplay,
+		"intensityClass":   domain.IntensityPillClassFor,
 	}
 	tmpl, err := template.New("index.html").Funcs(funcMap).ParseFiles(basePath, tmplPath)
 	if err != nil {
