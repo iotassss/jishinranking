@@ -228,8 +228,9 @@ func makeEarthquakeRecord(report Report) (EarthquakeRecord, bool) {
 		}
 	}
 
+	eventID := strings.TrimSpace(report.Head.EventID)
 	return EarthquakeRecord{
-		EventID:         strings.TrimSpace(report.Head.EventID),
+		EventID:         eventID,
 		OccurredAt:      occurredAt,
 		Hypocenter:      hypocenter,
 		Latitude:        lat,
@@ -237,7 +238,7 @@ func makeEarthquakeRecord(report Report) (EarthquakeRecord, bool) {
 		CoordinateKnown: coordinateKnown,
 		Magnitude:       magnitude,
 		MaxIntensity:    maxIntensity,
-		DetailURL:       report.Metadata.URL,
+		DetailURL:       "/eq/" + eventID + "/",
 		ObservedPrefs:   prefs,
 	}, true
 }
