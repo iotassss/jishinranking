@@ -121,6 +121,8 @@
     a.ev-pref-item:hover { background: var(--border); text-decoration: none; }
     @media (max-width: 600px) {
       .event .ev-right { display: none; }
+      .section-title { flex-wrap: wrap; gap: 2px 8px; }
+      .section-title .meta { white-space: normal; font-size: 11px; }
     }
     tr.clickable { cursor: pointer; }
     tr.clickable:hover td { background: var(--bg-sub) !important; }
@@ -429,7 +431,7 @@
     <section class="card mt" aria-labelledby="sec-week-score">
       <div class="section-title">
         <h2 id="sec-week-score"><a class="heading-link" href="/pref/week_score/">今週の都道府県別地震スコア</a></h2>
-        <div class="meta">頂点（10件）・指数減衰スコア（G_long，τ=7日）降順</div>
+        <div class="meta">指数減衰スコア（τ=7日）降順・上位10件</div>
       </div>
       {{if .WeekScoreRanking}}
       <table aria-label="今週の都道府県別地震スコア">

@@ -165,6 +165,49 @@ func makeHourlyChartData(h domain.HourlyEarthquakeData) template.JS {
 	return template.JS(b)
 }
 
+// makePrefScatterChartData は EpicenterPoint リストを Chart.js 散布図用 JSON に変換する。
+// intensityStyleMap の色・サイズはその都道府県での観測震度 (PrefMaxInt) をもとに決定する。
+func makePrefScatterChartData(epicenters []domain.EpicenterPoint) template.JS {
+	n := len(epicenters)
+	pts := make([]scatterPointJSON, n)
+	radii := make([]int, n)
+	bws := make([]int, n)
+	colors := make([]string, n)
+
+	for i, ep := range epicenters {
+		pts[i] = scatterPointJSON{X: ep.OccurredAt.UnixMilli(), Y: ep.Magnitude}
+		level := domain.IntensityLevel(ep.PrefMaxInt)
+		if level < 0 {
+			level = 0
+		} else if level >= len(intensityStyleMap) {
+			level = len(intensityStyleMap) - 1
+		}
+		s := intensityStyleMap[level]
+		radii[i] = s.radius
+		bws[i] = s.borderWidth
+		colors[i] = s.color
+	}
+
+	chartData := scatterChartDataJSON{
+		Datasets: []scatterDatasetJSON{
+			{
+				Label:                "地震",
+				Data:                 pts,
+				PointStyle:           "crossRot",
+				PointRadius:          radii,
+				PointBorderWidth:     bws,
+				PointBorderColor:     colors,
+				PointBackgroundColor: colors,
+			},
+		},
+	}
+	b, err := json.Marshal(chartData)
+	if err != nil {
+		return template.JS(`{"datasets":[]}`)
+	}
+	return template.JS(b)
+}
+
 func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 	jst := time.FixedZone("JST", 9*60*60)
 
@@ -510,6 +553,7 @@ func (g *SimpleHTMLGenerator) GeneratePref(data domain.PrefPageData) (domain.Pub
 		"HourlyCountsJS":        template.JS(countsJSON),
 		"HourlyTooltipLabelsJS": template.JS(tooltipJSON),
 		"EpicenterJS":           template.JS(epicenterJSON),
+		"PrefHourlyChartData":   makePrefScatterChartData(data.Epicenters),
 		"UpdatedAt":             data.UpdatedAt,
 		"WeekFrom":              data.WeekFrom,
 		"WeekTo":                data.WeekTo,
