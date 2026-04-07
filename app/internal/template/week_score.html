@@ -70,6 +70,9 @@
       height: 6px; border-radius: 3px;
       background: var(--accent); opacity: 0.55; flex-shrink: 0;
     }
+    .score-bar.score-bar--short {
+      background: #4096d8; opacity: 0.65;
+    }
     td.num { text-align: right; font-variant-numeric: tabular-nums; }
     td.center, th.center { text-align: center; }
   </style>
@@ -139,7 +142,7 @@
             <td>
               <div class="score-bar-wrap">
                 <span>{{printf "%.2f" .ShortScore}}</span>
-                <div class="score-bar" style="width:{{scoreBarWidth .ShortScore $.MaxShortScore}}px;"></div>
+                <div class="score-bar score-bar--short" style="width:{{scoreBarWidth .ShortScore $.MaxShortScore}}px;"></div>
               </div>
             </td>
             <td class="center" style="font-variant-numeric:tabular-nums;">{{printf "%.2f" .Ratio}}</td>

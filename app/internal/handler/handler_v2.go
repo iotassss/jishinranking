@@ -174,6 +174,7 @@ func (h *Handler) ProcessV2(
 		TodayPrefectureRanking: todayPrefectureRanking,
 		WeekPrefectureRanking:  weekPrefectureRanking,
 		SurgeRanking:           surgeRanking,
+		WeekScoreRanking:       domain.MakeWeekScoreRecordList(allMonthEarthquakes, now, 20.0, 2.0, 10),
 		HourlyEarthquake:       hourlyEarthquake,
 		Summary:                summary,
 		WeekReportCount:        len(thisWeekReports),

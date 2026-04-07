@@ -82,33 +82,27 @@ func calcDecayScore(events []surgeEvent, now time.Time, tauDays float64) float64
 	return score
 }
 
-// MakeSurgeRecordList は時間減衰スコアに基づく急上昇都道府県ランキングを生成する。
-//
-// アルゴリズム（docs/ph2/急上昇計算.md）:
-//
-//	短期スコア G_short = Σ w(I_i) * exp(-days/τ_short)  τ_short=1.5日（今日中心）
-//	長期スコア G_long  = Σ w(I_i) * exp(-days/τ_long)   τ_long=7日（1週間ベースライン）
-//	急上昇倍率 R       = G_short / (normalizedLong + ε)  normalizedLong = G_long * (τ_short/τ_long)
-//	警戒スコア         = G_short * log(1 + R)  ← ランキング基準
-//
-// 判定条件: R > minRatio AND G_short > minShortScore
-func MakeSurgeRecordList(
-	allEarthquakes EarthquakeRecordList,
-	now time.Time,
-	minShortScore float64,
-	minRatio float64,
-	limit int,
-) SurgeRecordList {
-	if limit <= 0 {
-		return SurgeRecordList{}
-	}
+// スコア計算の共通時定数・ε
+const (
+	decayTauShort = 1.5 // 日（短期: 今日中心）
+	decayTauLong  = 7.0 // 日（長期: 1週間ベースライン）
+	decayEpsilon  = 1.0 // ゼロ割防止
+)
 
-	const (
-		tauShort = 1.5 // 日（短期: 今日中心）
-		tauLong  = 7.0 // 日（長期: 1週間ベースライン）
-		epsilon  = 1.0 // ゼロ割防止
-	)
+// prefScoreEntry は都道府県ごとの減衰スコア計算結果を保持する。
+type prefScoreEntry struct {
+	PrefCode   string
+	PrefName   string
+	ShortScore float64 // G_short（τ=decayTauShort日）
+	LongScore  float64 // G_long（τ=decayTauLong日）
+	Ratio      float64 // G_short / (normalizedLong + ε)
+	TodayCount int
+	WeekCount  int
+}
 
+// buildPrefScores は全地震データから都道府県別の減衰スコアを計算して返す。
+// MakeSurgeRecordList と MakeWeekScoreRecordList の共通処理を集約する。
+func buildPrefScores(allEarthquakes EarthquakeRecordList, now time.Time) []prefScoreEntry {
 	oneDayAgo := now.Add(-24 * time.Hour)
 	oneWeekAgo := now.Add(-7 * 24 * time.Hour)
 
@@ -142,27 +136,61 @@ func MakeSurgeRecordList(
 		}
 	}
 
-	list := make(SurgeRecordList, 0)
+	entries := make([]prefScoreEntry, 0, len(prefEvents))
 	for prefCode, events := range prefEvents {
-		short := calcDecayScore(events, now, tauShort)
-		long := calcDecayScore(events, now, tauLong)
-		// G_long を短期と同一時間スケールに正規化してから比較する。
-		// 定常状態: short≈rate*τ_s, long≈rate*τ_l → normalizedLong≈rate*τ_s → ratio≈1
-		// 急上昇時: short >> normalizedLong → ratio >> 1
-		normalizedLong := long * (tauShort / tauLong)
-		ratio := short / (normalizedLong + epsilon)
-
-		if short < minShortScore || ratio < minRatio {
+		short := calcDecayScore(events, now, decayTauShort)
+		long := calcDecayScore(events, now, decayTauLong)
+		if long <= 0 {
 			continue
 		}
-
-		alertScore := short * math.Log1p(ratio)
-
-		list = append(list, SurgeRecord{
+		normalizedLong := long * (decayTauShort / decayTauLong)
+		ratio := short / (normalizedLong + decayEpsilon)
+		entries = append(entries, prefScoreEntry{
 			PrefCode:   prefCode,
 			PrefName:   prefNames[prefCode],
+			ShortScore: short,
+			LongScore:  long,
+			Ratio:      ratio,
 			TodayCount: prefTodayCount[prefCode],
-			WeekAvg:    float64(prefWeekCount[prefCode]) / 7.0,
+			WeekCount:  prefWeekCount[prefCode],
+		})
+	}
+	return entries
+}
+
+// MakeSurgeRecordList は時間減衰スコアに基づく急上昇都道府県ランキングを生成する。
+//
+// アルゴリズム（docs/ph2/急上昇計算.md）:
+//
+//	短期スコア G_short = Σ w(I_i) * exp(-days/τ_short)  τ_short=1.5日（今日中心）
+//	長期スコア G_long  = Σ w(I_i) * exp(-days/τ_long)   τ_long=7日（1週間ベースライン）
+//	急上昇倍率 R       = G_short / (normalizedLong + ε)  normalizedLong = G_long * (τ_short/τ_long)
+//	警戒スコア         = G_short * log(1 + R)  ← ランキング基準
+//
+// 判定条件: R > minRatio AND G_short > minShortScore
+func MakeSurgeRecordList(
+	allEarthquakes EarthquakeRecordList,
+	now time.Time,
+	minShortScore float64,
+	minRatio float64,
+	limit int,
+) SurgeRecordList {
+	if limit <= 0 {
+		return SurgeRecordList{}
+	}
+
+	entries := buildPrefScores(allEarthquakes, now)
+	list := make(SurgeRecordList, 0)
+	for _, e := range entries {
+		if e.ShortScore < minShortScore || e.Ratio < minRatio {
+			continue
+		}
+		alertScore := e.ShortScore * math.Log1p(e.Ratio)
+		list = append(list, SurgeRecord{
+			PrefCode:   e.PrefCode,
+			PrefName:   e.PrefName,
+			TodayCount: e.TodayCount,
+			WeekAvg:    float64(e.WeekCount) / 7.0,
 			Score:      alertScore,
 		})
 	}

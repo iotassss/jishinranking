@@ -51,58 +51,18 @@ func MakeWeekScoreRecordList(
 		return WeekScoreRecordList{}
 	}
 
-	const (
-		tauShort = 1.5 // 日（短期: 今日中心）
-		tauLong  = 7.0 // 日（長期: 1週間ベースライン）
-		epsilon  = 1.0 // ゼロ割防止
-	)
-
-	oneWeekAgo := now.Add(-7 * 24 * time.Hour)
-
-	prefEvents := make(map[string][]surgeEvent)
-	prefNames := make(map[string]string)
-	prefWeekCount := make(map[string]int)
-
-	for _, eq := range allEarthquakes {
-		for _, pref := range eq.ObservedPrefs {
-			if pref.Code == "" {
-				continue
-			}
-			weight := intensityWeight(pref.MaxInt)
-			if weight == 0 {
-				continue
-			}
-			prefEvents[pref.Code] = append(prefEvents[pref.Code], surgeEvent{
-				OccurredAt: eq.OccurredAt,
-				Weight:     weight,
-			})
-			if _, ok := prefNames[pref.Code]; !ok {
-				prefNames[pref.Code] = pref.Name
-			}
-			if !eq.OccurredAt.Before(oneWeekAgo) {
-				prefWeekCount[pref.Code]++
-			}
-		}
-	}
-
-	list := make(WeekScoreRecordList, 0, len(prefEvents))
-	for prefCode, events := range prefEvents {
-		long := calcDecayScore(events, now, tauLong)
-		short := calcDecayScore(events, now, tauShort)
-		if long <= 0 {
-			continue
-		}
-		normalizedLong := long * (tauShort / tauLong)
-		ratio := short / (normalizedLong + epsilon)
-		isSurge := short >= minShortScore && ratio >= minRatio
+	entries := buildPrefScores(allEarthquakes, now)
+	list := make(WeekScoreRecordList, 0, len(entries))
+	for _, e := range entries {
+		isSurge := e.ShortScore >= minShortScore && e.Ratio >= minRatio
 		list = append(list, WeekScoreRecord{
-			PrefCode:   prefCode,
-			PrefName:   prefNames[prefCode],
-			WeekScore:  long,
-			ShortScore: short,
-			Ratio:      ratio,
+			PrefCode:   e.PrefCode,
+			PrefName:   e.PrefName,
+			WeekScore:  e.LongScore,
+			ShortScore: e.ShortScore,
+			Ratio:      e.Ratio,
 			IsSurge:    isSurge,
-			WeekCount:  prefWeekCount[prefCode],
+			WeekCount:  e.WeekCount,
 		})
 	}
 
