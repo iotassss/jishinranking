@@ -39,6 +39,7 @@ type HTMLGenerator interface {
 	GenerateHistory(tab string, earthquakes domain.EarthquakeRecordList, counts map[string]int, now time.Time) (domain.PublishedHTML, error)
 	GeneratePref(data domain.PrefPageData) (domain.PublishedHTML, error)
 	GeneratePrefRanking(todayRanking domain.RankingRecordList, weekRanking domain.RankingRecordList, now time.Time) (domain.PublishedHTML, error)
+	GenerateWeekScore(ranking domain.WeekScoreRecordList, minShortScore, minRatio float64, now time.Time) (domain.PublishedHTML, error)
 }
 
 type Handler struct {

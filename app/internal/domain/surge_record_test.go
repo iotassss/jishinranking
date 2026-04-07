@@ -85,7 +85,7 @@ func TestCalcDecayScore_ExactlyNow(t *testing.T) {
 }
 
 func TestCalcDecayScore_OneTauDecay(t *testing.T) {
-	tau := 14.0
+	tau := 7.0
 	events := []surgeEvent{
 		{OccurredAt: daysAgo(tau), Weight: 10},
 	}
@@ -99,9 +99,9 @@ func TestCalcDecayScore_OneTauDecay(t *testing.T) {
 func TestCalcDecayScore_MultipleEvents(t *testing.T) {
 	events := []surgeEvent{
 		{OccurredAt: daysAgo(0), Weight: 4},
-		{OccurredAt: daysAgo(7), Weight: 8},
+		{OccurredAt: daysAgo(3.5), Weight: 8},
 	}
-	tau := 14.0
+	tau := 7.0
 	want := 4.0*math.Exp(0) + 8.0*math.Exp(-0.5)
 	got := calcDecayScore(events, testNow, tau)
 	if math.Abs(got-want) > 1e-9 {
@@ -130,13 +130,13 @@ func TestMakeSurgeRecordList_ZeroLimit(t *testing.T) {
 
 // 急上昇しない都道府県（長期実績あり・短期スコア低い）はランキング外になる。
 func TestMakeSurgeRecordList_NoSurge(t *testing.T) {
-	// 30日以上前の地震だけ → short << long → ratio < 2
+	// 過去だけに均等分布 → short ≒ normalizedLong → ratio < 2
 	eqs := EarthquakeRecordList{
-		eq(daysAgo(30), []PrefIntensityDetail{pref("01", "北海道", "3")}),
-		eq(daysAgo(60), []PrefIntensityDetail{pref("01", "北海道", "3")}),
-		eq(daysAgo(80), []PrefIntensityDetail{pref("01", "北海道", "3")}),
+		eq(daysAgo(3), []PrefIntensityDetail{pref("01", "北海道", "3")}),
+		eq(daysAgo(5), []PrefIntensityDetail{pref("01", "北海道", "3")}),
+		eq(daysAgo(7), []PrefIntensityDetail{pref("01", "北海道", "3")}),
 	}
-	result := MakeSurgeRecordList(eqs, testNow, 20.0, 2.0, 10)
+	result := MakeSurgeRecordList(eqs, testNow, 0.5, 2.0, 10)
 	if len(result) != 0 {
 		t.Errorf("no surge: got %d records, want 0", len(result))
 	}
@@ -144,11 +144,11 @@ func TestMakeSurgeRecordList_NoSurge(t *testing.T) {
 
 // 短期スコアが minShortScore 未満の場合は除外される。
 func TestMakeSurgeRecordList_BelowMinShortScore(t *testing.T) {
-	// 震度1 (weight=1) が 1件だけ → short ≈ 1 < 20
+	// 震度1 (weight=1) が 1件だけ → short ≈ 1 < 5
 	eqs := EarthquakeRecordList{
 		eq(daysAgo(0.1), []PrefIntensityDetail{pref("01", "北海道", "1")}),
 	}
-	result := MakeSurgeRecordList(eqs, testNow, 20.0, 2.0, 10)
+	result := MakeSurgeRecordList(eqs, testNow, 5.0, 2.0, 10)
 	if len(result) != 0 {
 		t.Errorf("below min short score: got %d records, want 0", len(result))
 	}
@@ -156,7 +156,7 @@ func TestMakeSurgeRecordList_BelowMinShortScore(t *testing.T) {
 
 // 急上昇する都道府県がランキングに含まれる。
 func TestMakeSurgeRecordList_SurgeDetected(t *testing.T) {
-	// 直近にだけ震度4の地震が集中 → ratio > 2, short > 20
+	// 直近にだけ震度4の地震が集中（過去実績なし）→ ratio >> 2, short > 5
 	eqs := EarthquakeRecordList{
 		eq(daysAgo(0.1), []PrefIntensityDetail{pref("30", "和歌山県", "4")}),
 		eq(daysAgo(0.3), []PrefIntensityDetail{pref("30", "和歌山県", "4")}),
@@ -164,7 +164,7 @@ func TestMakeSurgeRecordList_SurgeDetected(t *testing.T) {
 		eq(daysAgo(0.8), []PrefIntensityDetail{pref("30", "和歌山県", "4")}),
 		eq(daysAgo(1.1), []PrefIntensityDetail{pref("30", "和歌山県", "4")}),
 	}
-	result := MakeSurgeRecordList(eqs, testNow, 20.0, 2.0, 10)
+	result := MakeSurgeRecordList(eqs, testNow, 5.0, 2.0, 10)
 	if len(result) != 1 {
 		t.Fatalf("surge detected: got %d records, want 1", len(result))
 	}
@@ -194,7 +194,7 @@ func TestMakeSurgeRecordList_MultiplePrefectures(t *testing.T) {
 		eq(daysAgo(0.5), []PrefIntensityDetail{pref("17", "石川県", "4")}),
 		eq(daysAgo(1.0), []PrefIntensityDetail{pref("17", "石川県", "4")}),
 	}
-	result := MakeSurgeRecordList(eqs, testNow, 20.0, 2.0, 10)
+	result := MakeSurgeRecordList(eqs, testNow, 5.0, 2.0, 10)
 
 	if len(result) != 2 {
 		t.Fatalf("got %d records, want 2", len(result))
@@ -225,7 +225,7 @@ func TestMakeSurgeRecordList_LimitApplied(t *testing.T) {
 			eqs = append(eqs, eq(daysAgo(float64(i)*0.2+0.1), []PrefIntensityDetail{pref(p.code, p.name, "4")}))
 		}
 	}
-	result := MakeSurgeRecordList(eqs, testNow, 20.0, 2.0, 2)
+	result := MakeSurgeRecordList(eqs, testNow, 5.0, 2.0, 2)
 	if len(result) != 2 {
 		t.Errorf("limit=2: got %d records, want 2", len(result))
 	}
@@ -239,7 +239,7 @@ func TestMakeSurgeRecordList_RanksAssigned(t *testing.T) {
 			eqs = append(eqs, eq(daysAgo(float64(i)*0.2), []PrefIntensityDetail{pref(code, code, "4")}))
 		}
 	}
-	result := MakeSurgeRecordList(eqs, testNow, 20.0, 2.0, 10)
+	result := MakeSurgeRecordList(eqs, testNow, 5.0, 2.0, 10)
 	for i, r := range result {
 		if r.Rank != i+1 {
 			t.Errorf("index %d: Rank=%d, want %d", i, r.Rank, i+1)
@@ -253,7 +253,7 @@ func TestMakeSurgeRecordList_UnknownIntensityIgnored(t *testing.T) {
 		eq(daysAgo(0.1), []PrefIntensityDetail{pref("01", "北海道", "")}),
 		eq(daysAgo(0.2), []PrefIntensityDetail{pref("01", "北海道", "-")}),
 	}
-	result := MakeSurgeRecordList(eqs, testNow, 20.0, 2.0, 10)
+	result := MakeSurgeRecordList(eqs, testNow, 5.0, 2.0, 10)
 	if len(result) != 0 {
 		t.Errorf("unknown intensity: got %d records, want 0", len(result))
 	}
@@ -269,7 +269,7 @@ func TestMakeSurgeRecordList_TodayCount(t *testing.T) {
 		eq(daysAgo(1.5), []PrefIntensityDetail{pref("30", "和歌山県", "4")}), // 24h超
 		eq(daysAgo(2.0), []PrefIntensityDetail{pref("30", "和歌山県", "4")}), // 24h超
 	}
-	result := MakeSurgeRecordList(eqs, testNow, 20.0, 2.0, 10)
+	result := MakeSurgeRecordList(eqs, testNow, 5.0, 2.0, 10)
 	if len(result) == 0 {
 		t.Fatal("expected at least 1 surge record")
 	}

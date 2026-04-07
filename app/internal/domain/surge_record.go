@@ -86,9 +86,9 @@ func calcDecayScore(events []surgeEvent, now time.Time, tauDays float64) float64
 //
 // アルゴリズム（docs/ph2/急上昇計算.md）:
 //
-//	短期スコア G_short = Σ w(I_i) * exp(-days/τ_short)  τ_short=14日
-//	長期スコア G_long  = Σ w(I_i) * exp(-days/τ_long)   τ_long=90日
-//	急上昇倍率 R       = G_short / (G_long + ε)
+//	短期スコア G_short = Σ w(I_i) * exp(-days/τ_short)  τ_short=1.5日（今日中心）
+//	長期スコア G_long  = Σ w(I_i) * exp(-days/τ_long)   τ_long=7日（1週間ベースライン）
+//	急上昇倍率 R       = G_short / (normalizedLong + ε)  normalizedLong = G_long * (τ_short/τ_long)
 //	警戒スコア         = G_short * log(1 + R)  ← ランキング基準
 //
 // 判定条件: R > minRatio AND G_short > minShortScore
@@ -104,9 +104,9 @@ func MakeSurgeRecordList(
 	}
 
 	const (
-		tauShort = 14.0 // 日（短期）
-		tauLong  = 90.0 // 日（長期）
-		epsilon  = 5.0  // ゼロ割防止
+		tauShort = 1.5 // 日（短期: 今日中心）
+		tauLong  = 7.0 // 日（長期: 1週間ベースライン）
+		epsilon  = 1.0 // ゼロ割防止
 	)
 
 	oneDayAgo := now.Add(-24 * time.Hour)

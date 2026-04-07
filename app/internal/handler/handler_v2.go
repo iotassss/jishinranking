@@ -325,5 +325,18 @@ func (h *Handler) ProcessV2(
 		slog.Info("Prefecture ranking page generated")
 	}
 
+	// ==============================
+	// 今週の都道府県別地震スコアページ生成・保存 (/pref/week_score/)
+	// ==============================
+	weekScoreRanking := domain.MakeWeekScoreRecordList(allMonthEarthquakes, now, 20.0, 2.0, 47)
+	weekScoreHTML, err := h.htmlGenerator.GenerateWeekScore(weekScoreRanking, 20.0, 2.0, now)
+	if err != nil {
+		slog.Warn("week score HTML generation failed", "err", err)
+	} else if err := h.htmlRepo.Save(ctx, "pref/week_score/index.html", weekScoreHTML); err != nil {
+		slog.Warn("week score HTML save failed", "err", err)
+	} else {
+		slog.Info("Week score page generated")
+	}
+
 	return nil
 }

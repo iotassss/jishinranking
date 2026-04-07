@@ -24,6 +24,7 @@ type SimpleHTMLGenerator struct {
 	historyTmpl     *template.Template
 	prefTmpl        *template.Template
 	prefRankingTmpl *template.Template
+	weekScoreTmpl   *template.Template
 }
 
 // ---- hourly chart helpers (散布図) ----
@@ -274,7 +275,29 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 		panic(fmt.Sprintf("pref_ranking template parse error: %v", err))
 	}
 
-	return &SimpleHTMLGenerator{tmpl: tmpl, detailTmpl: detailTmpl, aboutTmpl: aboutTmpl, historyTmpl: historyTmpl, prefTmpl: prefTmpl, prefRankingTmpl: prefRankingTmpl}
+	// week_score.html
+	weekScoreFuncMap := template.FuncMap{
+		"fmtTime": func(t time.Time, layout string) string {
+			return t.In(jst).Format(layout)
+		},
+		"scoreBarWidth": func(score, maxScore float64) int {
+			if maxScore <= 0 {
+				return 0
+			}
+			w := int(score / maxScore * 80)
+			if w < 2 {
+				w = 2
+			}
+			return w
+		},
+	}
+	weekScoreTmplPath := filepath.Join(templatePath, "week_score.html")
+	weekScoreTmpl, err := template.New("week_score.html").Funcs(weekScoreFuncMap).ParseFiles(basePath, weekScoreTmplPath)
+	if err != nil {
+		panic(fmt.Sprintf("week_score template parse error: %v", err))
+	}
+
+	return &SimpleHTMLGenerator{tmpl: tmpl, detailTmpl: detailTmpl, aboutTmpl: aboutTmpl, historyTmpl: historyTmpl, prefTmpl: prefTmpl, prefRankingTmpl: prefRankingTmpl, weekScoreTmpl: weekScoreTmpl}
 }
 
 // Generate: 地震イベントJSONからHTMLランキング表を生成
@@ -513,6 +536,41 @@ func (g *SimpleHTMLGenerator) GeneratePrefRanking(
 	}
 	if err := g.prefRankingTmpl.Execute(&buf, dataMap); err != nil {
 		return "", fmt.Errorf("pref_ranking template execute failed: %w", err)
+	}
+	return domain.PublishedHTML(buf.String()), nil
+}
+
+// GenerateWeekScore は今週の都道府県別地震スコアページのHTMLを生成する。
+func (g *SimpleHTMLGenerator) GenerateWeekScore(
+	ranking domain.WeekScoreRecordList,
+	minShortScore float64,
+	minRatio float64,
+	now time.Time,
+) (domain.PublishedHTML, error) {
+	jst := time.FixedZone("JST", 9*60*60)
+	// スコアバー描画用に最大スコアを計算
+	var maxScore, maxShortScore float64
+	for _, r := range ranking {
+		if r.WeekScore > maxScore {
+			maxScore = r.WeekScore
+		}
+		if r.ShortScore > maxShortScore {
+			maxShortScore = r.ShortScore
+		}
+	}
+	var buf bytes.Buffer
+	dataMap := map[string]interface{}{
+		"BrandSub":         "今週の都道府県別地震スコア",
+		"WeekScoreRanking": ranking,
+		"MaxScore":         maxScore,
+		"MaxShortScore":    maxShortScore,
+		"MinShortScore":    minShortScore,
+		"MinRatio":         minRatio,
+		"Now":              now.In(jst).Format(time.RFC3339),
+		"NowTime":          now,
+	}
+	if err := g.weekScoreTmpl.Execute(&buf, dataMap); err != nil {
+		return "", fmt.Errorf("week_score template execute failed: %w", err)
 	}
 	return domain.PublishedHTML(buf.String()), nil
 }

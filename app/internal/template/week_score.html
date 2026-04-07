@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>今週の都道府県別地震スコア｜地震ランキング</title>
+  <meta name="description" content="今週（過去7日間）の都道府県別地震スコア一覧。震度重み付き減衰スコア（τ=7日）で都道府県をランキング。" />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://jishinranking.com/pref/week_score/" />
+  <link rel="icon" href="/jishinranking_32px.png?v=1" type="image/png" />
+  {{template "base_css" .}}
+  <style>
+    /* ===== week_score.html 固有スタイル ===== */
+    main { padding: 18px 0 56px; }
+
+    .breadcrumb { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    .breadcrumb a { color: var(--muted); }
+    .breadcrumb a:hover { color: var(--text); text-decoration: underline; }
+
+    .page-head {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 12px; margin-bottom: 14px;
+    }
+    .page-head h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: .01em; }
+    .page-head .meta { font-size: 12px; color: var(--muted); text-align: right; white-space: nowrap; }
+    @media (max-width: 480px) {
+      .page-head { flex-direction: column; gap: 4px; }
+      .page-head .meta { text-align: left; }
+      .page-head h2 { font-size: 17px; }
+    }
+
+    .note-box {
+      font-size: 12px; color: var(--muted);
+      background: var(--bg-sub); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;
+      line-height: 1.8;
+    }
+    .note-box dl { margin: 6px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; }
+    .note-box dt { font-weight: 700; color: var(--text-sub); white-space: nowrap; }
+    .note-box dd { margin: 0; }
+
+    /* 急上昇バッジ */
+    .badge-surge {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px;
+      background: rgba(215,0,15,.10); color: #d7000f;
+      border: 1px solid rgba(215,0,15,.25); white-space: nowrap; vertical-align: middle;
+    }
+
+    /* テーブル */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
+    th, td { padding: 9px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+    th { background: var(--bg-sub); color: var(--text-sub); font-weight: 700; font-size: 12px; white-space: nowrap; }
+    tr:last-child td { border-bottom: none; }
+    td.metric { font-weight: 700; }
+    tr.rank-gold   td { background: rgba(255,200,0,.13); }
+    tr.rank-silver td { background: rgba(160,160,160,.13); }
+    tr.rank-bronze td { background: rgba(180,110,40,.10); }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover td { background: var(--bg-sub) !important; }
+    @media (max-width: 480px) {
+      th, td { padding: 8px 7px; }
+      table { font-size: 12px; }
+    }
+
+    .rank-cell { font-size: 12px; color: var(--muted); width: 36px; text-align: right; }
+    .score-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .score-bar {
+      height: 6px; border-radius: 3px;
+      background: var(--accent); opacity: 0.55; flex-shrink: 0;
+    }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td.center, th.center { text-align: center; }
+  </style>
+</head>
+<body>
+  {{template "common_header" .}}
+
+  <main class="container">
+
+    <!-- パンくず -->
+    <div class="breadcrumb">
+      <a href="/">ホーム</a> &nbsp;›&nbsp; 今週の都道府県別地震スコア
+    </div>
+
+    <!-- ページタイトル -->
+    <div class="page-head">
+      <div>
+        <h2>今週の都道府県別地震スコア</h2>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px;">
+          過去7日間の震度重み付きスコアで都道府県をランキング
+        </div>
+      </div>
+      <div class="meta">
+        更新: <time datetime="{{.Now}}">{{fmtTime .NowTime "2006-01-02 15:04"}}</time>
+      </div>
+    </div>
+
+    <!-- スコアの説明 -->
+    <div class="note-box">
+      各スコアは震度に重みを付けた地震イベントを指数減衰で合算した値です。直近の地震ほど高く寄与します。
+      <dl>
+        <dt>今週スコア (G_long)</dt><dd>時定数 τ=7日。1週間の活動量を示すランキング基準。</dd>
+        <dt>短期スコア (G_short)</dt><dd>時定数 τ=1.5日。今日中心の直近活動を示す。</dd>
+        <dt>急上昇倍率 (R)</dt><dd>G_short ÷ (normalizedLong + ε)。1より大きいほど直近に集中している。</dd>
+        <dt>急上昇マーク</dt><dd><span class="badge-surge">↑急上昇</span> は短期スコア ≥ {{printf "%.1f" .MinShortScore}} かつ 急上昇倍率 ≥ {{printf "%.1f" .MinRatio}} を満たす都道府県に表示。</dd>
+      </dl>
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+      <table aria-label="今週の都道府県別地震スコア一覧">
+        <thead>
+          <tr>
+            <th style="text-align:right;">順位</th>
+            <th>都道府県</th>
+            <th>今週スコア<br><span style="font-weight:400;font-size:11px;">(G_long, τ=7日)</span></th>
+            <th>短期スコア<br><span style="font-weight:400;font-size:11px;">(G_short, τ=1.5日)</span></th>
+            <th class="center">急上昇倍率<br><span style="font-weight:400;font-size:11px;">(R)</span></th>
+            <th class="center">件数（7日）</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .WeekScoreRanking}}
+          <tr class="clickable{{if eq .Rank 1}} rank-gold{{else if eq .Rank 2}} rank-silver{{else if eq .Rank 3}} rank-bronze{{end}}"
+              onclick="location.href='/pref/{{.PrefCode}}/'">
+            <td class="rank-cell">{{.Rank}}</td>
+            <td>
+              {{.PrefName}}
+              {{if .IsSurge}}<span class="badge-surge">↑急上昇</span>{{end}}
+            </td>
+            <td class="metric">
+              <div class="score-bar-wrap">
+                <span>{{printf "%.1f" .WeekScore}}</span>
+                <div class="score-bar" style="width:{{scoreBarWidth .WeekScore $.MaxScore}}px;"></div>
+              </div>
+            </td>
+            <td>
+              <div class="score-bar-wrap">
+                <span>{{printf "%.2f" .ShortScore}}</span>
+                <div class="score-bar" style="width:{{scoreBarWidth .ShortScore $.MaxShortScore}}px;"></div>
+              </div>
+            </td>
+            <td class="center" style="font-variant-numeric:tabular-nums;">{{printf "%.2f" .Ratio}}</td>
+            <td class="center" style="font-variant-numeric:tabular-nums;">{{.WeekCount}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+      </div><!-- /.table-wrap -->
+
+      <p style="margin:12px 0 0;font-size:12px;color:var(--muted)">
+        出典: <a href="https://xml.kishou.go.jp/xmlpull.html" target="_blank" rel="noopener noreferrer" style="color:var(--muted)">気象庁防災情報XMLフォーマット形式電文</a>
+      </p>
+    </div>
+
+    <div class="btn-row mt" style="margin-top:20px;">
+      <a class="btn" href="/">← トップへ戻る</a>
+      <a class="btn" href="/pref/ranking/">都道府県別ランキング</a>
+    </div>
+
+  </main>
+
+  {{template "common_footer" .}}
+</body>
+</html>
