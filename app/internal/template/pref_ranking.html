@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>都道府県別 地震ランキング（全47都道府県）｜地震ランキング</title>
-  <meta name="description" content="都道府県別の地震発生回数・密度（回/1,000km²）・最大震度を一覧。本日と今週の切り替え・並び替えに対応。" />
+  <meta name="description" content="都道府県別の地震発生回数・地震スコア（τ=7日）・最大震度を一覧。本日と今週の切り替え・並び替えに対応。" />
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://jishinranking.com/pref/ranking/" />
   <link rel="icon" href="/jishinranking_32px.png?v=1" type="image/png" />
@@ -114,7 +114,7 @@
       <div>
         <h2>都道府県別 地震ランキング</h2>
         <div style="font-size:13px;color:var(--muted);margin-top:4px;">
-          全47都道府県の地震発生回数・密度（回/1,000km²）・最大震度の一覧
+          全47都道府県の地震発生回数・地震スコア（τ=7日）・最大震度の一覧
         </div>
       </div>
       <div class="meta">
@@ -133,7 +133,7 @@
       <!-- ソートバー -->
       <div class="sort-bar" role="group" aria-label="並び替え">
         <span class="sort-label">並び替え：</span>
-        <button class="sort-btn"        data-sort="ratio-desc" onclick="applySort('ratio-desc', this)"><span class="long">密度（回/1,000km²）順 ↓</span><span class="short">密度順 ↓</span></button>
+        <button class="sort-btn"        data-sort="ratio-desc" onclick="applySort('ratio-desc', this)"><span class="long">地震スコア順 ↓</span><span class="short">スコア順 ↓</span></button>
         <button class="sort-btn"        data-sort="count-desc" onclick="applySort('count-desc', this)"><span class="long">地震回数順 ↓</span><span class="short">回数順 ↓</span></button>
         <button class="sort-btn active" data-sort="int-desc"   onclick="applySort('int-desc',   this)"><span class="long">最大震度順 ↓</span><span class="short">震度順 ↓</span></button>
       </div>
@@ -145,7 +145,7 @@
           <tr>
             <th>都道府県</th>
             <th>回数</th>
-            <th>回/1,000km²</th>
+            <th>地震スコア</th>
             <th>震度</th>
           </tr>
         </thead>
@@ -154,11 +154,11 @@
           <tr class="clickable"
               onclick="location.href='/pref/{{.PrefCode}}/'"
               data-count="{{.Count}}"
-              data-ratio="{{printf "%.6f" .Ratio}}"
+              data-ratio="{{printf "%.6f" (index $.ScoreMap .PrefCode)}}"
               data-int="{{intensityLevel .Intensity}}">
             <td>{{.PrefName}}</td>
             <td>{{.Count}}</td>
-            <td class="metric">{{printf "%.3f" .Ratio}}</td>
+            <td class="metric">{{printf "%.1f" (index $.ScoreMap .PrefCode)}}</td>
             <td>{{intensityDisplay .Intensity}}</td>
           </tr>
           {{end}}
@@ -168,11 +168,11 @@
           <tr class="clickable"
               onclick="location.href='/pref/{{.PrefCode}}/'"
               data-count="{{.Count}}"
-              data-ratio="{{printf "%.6f" .Ratio}}"
+              data-ratio="0"
               data-int="{{intensityLevel .Intensity}}">
             <td>{{.PrefName}}</td>
             <td>{{.Count}}</td>
-            <td class="metric">{{printf "%.3f" .Ratio}}</td>
+            <td class="metric" style="color:var(--muted);">—</td>
             <td>{{intensityDisplay .Intensity}}</td>
           </tr>
           {{end}}

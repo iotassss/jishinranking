@@ -100,6 +100,7 @@ type prefScoreEntry struct {
 	WeekCount  int
 }
 
+// 都道府県別地震スコア
 // buildPrefScores は全地震データから都道府県別の減衰スコアを計算して返す。
 // MakeSurgeRecordList と MakeWeekScoreRecordList の共通処理を集約する。
 func buildPrefScores(allEarthquakes EarthquakeRecordList, now time.Time) []prefScoreEntry {

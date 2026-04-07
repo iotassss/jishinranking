@@ -114,6 +114,8 @@ func contentTypeFor(key string) string {
 		return "application/javascript"
 	case ".json":
 		return "application/json"
+	case ".geojson":
+		return "application/geo+json"
 	case ".png":
 		return "image/png"
 	case ".jpg", ".jpeg":

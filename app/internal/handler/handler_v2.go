@@ -175,6 +175,7 @@ func (h *Handler) ProcessV2(
 		WeekPrefectureRanking:  weekPrefectureRanking,
 		SurgeRanking:           surgeRanking,
 		WeekScoreRanking:       domain.MakeWeekScoreRecordList(allMonthEarthquakes, now, 20.0, 2.0, 10),
+		WeekScoreRankingAll:    domain.MakeWeekScoreRecordList(allMonthEarthquakes, now, 20.0, 2.0, 47),
 		HourlyEarthquake:       hourlyEarthquake,
 		Summary:                summary,
 		WeekReportCount:        len(thisWeekReports),
@@ -288,6 +289,9 @@ func (h *Handler) ProcessV2(
 	// 今週全地震リスト（都道府県フィルタ用）
 	allWeekEarthquakes := thisWeekReports.FilterByTelegramCode(domain.TelegramCodeEarthquakeDetail).AllEarthquakesInPeriod(now, 7*24*time.Hour)
 
+	// 都道府県別ページ用地震スコアランキング（全47都道府県）
+	prefWeekScoreRanking := domain.MakeWeekScoreRecordList(allMonthEarthquakes, now, 20.0, 2.0, 47)
+
 	prefSuccessCount := 0
 	for _, prefCode := range domain.PrefCodeList {
 		prefData := domain.MakePrefPageData(
@@ -298,6 +302,7 @@ func (h *Handler) ProcessV2(
 			hourlyEarthquake,
 			allWeekEarthquakes,
 			nationalAvgRatio,
+			prefWeekScoreRanking,
 			now, oneWeekAgo, now,
 		)
 		prefHTML, err := h.htmlGenerator.GeneratePref(prefData)
@@ -317,7 +322,7 @@ func (h *Handler) ProcessV2(
 	// ==============================
 	// 都道府県別ランキング一覧ページ生成・保存 (/pref/ranking/)
 	// ==============================
-	prefRankingHTML, err := h.htmlGenerator.GeneratePrefRanking(todayPrefectureRanking, weekPrefectureRanking, now)
+	prefRankingHTML, err := h.htmlGenerator.GeneratePrefRanking(todayPrefectureRanking, weekPrefectureRanking, prefWeekScoreRanking, now)
 	if err != nil {
 		slog.Warn("pref ranking HTML generation failed", "err", err)
 	} else if err := h.htmlRepo.Save(ctx, "pref/ranking/index.html", prefRankingHTML); err != nil {

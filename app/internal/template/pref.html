@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{{.PrefName}}の地震情報｜地震ランキング</title>
-  <meta name="description" content="{{.PrefName}}の地震発生状況（回数・密度・最大震度・週間推移）をまとめて確認できます。気象庁防災情報XMLをもとに自動集計。" />
+  <meta name="description" content="{{.PrefName}}の地震発生状況（回数・最大震度・週間推移）をまとめて確認できます。気象庁防災情報XMLをもとに自動集計。" />
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://jishinranking.com/pref/{{.PrefCode}}/" />
   <link rel="icon" href="/jishinranking_32px.png?v=1" type="image/png" />
@@ -166,9 +166,9 @@
 
       <div class="kpi">
         <div class="kpi-item highlight">
-          <div class="label">全国順位（密度）</div>
-          <div class="value">{{.WeekRank}}<small>位 / 47都道府県</small></div>
-          <div class="hint"><span style="font-size:12px;color:var(--muted);">密度: {{printf "%.2f" .WeekRatio}}回/1000km²</span></div>
+          <div class="label">全国順位（地震スコア）</div>
+          <div class="value">{{if gt .WeekScoreRank 0}}{{.WeekScoreRank}}<small>位 / 47都道府県</small>{{else}}<span style="font-size:16px;color:var(--muted);">—</span>{{end}}</div>
+          <div class="hint"><span style="font-size:12px;color:var(--muted);">スコア: {{printf "%.1f" .WeekScore}}</span></div>
         </div>
         <div class="kpi-item">
           <div class="label">地震発生回数</div>
@@ -201,15 +201,7 @@
       </div>
 
       <div class="compare-note" style="margin-top:14px;">
-        今週の発生密度は <b>{{printf "%.2f" .WeekRatio}} 回/1000km²</b> で全国{{.WeekRank}}位。
-        {{if gt .NationalAvgRatio 0.0}}
-          全国平均（<b>{{printf "%.2f" .NationalAvgRatio}}</b> 回/1000km²）の約
-          {{if gt .WeekRatio .NationalAvgRatio}}
-            <span class="red">{{printf "%.1f" (divf .WeekRatio .NationalAvgRatio)}}倍</span>。
-          {{else}}
-            <span class="green">{{printf "%.1f" (divf .NationalAvgRatio .WeekRatio)}}分の1</span>。
-          {{end}}
-        {{end}}
+        今週の地震スコアは <b>{{printf "%.1f" .WeekScore}}</b> で全国{{if gt .WeekScoreRank 0}}{{.WeekScoreRank}}位{{else}}圏外{{end}}（発生回数: <b>{{.WeekCount}}回</b>）。
         本日（24h）は <b>{{.TodayCount}}回</b>、7日平均は <b>{{printf "%.1f" .WeekAvg}}回/日</b>。
         {{if ne .MaxIntensity "-"}}
           今週の最大震度は <span class="red">震度{{intensityDisplay .MaxIntensity}}</span>（{{fmtTime .MaxIntensityAt "1月2日 15:04"}}）。

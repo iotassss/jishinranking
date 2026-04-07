@@ -362,6 +362,7 @@ func (g *SimpleHTMLGenerator) Generate(
 		"WeekPrefectureRanking":  displayData.WeekPrefectureRanking,
 		"SurgeRanking":           displayData.SurgeRanking,
 		"WeekScoreRanking":       displayData.WeekScoreRanking,
+		"WeekScoreRankingAll":    displayData.WeekScoreRankingAll,
 		"Summary":                displayData.Summary,
 		"ReportPeriod":           from.Format("2006-01-02") + " ～ " + to.Format("2006-01-02"),
 		"Now":                    now.Format(time.RFC3339),
@@ -542,6 +543,8 @@ func (g *SimpleHTMLGenerator) GeneratePref(data domain.PrefPageData) (domain.Pub
 		"WeekCount":             data.WeekCount,
 		"WeekRatio":             data.WeekRatio,
 		"WeekAvg":               data.WeekAvg,
+		"WeekScoreRank":         data.WeekScoreRank,
+		"WeekScore":             data.WeekScore,
 		"MaxIntensity":          data.MaxIntensity,
 		"MaxIntensityAt":        data.MaxIntensityAt,
 		"TodayCount":            data.TodayCount,
@@ -568,14 +571,23 @@ func (g *SimpleHTMLGenerator) GeneratePref(data domain.PrefPageData) (domain.Pub
 func (g *SimpleHTMLGenerator) GeneratePrefRanking(
 	todayRanking domain.RankingRecordList,
 	weekRanking domain.RankingRecordList,
+	weekScoreRanking domain.WeekScoreRecordList,
 	now time.Time,
 ) (domain.PublishedHTML, error) {
 	jst := time.FixedZone("JST", 9*60*60)
+
+	// 都道府県コード → WeekScore のマップを構築
+	scoreMap := make(map[string]float64, len(weekScoreRanking))
+	for _, r := range weekScoreRanking {
+		scoreMap[r.PrefCode] = r.WeekScore
+	}
+
 	var buf bytes.Buffer
 	dataMap := map[string]interface{}{
 		"BrandSub":     "都道府県別 地震ランキング",
 		"TodayRanking": todayRanking,
 		"WeekRanking":  weekRanking,
+		"ScoreMap":     scoreMap,
 		"Now":          now.In(jst).Format(time.RFC3339),
 		"NowTime":      now,
 	}

@@ -81,7 +81,15 @@
     .red { color: var(--accent); font-weight: 800; }
 
     /* Map */
-    #my-map { width: 100%; min-height: 260px; }
+    #my-map { width: 100%; aspect-ratio: 2/1; position: relative; overflow: hidden; background: var(--bg-sub); border-radius: 8px; }
+    @media (max-width: 600px) { #my-map { aspect-ratio: 3/4; } }
+    #map-svg { display: block; width: 100%; height: 100%; cursor: grab; user-select: none; }
+    #map-svg:active { cursor: grabbing; }
+    .pref-path { stroke: #d1d5db; stroke-width: 0.5; transition: fill 0.1s; }
+    .pref-label { pointer-events: none; font-weight: 700; fill: rgba(20,20,20,0.9); font-family: sans-serif; paint-order: stroke; stroke: rgba(255,255,255,0.75); stroke-width: 1px; stroke-linejoin: round; transition: opacity 0.2s; }
+    .map-tooltip { position: absolute; pointer-events: none; background: rgba(0,0,0,.72); color: #fff; font-size: 12px; padding: 4px 9px; border-radius: 6px; white-space: nowrap; display: none; z-index: 10; }
+    .map-reset-btn { position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 10px; background: #fff; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; color: var(--text-sub); }
+    .map-reset-btn:hover { background: var(--bg-sub); }
     .map-legend { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; font-size: 12px; color: var(--muted); }
     .legend-swatch { display: inline-block; width: 20px; height: 12px; border-radius: 3px; border: 1px solid rgba(0,0,0,.08); }
 
@@ -126,6 +134,7 @@
     }
     tr.clickable { cursor: pointer; }
     tr.clickable:hover td { background: var(--bg-sub) !important; }
+    @media (max-width: 600px) { .col-sp-hide { display: none; } }
     .pill {
       font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px;
       border: 1px solid var(--border); background: var(--bg-sub); white-space: nowrap;
@@ -170,7 +179,7 @@
 
   <script>window.__NativeMap = window.Map;</script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/japan-map-js@1.0.1/dist/jpmap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 
   <script type="application/ld+json">
   {
@@ -249,68 +258,89 @@
         </div>
       </div>
       <div class="btn-row">
-        <a class="btn primary" href="#heatmap">今週のヒートマップを見る</a>
+        <a class="btn primary" href="#heatmap">今週の地震スコアマップを見る</a>
         <a class="btn" href="#recent">最新の地震を確認</a>
         <a class="btn" href="#weekly">週間推移グラフ</a>
       </div>
     </section>
 
-    <div class="grid">
-      <section id="heatmap" class="card" aria-labelledby="sec-heatmap">
-        <div class="section-title">
-          <h2 id="sec-heatmap">今週の都道府県別ヒートマップ</h2>
-          <div class="meta">回/1,000km²</div>
-        </div>
-        <div class="map-legend" aria-hidden="true">
-          <span>地震少</span>
-          <span class="legend-swatch" style="background:var(--hm-0)"></span>
-          <span class="legend-swatch" style="background:var(--hm-1)"></span>
-          <span class="legend-swatch" style="background:var(--hm-2)"></span>
-          <span class="legend-swatch" style="background:var(--hm-3)"></span>
-          <span class="legend-swatch" style="background:var(--hm-4)"></span>
-          <span class="legend-swatch" style="background:var(--hm-5)"></span>
-          <span>地震多</span>
-        </div>
-        <div id="my-map"
-          {{- range .Ranking}}
-          data-code-{{.PrefCode}}="{{.PrefCode}}"
-          data-name-{{.PrefCode}}="{{.PrefName}}"
-          data-tier-{{.PrefCode}}="{{.Tier}}"
-          {{- end}}
-        ></div>
-      </section>
+    <section class="card mt" aria-labelledby="sec-week-score">
+      <div class="section-title">
+        <h2 id="sec-week-score"><a class="heading-link" href="/pref/week_score/">今週の都道府県別地震スコア ランキング</a></h2>
+        <div class="meta">指数減衰スコア（τ=7日）降順・上位10件</div>
+      </div>
+      {{if .WeekScoreRanking}}
+      <table aria-label="今週の都道府県別地震スコア ランキング">
+        <thead>
+          <tr>
+            <th style="width:44px">順位</th>
+            <th>都道府県</th>
+            <th>今週スコア</th>
+            <th class="col-sp-hide">短期スコア</th>
+            <th class="col-sp-hide">急上昇倍率</th>
+            <th class="col-sp-hide">件数（7日）</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .WeekScoreRanking}}
+          <tr
+            class="{{if eq .Rank 1}}rank-gold{{else if eq .Rank 2}}rank-silver{{else if eq .Rank 3}}rank-bronze{{end}} clickable"
+            onclick="location.href='/pref/week_score/'">
+            <td class="rank">{{.Rank}}</td>
+            <td>
+              <a href="/pref/{{.PrefCode}}/">{{.PrefName}}</a>
+              {{if .IsSurge}}<span class="badge-surge">↑急上昇</span>{{end}}
+            </td>
+            <td class="metric">{{printf "%.1f" .WeekScore}}</td>
+            <td class="col-sp-hide">{{printf "%.2f" .ShortScore}}</td>
+            <td class="col-sp-hide" style="text-align:center">{{printf "%.2f" .Ratio}}</td>
+            <td class="col-sp-hide" style="text-align:center">{{.WeekCount}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+      {{else}}
+      <p class="empty-notice">地震スコアデータがありません。</p>
+      {{end}}
+      <div class="more-link"><a href="/pref/week_score/">全都道府県の地震スコアを見る &rsaquo;</a></div>
+    </section>
 
-      <section id="top10" class="card" aria-labelledby="sec-top10">
-        <div class="section-title">
-          <h2 id="sec-top10">今週の地震が多かった都道府県（回/1000km²）</h2>
-          <div class="meta">上位10件</div>
-        </div>
-        <table aria-label="都道府県別 地震密度ランキング 上位10">
-          <thead>
-            <tr>
-              <th style="width:44px">順位</th>
-              <th>都道府県</th>
-              <th>回/1000km²</th>
-              <th>回数</th>
-              <th>震度</th>
-            </tr>
-          </thead>
-          <tbody>
-            {{range $i, $r := .WeekPrefectureRanking -}}
-            {{if lt $i 10}}
-            <tr class="{{if eq $r.Rank 1}}rank-gold{{else if eq $r.Rank 2}}rank-silver{{else if eq $r.Rank 3}}rank-bronze{{end}} clickable" onclick="location.href='/pref/{{$r.PrefCode}}/'">
-              <td class="rank">{{$r.Rank}}</td>
-              <td>{{$r.PrefName}}</td>
-              <td class="metric">{{printf "%.3f" $r.Ratio}}</td>
-              <td>{{$r.Count}}</td>
-              <td>{{intensityDisplay $r.Intensity}}</td>
-            </tr>
-            {{end -}}
-            {{end}}
-          </tbody>
-        </table>
-      </section>
-    </div>
+    <section id="heatmap" class="card mt" aria-labelledby="sec-heatmap">
+      <div class="section-title">
+        <h2 id="sec-heatmap">今週の都道府県別地震スコアマップ</h2>
+        <div class="meta">指数減衰スコア（τ=7日）</div>
+      </div>
+      <p style="margin:0 0 10px;font-size:13px;color:var(--text-sub)">過去7日間の地震発生スコアを色の濃淡で表しています。色が濃いほど地震活動が活発です。クリックすると詳細ページへ、ドラッグ・ピンチでズームできます。</p>
+      <div class="map-legend" aria-hidden="true">
+        <span>スコア低</span>
+        <span class="legend-swatch" style="background:var(--hm-0)"></span>
+        <span class="legend-swatch" style="background:var(--hm-1)"></span>
+        <span class="legend-swatch" style="background:var(--hm-2)"></span>
+        <span class="legend-swatch" style="background:var(--hm-3)"></span>
+        <span class="legend-swatch" style="background:var(--hm-4)"></span>
+        <span class="legend-swatch" style="background:var(--hm-5)"></span>
+        <span>スコア高</span>
+      </div>
+      <div id="my-map"
+        {{- range .Ranking}}
+        data-code-{{.PrefCode}}="{{.PrefCode}}"
+        data-name-{{.PrefCode}}="{{.PrefName}}"
+        {{- end}}
+        {{- range .WeekScoreRankingAll}}
+        data-score-{{.PrefCode}}="{{printf "%.4f" .WeekScore}}"
+        {{- end}}
+      ></div>
+    </section>
+
+    <section id="weekly" class="card mt" aria-labelledby="sec-weekly">
+      <div class="section-title">
+        <h2 id="sec-weekly">過去1週間の地震発生推移（1時間ごと）</h2>
+        <div class="meta">棒グラフ</div>
+      </div>
+      <div class="chart-container">
+        <canvas id="hourly-chart" aria-label="1時間ごとの地震発生回数グラフ" role="img"></canvas>
+      </div>
+    </section>
 
     <section id="recent" class="card mt" aria-labelledby="sec-recent">
       <div class="section-title">
@@ -427,14 +457,14 @@
         <a href="/eq/month/">今月の地震をすべて見る &rsaquo;</a>
       </div>
     </section>
-
+<!--
     <section class="card mt" aria-labelledby="sec-week-score">
       <div class="section-title">
-        <h2 id="sec-week-score"><a class="heading-link" href="/pref/week_score/">今週の都道府県別地震スコア</a></h2>
+        <h2 id="sec-week-score"><a class="heading-link" href="/pref/week_score/">今週の都道府県別地震スコア ランキング</a></h2>
         <div class="meta">指数減衰スコア（τ=7日）降順・上位10件</div>
       </div>
       {{if .WeekScoreRanking}}
-      <table aria-label="今週の都道府県別地震スコア">
+      <table aria-label="今週の都道府県別地震スコア ランキング">
         <thead>
           <tr>
             <th style="width:44px">順位</th><th>都道府県</th><th>今週スコア</th><th>短期スコア</th><th>急上昇倍率</th><th>件数（7日）</th>
@@ -460,80 +490,9 @@
       <p class="empty-notice">地震スコアデータがありません。</p>
       {{end}}
       <div class="more-link"><a href="/pref/week_score/">全都道府県の地震スコアを見る &rsaquo;</a></div>
-    </section>
+    </section> -->
 
-    <section class="card mt" aria-labelledby="sec-today-pref">
-      <div class="section-title">
-        <h2 id="sec-today-pref"><a class="heading-link" href="/pref/ranking/">本日の都道府県別地震ランキング（回/1,000km²）</a></h2>
-        <div class="meta">過去24時間・上位5件</div>
-      </div>
-      <table aria-label="本日の都道府県別地震ランキング">
-        <thead>
-          <tr>
-            <th style="width:44px">順位</th><th>都道府県</th><th>発生回数</th><th>回/1000km²</th><th>最大震度</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{range $i, $r := .TodayPrefectureRanking -}}
-          {{if lt $i 5}}
-          <tr class="{{if eq $r.Rank 1}}rank-gold{{else if eq $r.Rank 2}}rank-silver{{else if eq $r.Rank 3}}rank-bronze{{end}} clickable" onclick="location.href='/pref/{{$r.PrefCode}}/'">
-            <td class="rank">{{$r.Rank}}</td>
-            <td>{{$r.PrefName}}</td>
-            <td>{{$r.Count}}</td>
-            <td class="metric">{{printf "%.3f" $r.Ratio}}</td>
-            <td>{{intensityDisplay $r.Intensity}}</td>
-          </tr>
-          {{end -}}
-          {{end}}
-        </tbody>
-      </table>
-      <div class="more-link">
-        <a href="/pref/ranking/">全47都道府県のランキングを見る &rsaquo;</a>
-      </div>
-    </section>
 
-    <section class="card mt" aria-labelledby="sec-week-pref">
-      <div class="section-title">
-        <h2 id="sec-week-pref"><a class="heading-link" href="/pref/ranking/">今週の都道府県別地震ランキング（回/1,000km²）</a></h2>
-        <div class="meta">過去7日間・上位5件</div>
-      </div>
-      <table aria-label="今週の都道府県別地震ランキング">
-        <thead>
-          <tr>
-            <th style="width:44px">順位</th><th>都道府県</th><th>発生回数</th><th>回/1000km²</th><th>最大震度</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{range $i, $r := .WeekPrefectureRanking -}}
-          {{if lt $i 5}}
-          <tr class="{{if eq $r.Rank 1}}rank-gold{{else if eq $r.Rank 2}}rank-silver{{else if eq $r.Rank 3}}rank-bronze{{end}} clickable" onclick="location.href='/pref/{{$r.PrefCode}}/'">
-            <td class="rank">{{$r.Rank}}</td>
-            <td>{{$r.PrefName}}</td>
-            <td>{{$r.Count}}</td>
-            <td class="metric">{{printf "%.3f" $r.Ratio}}</td>
-            <td>{{intensityDisplay $r.Intensity}}</td>
-          </tr>
-          {{end -}}
-          {{end}}
-        </tbody>
-      </table>
-      <div class="more-link">
-        <a href="/pref/ranking/">全47都道府県のランキングを見る &rsaquo;</a>
-      </div>
-      <p style="margin:10px 0 0;font-size:12px;color:var(--muted)">
-        出典: <a href="https://xml.kishou.go.jp/xmlpull.html" target="_blank" rel="noopener noreferrer" style="color:var(--muted)">気象庁防災情報XMLフォーマット形式電文</a>
-      </p>
-    </section>
-
-    <section id="weekly" class="card mt" aria-labelledby="sec-weekly">
-      <div class="section-title">
-        <h2 id="sec-weekly">過去1週間の地震発生推移（1時間ごと）</h2>
-        <div class="meta">棒グラフ</div>
-      </div>
-      <div class="chart-container">
-        <canvas id="hourly-chart" aria-label="1時間ごとの地震発生回数グラフ" role="img"></canvas>
-      </div>
-    </section>
 
     <section class="card mt" aria-labelledby="sec-affiliate">
       <div class="section-title">
@@ -569,37 +528,151 @@
     (() => {
       const el = document.getElementById("my-map");
       if (!el) return;
-      const colorMap = {
-        0: { color: "#fff1f2", hover: "#fecdd3" },
-        1: { color: "#fecdd3", hover: "#fda4af" },
-        2: { color: "#fda4af", hover: "#f87171" },
-        3: { color: "#f87171", hover: "#ef4444" },
-        4: { color: "#ef4444", hover: "#dc2626" },
-        5: { color: "#b91c1c", hover: "#991b1b" },
-      };
-      const areas = [];
+
+      const colors      = ["#fff1f2","#fecdd3","#fda4af","#f87171","#ef4444","#b91c1c"];
+      const hoverColors = ["#fecdd3","#fda4af","#f87171","#ef4444","#dc2626","#991b1b"];
+
+      const scores = {}, names = {};
+      let maxScore = 0;
       for (let i = 1; i <= 47; i++) {
         const code = String(i).padStart(2, "0");
-        const prefCode = el.getAttribute("data-code-" + code);
-        const name     = el.getAttribute("data-name-" + code);
-        const tierStr  = el.getAttribute("data-tier-" + code);
-        if (!prefCode) continue;
-        const tier = parseInt(tierStr) || 0;
-        const c = colorMap[tier] || colorMap[0];
-        areas.push({ code: parseInt(prefCode), name: name, color: c.color, hoverColor: c.hover });
+        const s = parseFloat(el.getAttribute("data-score-" + code)) || 0;
+        scores[code] = s;
+        names[code]  = el.getAttribute("data-name-" + code) || "";
+        if (s > maxScore) maxScore = s;
       }
-      new jpmap.japanMap(el, {
-        areas: areas,
-        showsPrefectureName: true,
-        width: el.offsetWidth || 900,
-        movesIslands: true,
-        borderLineColor: "#d1d5db",
-        lang: "ja",
-        onClick: function(area) {
-          var code = String(area.code).padStart(2, "0");
-          location.href = "/pref/" + code + "/";
-        },
-      });
+
+      function tier(code) {
+        const s = scores[code] || 0;
+        if (maxScore <= 0 || s <= 0) return 0;
+        return Math.min(5, Math.ceil(s / maxScore * 5));
+      }
+
+      const w = el.offsetWidth || 720;
+      const h = el.offsetHeight || Math.round(w * 0.5);
+
+      const svg = d3.select(el).append("svg")
+        .attr("id", "map-svg")
+        .attr("viewBox", "0 0 " + w + " " + h)
+        .attr("width", "100%")
+        .attr("height", "100%");
+      const g = svg.append("g");
+
+      const tooltip = d3.select(el).append("div").attr("class", "map-tooltip");
+
+      const LABEL_SHOW_K  = 2.0;  // ズーム倍率がこれ以上でラベル表示
+      const LABEL_FONT_PX = 9;    // 画面上の視覚的フォントサイズ(px)
+
+      const zoom = d3.zoom()
+        .scaleExtent([0.8, 12])
+        .on("zoom", function(event) {
+          const k = event.transform.k;
+          g.attr("transform", event.transform);
+          g.selectAll("text.pref-label")
+            .attr("font-size", (LABEL_FONT_PX / k) + "px")
+            .style("opacity", k >= LABEL_SHOW_K ? 1 : 0);
+        });
+
+      svg.call(zoom).on("dblclick.zoom", null);
+
+      d3.select(el).append("button")
+        .attr("class", "map-reset-btn")
+        .attr("type", "button")
+        .attr("aria-label", "地図の表示をリセット")
+        .text("リセット")
+        .on("click", function() {
+          svg.transition().duration(400).call(zoom.transform, d3.zoomIdentity);
+        });
+
+      d3.json("/japan.geojson").then(function(geojson) {
+        const projection = d3.geoMercator().fitExtent([[10, 10], [w - 10, h - 10]], geojson);
+        const pathGen    = d3.geoPath().projection(projection);
+
+        let hottestCode = null, hottestScore = 0;
+        for (const code in scores) {
+          if (scores[code] > hottestScore) { hottestScore = scores[code]; hottestCode = code; }
+        }
+
+        g.selectAll("path")
+          .data(geojson.features)
+          .enter()
+          .append("path")
+          .attr("class", "pref-path")
+          .attr("d", pathGen)
+          .attr("fill", function(d) { return colors[tier(String(d.properties.id).padStart(2, "0"))]; })
+          .on("mouseenter", function(event, d) {
+            const code = String(d.properties.id).padStart(2, "0");
+            d3.select(this).attr("fill", hoverColors[tier(code)]);
+            const name = names[code] || d.properties.nam_ja || "";
+            const s    = scores[code] || 0;
+            const rect = el.getBoundingClientRect();
+            tooltip.style("display", "block")
+              .style("left", (event.clientX - rect.left + 12) + "px")
+              .style("top",  (event.clientY - rect.top  - 34) + "px")
+              .html(name + (s > 0 ? "\u3000<b>" + s.toFixed(2) + "</b>" : ""));
+          })
+          .on("mousemove", function(event) {
+            const rect = el.getBoundingClientRect();
+            tooltip
+              .style("left", (event.clientX - rect.left + 12) + "px")
+              .style("top",  (event.clientY - rect.top  - 34) + "px");
+          })
+          .on("mouseleave", function(event, d) {
+            const code = String(d.properties.id).padStart(2, "0");
+            d3.select(this).attr("fill", colors[tier(code)]);
+            tooltip.style("display", "none");
+          })
+          .on("click", function(event, d) {
+            location.href = "/pref/" + String(d.properties.id).padStart(2, "0") + "/";
+          });
+
+        // Prefecture name labels (centroid of largest polygon to avoid island bias)
+        function mainCentroid(feature) {
+          if (feature.geometry.type === "Polygon") return pathGen.centroid(feature);
+          let maxArea = 0, bestPoly = null;
+          for (const poly of feature.geometry.coordinates) {
+            const tmp = { type: "Feature", geometry: { type: "Polygon", coordinates: poly } };
+            const b = pathGen.bounds(tmp);
+            const a = (b[1][0] - b[0][0]) * (b[1][1] - b[0][1]);
+            if (a > maxArea) { maxArea = a; bestPoly = tmp; }
+          }
+          return bestPoly ? pathGen.centroid(bestPoly) : pathGen.centroid(feature);
+        }
+
+        g.selectAll("text.pref-label")
+          .data(geojson.features)
+          .enter()
+          .append("text")
+          .attr("class", "pref-label")
+          .attr("x", function(d) { return mainCentroid(d)[0]; })
+          .attr("y", function(d) { return mainCentroid(d)[1]; })
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "central")
+          .attr("font-size", LABEL_FONT_PX + "px")
+          .style("opacity", 0)
+          .text(function(d) {
+            const code = String(d.properties.id).padStart(2, "0");
+            return names[code] || d.properties.nam_ja || "";
+          });
+
+        if (hottestCode && hottestScore > 0) {
+          const feat = geojson.features.find(function(f) {
+            return String(f.properties.id).padStart(2, "0") === hottestCode;
+          });
+          if (feat) {
+            const [[x0, y0], [x1, y1]] = pathGen.bounds(feat);
+            const cx    = (x0 + x1) / 2;
+            const cy    = (y0 + y1) / 2;
+            const scale = Math.min(6, 0.8 / Math.max((x1 - x0) / w, (y1 - y0) / h));
+            setTimeout(function() {
+              svg.transition().duration(1200).ease(d3.easeCubicInOut)
+                .call(zoom.transform, d3.zoomIdentity
+                  .translate(w / 2 - scale * cx, h / 2 - scale * cy)
+                  .scale(scale));
+            }, 700);
+          }
+        }
+      }).catch(function(err) { console.error("GeoJSON load error:", err); });
     })();
   </script>
 

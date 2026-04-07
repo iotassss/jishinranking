@@ -12,10 +12,12 @@ type PrefPageData struct {
 	PrefName string
 
 	// 週間サマリー
-	WeekRank  int     // 全国順位（密度ベース）
-	WeekCount int     // 今週の発生回数
-	WeekRatio float64 // 今週の密度（回/1000km²）
-	WeekAvg   float64 // 7日平均（回/日）= WeekCount / 7
+	WeekRank      int     // 全国順位（密度ベース）
+	WeekCount     int     // 今週の発生回数
+	WeekRatio     float64 // 今週の密度（回/1000km²）
+	WeekAvg       float64 // 7日平均（回/日）= WeekCount / 7
+	WeekScoreRank int     // 全国順位（地震スコアベース）
+	WeekScore     float64 // 今週の地震スコア（τ=7日）
 
 	// 最大震度（今週）
 	MaxIntensity   string    // "1"〜"7"（"-" = 不明）
@@ -72,8 +74,8 @@ type EpicenterPoint struct {
 //	hourlyData           - 全都道府県の時間別発生数
 //	allWeekEarthquakes   - 今週全地震リスト（AllEarthquakesInPeriod 済み）
 //	nationalAvgRatio     - 全国平均密度（事前計算済み）
+//	weekScoreRanking     - 全都道府県の地震スコアランキング（AssignRanks済み）
 //	now                  - 現在時刻
-//	weekFrom, weekTo     - 集計期間
 func MakePrefPageData(
 	prefCode string,
 	weekPrefRanking RankingRecordList,
@@ -82,6 +84,7 @@ func MakePrefPageData(
 	hourlyData HourlyEarthquakeData,
 	allWeekEarthquakes EarthquakeRecordList,
 	nationalAvgRatio float64,
+	weekScoreRanking WeekScoreRecordList,
 	now, weekFrom, weekTo time.Time,
 ) PrefPageData {
 	// --- 基本情報 ---
@@ -116,6 +119,17 @@ func MakePrefPageData(
 		if s.PrefCode == prefCode {
 			surgeScore = s.Score
 			surgeRank = s.Rank
+			break
+		}
+	}
+
+	// --- 地震スコアランキング ---
+	weekScoreRank := 0
+	weekScore := 0.0
+	for _, r := range weekScoreRanking {
+		if r.PrefCode == prefCode {
+			weekScoreRank = r.Rank
+			weekScore = r.WeekScore
 			break
 		}
 	}
@@ -190,6 +204,8 @@ func MakePrefPageData(
 		WeekCount:         weekCount,
 		WeekRatio:         weekRatio,
 		WeekAvg:           weekAvg,
+		WeekScoreRank:     weekScoreRank,
+		WeekScore:         weekScore,
 		MaxIntensity:      maxIntensity,
 		MaxIntensityAt:    maxIntensityAt,
 		TodayCount:        todayCount,

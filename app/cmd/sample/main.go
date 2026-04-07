@@ -167,6 +167,8 @@ func staticContentType(name string) string {
 		return "text/css; charset=utf-8"
 	case ".js":
 		return "application/javascript"
+	case ".geojson":
+		return "application/geo+json"
 	}
 	return "application/octet-stream"
 }

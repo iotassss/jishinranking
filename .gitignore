@@ -12,3 +12,7 @@ TODO.md
 ./index.html
 
 output/
+
+tmp/
+
+.vscode/
