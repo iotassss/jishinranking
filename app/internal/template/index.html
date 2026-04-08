@@ -234,11 +234,11 @@
           <div class="hint">集計期間: {{.ReportPeriod}}</div>
         </div>
         <div class="kv-item">
-          <div class="label">今週 面積あたりの地震の多さ</div>
-          {{- if .WeekPrefectureRanking}}
-          {{- with index .WeekPrefectureRanking 0}}
-          <div class="value"><a href="/pref/{{.PrefCode}}/">{{.PrefName}}</a><small>{{printf "%.2f" .Ratio}} 回/1000km²</small></div>
-          <div class="hint">{{.Count}}回（7日間）</div>
+          <div class="label">今週 地震スコアトップ</div>
+          {{- if .WeekScoreRanking}}
+          {{- with index .WeekScoreRanking 0}}
+          <div class="value"><a href="/pref/{{.PrefCode}}/">{{.PrefName}}</a><small>{{printf "%.1f" .WeekScore}}</small></div>
+          <div class="hint">{{.WeekCount}}回（7日間）</div>
           {{- end}}
           {{- else}}
           <div class="value">-</div>
