@@ -6,7 +6,7 @@
   <title>地震履歴｜{{.TabTitle}}｜地震ランキング</title>
   <meta name="description" content="{{.TabTitle}}の地震発生履歴。気象庁の防災情報XMLをもとに集計しています。" />
   <meta name="robots" content="index,follow" />
-  <link rel="canonical" href="https://jishinranking.com/eq/{{.Tab}}/" />
+  <link rel="canonical" href="https://jishinranking.com/eq/{{.Tab}}/index.html" />
   <link rel="icon" href="/jishinranking_32px.png?v=1" type="image/png" />
   {{template "base_css" .}}
   <style>
@@ -156,10 +156,10 @@
 
     <!-- タブナビ -->
     <nav class="tab-nav" aria-label="期間フィルタ">
-      <a href="/eq/6h/"    {{if eq .Tab "6h"   }}class="active"{{end}}>過去6時間  <span class="cnt">{{.Count6h}}</span></a>
-      <a href="/eq/today/" {{if eq .Tab "today" }}class="active"{{end}}>今日       <span class="cnt">{{.CountToday}}</span></a>
-      <a href="/eq/week/"  {{if eq .Tab "week"  }}class="active"{{end}}>今週       <span class="cnt">{{.CountWeek}}</span></a>
-      <a href="/eq/month/" {{if eq .Tab "month" }}class="active"{{end}}>今月       <span class="cnt">{{.CountMonth}}</span></a>
+      <a href="/eq/6h/index.html"    {{if eq .Tab "6h"   }}class="active"{{end}}>過去6時間  <span class="cnt">{{.Count6h}}</span></a>
+      <a href="/eq/today/index.html" {{if eq .Tab "today" }}class="active"{{end}}>今日       <span class="cnt">{{.CountToday}}</span></a>
+      <a href="/eq/week/index.html"  {{if eq .Tab "week"  }}class="active"{{end}}>今週       <span class="cnt">{{.CountWeek}}</span></a>
+      <a href="/eq/month/index.html" {{if eq .Tab "month" }}class="active"{{end}}>今月       <span class="cnt">{{.CountMonth}}</span></a>
     </nav>
 
     <!-- 統計KPI -->
@@ -195,7 +195,7 @@
     {{if .Earthquakes}}
     <div id="eq-list" class="event-list">
       {{- range .Earthquakes}}
-      <a class="event" href="/eq/{{.EventID}}/"
+      <a class="event" href="/eq/{{.EventID}}/index.html"
          data-time="{{fmtTime .OccurredAt "20060102150405"}}"
          data-mag="{{printf "%.2f" .Magnitude}}"
          data-int="{{intensityLevel .MaxIntensity}}">

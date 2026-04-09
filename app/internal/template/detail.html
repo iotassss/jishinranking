@@ -6,7 +6,7 @@
   <title>地震詳細｜{{fmtTime .OccurredAt "2006-01-02 15:04"}} {{.Hypocenter}} M{{printf "%.1f" .Magnitude}}</title>
   <meta name="description" content="地震の詳細（震源、マグニチュード、最大震度、観測地域）を見やすく表示します。" />
   <meta name="robots" content="index,follow" />
-  <link rel="canonical" href="https://jishinranking.com/eq/{{.EventID}}/" />
+  <link rel="canonical" href="https://jishinranking.com/eq/{{.EventID}}/index.html" />
   <link rel="icon" href="/jishinranking_32px.png?v=1" type="image/png" />
   {{template "base_css" .}}
   <style>
@@ -209,7 +209,7 @@
         <div class="fact"><span>見出し</span><b>「{{.HeadlineText}}」</b></div>
         {{end}}
         {{if .ObservedPrefs}}
-        <div class="fact"><span>観測都県</span><b>{{with index .ObservedPrefs 0}}<a href="/pref/{{.Code}}/">{{.Name}}</a>（震度{{intensityDisplay .MaxInt}}）{{end}}{{if gt (len .ObservedPrefs) 1}}ほか{{add (len .ObservedPrefs) -1}}都県{{end}}</b></div>
+        <div class="fact"><span>観測都県</span><b>{{with index .ObservedPrefs 0}}<a href="/pref/{{.Code}}/index.html">{{.Name}}</a>（震度{{intensityDisplay .MaxInt}}）{{end}}{{if gt (len .ObservedPrefs) 1}}ほか{{add (len .ObservedPrefs) -1}}都県{{end}}</b></div>
         {{end}}
         <div class="fact"><span>データ出典</span><b><a href="https://xml.kishou.go.jp/xmlpull.html" target="_blank" rel="noopener noreferrer">気象庁 防災情報XML（VXSE53）</a></b></div>
       </div>
@@ -239,7 +239,7 @@
           <tbody>
             {{range .ObservedPrefs}}
             <tr>
-              <td><a href="/pref/{{.Code}}/">{{.Name}}</a></td>
+              <td><a href="/pref/{{.Code}}/index.html">{{.Name}}</a></td>
               <td class="center"><span class="pill {{intensityClass .MaxInt}}">震度{{intensityDisplay .MaxInt}}</span></td>
               <td>{{joinStrings .AreaNames "・"}}</td>
             </tr>

@@ -238,7 +238,7 @@ func makeEarthquakeRecord(report Report) (EarthquakeRecord, bool) {
 		CoordinateKnown: coordinateKnown,
 		Magnitude:       magnitude,
 		MaxIntensity:    maxIntensity,
-		DetailURL:       "/eq/" + eventID + "/",
+		DetailURL:       "/eq/" + eventID + "/index.html",
 		ObservedPrefs:   prefs,
 	}, true
 }

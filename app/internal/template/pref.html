@@ -6,7 +6,7 @@
   <title>{{.PrefName}}の地震情報｜地震ランキング</title>
   <meta name="description" content="{{.PrefName}}の地震発生状況（回数・最大震度・週間推移）をまとめて確認できます。気象庁防災情報XMLをもとに自動集計。" />
   <meta name="robots" content="index,follow" />
-  <link rel="canonical" href="https://jishinranking.com/pref/{{.PrefCode}}/" />
+  <link rel="canonical" href="https://jishinranking.com/pref/{{.PrefCode}}/index.html" />
   <link rel="icon" href="/jishinranking_32px.png?v=1" type="image/png" />
   {{template "base_css" .}}
   <style>
@@ -239,7 +239,7 @@
       {{end}}
 
       <div class="more-link">
-        <a href="/eq/week/">今週の全地震履歴を見る &rsaquo;</a>
+        <a href="/eq/week/index.html">今週の全地震履歴を見る &rsaquo;</a>
       </div>
     </section>
 
@@ -311,11 +311,11 @@
       <div class="btn-row">
         <a class="btn primary" href="/">全国ランキングへ</a>
         <a class="btn" href="/#heatmap">ヒートマップへ</a>
-        <a class="btn" href="/eq/week/">今週の地震履歴</a>
+        <a class="btn" href="/eq/week/index.html">今週の地震履歴</a>
         <a class="btn" href="/about.html">このサイトについて</a>
       </div>
       <p style="margin:10px 0 0;font-size:12px;color:var(--muted);">
-        ※本ページの表示は参考情報です。正確な情報は<a href="https://www.jma.go.jp/" target="_blank" rel="noopener noreferrer" style="color:var(--muted);text-decoration:underline;">気象庁公式サイト</a>をご確認ください。
+        ※本ページの表示は参考情報です。正確な情報は<a href="https://www.jma.go.jp/index.html" target="_blank" rel="noopener noreferrer" style="color:var(--muted);text-decoration:underline;">気象庁公式サイト</a>をご確認ください。
       </p>
     </section>
 

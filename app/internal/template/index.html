@@ -6,7 +6,7 @@
   <title>地震ランキング｜今週の都道府県別 地震発生密度</title>
   <meta name="description" content="気象庁の防災情報XMLをもとに、過去1週間の地震発生密度（回数/1,000km²）を都道府県別にランキング形式で可視化します。" />
   <meta name="robots" content="index,follow,max-image-preview:large" />
-  <link rel="canonical" href="https://jishinranking.com/" />
+  <link rel="canonical" href="https://jishinranking.com/index.html" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="地震ランキング｜今週の都道府県別 地震発生密度" />
   <meta property="og:description" content="気象庁防災情報XMLをもとに集計。都道府県別の発生回数をランキングと地図で可視化。" />
@@ -237,7 +237,7 @@
           <div class="label">今週 地震スコアトップ</div>
           {{- if .WeekScoreRanking}}
           {{- with index .WeekScoreRanking 0}}
-          <div class="value"><a href="/pref/{{.PrefCode}}/">{{.PrefName}}</a><small>{{printf "%.1f" .WeekScore}}</small></div>
+          <div class="value"><a href="/pref/{{.PrefCode}}/index.html">{{.PrefName}}</a><small>{{printf "%.1f" .WeekScore}}</small></div>
           <div class="hint">{{.WeekCount}}回（7日間）</div>
           {{- end}}
           {{- else}}
@@ -248,7 +248,7 @@
           <div class="label">急上昇トップ</div>
           {{- if .SurgeRanking}}
           {{- with index .SurgeRanking 0}}
-          <div class="value"><span class="red"><a href="/pref/{{.PrefCode}}/">{{.PrefName}}</a></span><small>{{printf "%.1f" .Score}}</small></div>
+          <div class="value"><span class="red"><a href="/pref/{{.PrefCode}}/index.html">{{.PrefName}}</a></span><small>{{printf "%.1f" .Score}}</small></div>
           <div class="hint">24h {{.TodayCount}}回 / 7日平均 {{printf "%.1f" .WeekAvg}}回</div>
           {{- end}}
           {{- else}}
@@ -266,7 +266,7 @@
 
     <section class="card mt" aria-labelledby="sec-week-score">
       <div class="section-title">
-        <h2 id="sec-week-score"><a class="heading-link" href="/pref/week_score/">今週の都道府県別地震スコア ランキング</a></h2>
+        <h2 id="sec-week-score"><a class="heading-link" href="/pref/week_score/index.html">今週の都道府県別地震スコア ランキング</a></h2>
         <div class="meta">指数減衰スコア（τ=7日）降順・上位10件</div>
       </div>
       {{if .WeekScoreRanking}}
@@ -285,10 +285,10 @@
           {{range .WeekScoreRanking}}
           <tr
             class="{{if eq .Rank 1}}rank-gold{{else if eq .Rank 2}}rank-silver{{else if eq .Rank 3}}rank-bronze{{end}} clickable"
-            onclick="location.href='/pref/week_score/'">
+            onclick="location.href='/pref/week_score/index.html'">
             <td class="rank">{{.Rank}}</td>
             <td>
-              <a href="/pref/{{.PrefCode}}/">{{.PrefName}}</a>
+              <a href="/pref/{{.PrefCode}}/index.html">{{.PrefName}}</a>
               {{if .IsSurge}}<span class="badge-surge">↑急上昇</span>{{end}}
             </td>
             <td class="metric">{{printf "%.1f" .WeekScore}}</td>
@@ -302,7 +302,7 @@
       {{else}}
       <p class="empty-notice">地震スコアデータがありません。</p>
       {{end}}
-      <div class="more-link"><a href="/pref/week_score/">全都道府県の地震スコアを見る &rsaquo;</a></div>
+      <div class="more-link"><a href="/pref/week_score/index.html">全都道府県の地震スコアを見る &rsaquo;</a></div>
     </section>
 
     <section id="heatmap" class="card mt" aria-labelledby="sec-heatmap">
@@ -350,14 +350,14 @@
       {{if .LatestEarthquakes}}
       <div class="event-list">
         {{range .LatestEarthquakes}}
-        <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
+        <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/index.html'"{{end}}>
           <div class="left">
             <p class="ev-title"><span class="pill {{intensityClass .MaxIntensity}}" style="margin-right:8px">震度{{intensityDisplay .MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
             <p class="ev-sub">{{.OccurredAt.Format "2006-01-02 15:04"}}</p>
           </div>
           {{if .ObservedPrefs}}
           <div class="ev-right">
-            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{$p.Code}}/" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
+            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{$p.Code}}/index.html" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
           </div>
           {{end}}
         </div>
@@ -367,26 +367,26 @@
       <p class="empty-notice">過去6時間の対象地震はありません。</p>
       {{end}}
       <div class="more-link">
-        <a href="/eq/6h/">過去6時間の地震をすべて見る &rsaquo;</a>
+        <a href="/eq/6h/index.html">過去6時間の地震をすべて見る &rsaquo;</a>
       </div>
     </section>
 
     <section class="card mt" aria-labelledby="sec-today-big">
       <div class="section-title">
-        <h2 id="sec-today-big"><a class="heading-link" href="/eq/today/">本日の大きい地震（過去24時間・最大震度2以上）</a></h2>
+        <h2 id="sec-today-big"><a class="heading-link" href="/eq/today/index.html">本日の大きい地震（過去24時間・最大震度2以上）</a></h2>
         <div class="meta">震度の大きい順</div>
       </div>
       {{if .TodayBigEarthquakes}}
       <div class="event-list">
         {{range .TodayBigEarthquakes}}
-        <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
+        <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/index.html'"{{end}}>
           <div class="left">
             <p class="ev-title"><span class="pill {{intensityClass .MaxIntensity}}" style="margin-right:8px">震度{{intensityDisplay .MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
             <p class="ev-sub">{{.OccurredAt.Format "2006-01-02 15:04"}}</p>
           </div>
           {{if .ObservedPrefs}}
           <div class="ev-right">
-            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{$p.Code}}/" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
+            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{$p.Code}}/index.html" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
           </div>
           {{end}}
         </div>
@@ -396,26 +396,26 @@
       <p class="empty-notice">過去24時間で最大震度2以上の地震はありません。</p>
       {{end}}
       <div class="more-link">
-        <a href="/eq/today/">今日の地震をすべて見る &rsaquo;</a>
+        <a href="/eq/today/index.html">今日の地震をすべて見る &rsaquo;</a>
       </div>
     </section>
 
     <section class="card mt" aria-labelledby="sec-week-big">
       <div class="section-title">
-        <h2 id="sec-week-big"><a class="heading-link" href="/eq/week/">今週の大きい地震（過去168時間・最大震度3以上）</a></h2>
+        <h2 id="sec-week-big"><a class="heading-link" href="/eq/week/index.html">今週の大きい地震（過去168時間・最大震度3以上）</a></h2>
         <div class="meta">震度の大きい順</div>
       </div>
       {{if .WeekBigEarthquakes}}
       <div class="event-list">
         {{range .WeekBigEarthquakes}}
-        <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
+        <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/index.html'"{{end}}>
           <div class="left">
             <p class="ev-title"><span class="pill {{intensityClass .MaxIntensity}}" style="margin-right:8px">震度{{intensityDisplay .MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
             <p class="ev-sub">{{.OccurredAt.Format "2006-01-02 15:04"}}</p>
           </div>
           {{if .ObservedPrefs}}
           <div class="ev-right">
-            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{$p.Code}}/" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
+            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{$p.Code}}/index.html" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
           </div>
           {{end}}
         </div>
@@ -425,26 +425,26 @@
       <p class="empty-notice">過去168時間で最大震度3以上の地震はありません。</p>
       {{end}}
       <div class="more-link">
-        <a href="/eq/week/">今週の地震をすべて見る &rsaquo;</a>
+        <a href="/eq/week/index.html">今週の地震をすべて見る &rsaquo;</a>
       </div>
     </section>
 
     <section class="card mt" aria-labelledby="sec-month-big">
       <div class="section-title">
-        <h2 id="sec-month-big"><a class="heading-link" href="/eq/month/">今月の大きい地震（過去720時間・最大震度4以上）</a></h2>
+        <h2 id="sec-month-big"><a class="heading-link" href="/eq/month/index.html">今月の大きい地震（過去720時間・最大震度4以上）</a></h2>
         <div class="meta">震度の大きい順</div>
       </div>
       {{if .MonthBigEarthquakes}}
       <div class="event-list">
         {{range .MonthBigEarthquakes}}
-        <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/'"{{end}}>
+        <div class="event{{if .EventID}} clickable{{end}}"{{if .EventID}} onclick="location.href='/eq/{{.EventID}}/index.html'"{{end}}>
           <div class="left">
             <p class="ev-title"><span class="pill {{intensityClass .MaxIntensity}}" style="margin-right:8px">震度{{intensityDisplay .MaxIntensity}}</span>{{.Hypocenter}}　M{{printf "%.1f" .Magnitude}}</p>
             <p class="ev-sub">{{.OccurredAt.Format "2006-01-02 15:04"}}</p>
           </div>
           {{if .ObservedPrefs}}
           <div class="ev-right">
-            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{$p.Code}}/" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
+            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{$p.Code}}/index.html" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
           </div>
           {{end}}
         </div>
@@ -454,13 +454,13 @@
       <p class="empty-notice">過去720時間で最大震度4以上の地震はありません。</p>
       {{end}}
       <div class="more-link">
-        <a href="/eq/month/">今月の地震をすべて見る &rsaquo;</a>
+        <a href="/eq/month/index.html">今月の地震をすべて見る &rsaquo;</a>
       </div>
     </section>
 <!--
     <section class="card mt" aria-labelledby="sec-week-score">
       <div class="section-title">
-        <h2 id="sec-week-score"><a class="heading-link" href="/pref/week_score/">今週の都道府県別地震スコア ランキング</a></h2>
+        <h2 id="sec-week-score"><a class="heading-link" href="/pref/week_score/index.html">今週の都道府県別地震スコア ランキング</a></h2>
         <div class="meta">指数減衰スコア（τ=7日）降順・上位10件</div>
       </div>
       {{if .WeekScoreRanking}}
@@ -472,10 +472,10 @@
         </thead>
         <tbody>
           {{range .WeekScoreRanking}}
-          <tr class="{{if eq .Rank 1}}rank-gold{{else if eq .Rank 2}}rank-silver{{else if eq .Rank 3}}rank-bronze{{end}} clickable" onclick="location.href='/pref/week_score/'">
+          <tr class="{{if eq .Rank 1}}rank-gold{{else if eq .Rank 2}}rank-silver{{else if eq .Rank 3}}rank-bronze{{end}} clickable" onclick="location.href='/pref/week_score/index.html'">
             <td class="rank">{{.Rank}}</td>
             <td>
-              <a href="/pref/{{.PrefCode}}/">{{.PrefName}}</a>
+              <a href="/pref/{{.PrefCode}}/index.html">{{.PrefName}}</a>
               {{if .IsSurge}}<span class="badge-surge">↑急上昇</span>{{end}}
             </td>
             <td class="metric">{{printf "%.1f" .WeekScore}}</td>
@@ -489,7 +489,7 @@
       {{else}}
       <p class="empty-notice">地震スコアデータがありません。</p>
       {{end}}
-      <div class="more-link"><a href="/pref/week_score/">全都道府県の地震スコアを見る &rsaquo;</a></div>
+      <div class="more-link"><a href="/pref/week_score/index.html">全都道府県の地震スコアを見る &rsaquo;</a></div>
     </section> -->
 
 
@@ -503,7 +503,7 @@
         地震への備えとして、非常持ち出し袋・保存食・懐中電灯などの防災用品を日頃から準備しておきましょう。
       </p>
       <div class="affiliate-grid">
-        <a class="product" href="https://search.rakuten.co.jp/search/mall/%E9%98%B2%E7%81%BD%E7%94%A8%E5%93%81/" target="_blank" rel="noopener noreferrer">
+        <a class="product" href="https://search.rakuten.co.jp/search/mall/%E9%98%B2%E7%81%BD%E7%94%A8%E5%93%81/index.html" target="_blank" rel="noopener noreferrer">
           <div class="thumb">🛒</div>
           <div>
             <h3>楽天市場で防災用品を探す</h3>
@@ -623,7 +623,7 @@
             tooltip.style("display", "none");
           })
           .on("click", function(event, d) {
-            location.href = "/pref/" + String(d.properties.id).padStart(2, "0") + "/";
+            location.href = "/pref/" + String(d.properties.id).padStart(2, "0") + "/index.html";
           });
 
         // Prefecture name labels (centroid of largest polygon to avoid island bias)

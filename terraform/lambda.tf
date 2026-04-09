@@ -10,7 +10,7 @@ resource "aws_lambda_function" "batch" {
   source_code_hash = filebase64sha256("../build/linux/app.zip")
 
   memory_size = 512
-  timeout     = 15
+  timeout     = 30
 
   environment {
     variables = {
@@ -21,7 +21,7 @@ resource "aws_lambda_function" "batch" {
       JMA_FEED_URL = "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml"
       DAYS_RANGE   = "7"
       AWS_REGION_ID   = var.aws_region
-      TEMPLATE_PATH = ""
+      TEMPLATE_PATH = "template"
       INIT = "false"
     }
   }
@@ -36,8 +36,8 @@ resource "aws_lambda_function" "initialize" {
   runtime      = "provided.al2023"
   handler      = "bootstrap"
 
-  filename         = "../build/linux/init_app/initapp.zip"
-  source_code_hash = filebase64sha256("../build/linux/init_app/initapp.zip")
+  filename         = "../build/linux/app.zip"
+  source_code_hash = filebase64sha256("../build/linux/app.zip")
 
   memory_size = 512
   timeout     = 15
@@ -51,7 +51,7 @@ resource "aws_lambda_function" "initialize" {
       JMA_FEED_URL = "https://www.data.jma.go.jp/developer/xml/feed/eqvol_l.xml"
       DAYS_RANGE   = "7"
       AWS_REGION_ID   = var.aws_region
-      TEMPLATE_PATH = ""
+      TEMPLATE_PATH = "template"
       INIT = "true"
     }
   }

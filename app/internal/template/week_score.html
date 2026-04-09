@@ -6,7 +6,7 @@
   <title>今週の都道府県別地震スコア｜地震ランキング</title>
   <meta name="description" content="今週（過去7日間）の都道府県別地震スコア一覧。震度重み付き減衰スコア（τ=7日）で都道府県をランキング。" />
   <meta name="robots" content="index,follow" />
-  <link rel="canonical" href="https://jishinranking.com/pref/week_score/" />
+  <link rel="canonical" href="https://jishinranking.com/pref/week_score/index.html" />
   <link rel="icon" href="/jishinranking_32px.png?v=1" type="image/png" />
   {{template "base_css" .}}
   <style>
@@ -127,7 +127,7 @@
         <tbody>
           {{range .WeekScoreRanking}}
           <tr class="clickable{{if eq .Rank 1}} rank-gold{{else if eq .Rank 2}} rank-silver{{else if eq .Rank 3}} rank-bronze{{end}}"
-              onclick="location.href='/pref/{{.PrefCode}}/'">
+              onclick="location.href='/pref/{{.PrefCode}}/index.html'">
             <td class="rank-cell">{{.Rank}}</td>
             <td>
               {{.PrefName}}
@@ -160,7 +160,7 @@
 
     <div class="btn-row mt" style="margin-top:20px;">
       <a class="btn" href="/">← トップへ戻る</a>
-      <a class="btn" href="/pref/week_score/">都道府県別ランキング</a>
+      <a class="btn" href="/pref/week_score/index.html">都道府県別ランキング</a>
     </div>
 
   </main>

@@ -48,3 +48,11 @@ resource "aws_s3_object" "static_icon_256" {
   content_type = "image/png"
   source_hash  = filemd5("../static/jishinranking_256px.png")
 }
+
+resource "aws_s3_object" "static_japan_geojson" {
+  bucket       = aws_s3_bucket.jishinranking_html.id
+  key          = "japan.geojson"
+  source       = "../static/japan.geojson"
+  content_type = "application/json"
+  source_hash  = filemd5("../static/japan.geojson")
+}

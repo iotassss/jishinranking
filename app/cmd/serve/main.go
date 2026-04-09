@@ -56,6 +56,11 @@ func main() {
 	fmt.Printf("   http://localhost%s\n\n", *addr)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// trailing slash (except root "/") → 301 redirect to explicit index.html
+		if r.URL.Path != "/" && strings.HasSuffix(r.URL.Path, "/") {
+			http.Redirect(w, r, r.URL.Path+"index.html", http.StatusMovedPermanently)
+			return
+		}
 		key := urlToKey(r.URL.Path)
 		log.Printf("%s %s → s3://%s/%s", r.Method, r.URL.Path, htmlBucketID, key)
 

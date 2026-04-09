@@ -6,7 +6,7 @@
   <title>都道府県別 地震ランキング（全47都道府県）｜地震ランキング</title>
   <meta name="description" content="都道府県別の地震発生回数・地震スコア（τ=7日）・最大震度を一覧。本日と今週の切り替え・並び替えに対応。" />
   <meta name="robots" content="index,follow" />
-  <link rel="canonical" href="https://jishinranking.com/pref/ranking/" />
+  <link rel="canonical" href="https://jishinranking.com/pref/ranking/index.html" />
   <link rel="icon" href="/jishinranking_32px.png?v=1" type="image/png" />
   {{template "base_css" .}}
   <style>
@@ -152,7 +152,7 @@
         <tbody id="tbody-week">
           {{range .WeekRanking}}
           <tr class="clickable"
-              onclick="location.href='/pref/{{.PrefCode}}/'"
+              onclick="location.href='/pref/{{.PrefCode}}/index.html'"
               data-count="{{.Count}}"
               data-ratio="{{printf "%.6f" (index $.ScoreMap .PrefCode)}}"
               data-int="{{intensityLevel .Intensity}}">
@@ -166,7 +166,7 @@
         <tbody id="tbody-today" class="hidden">
           {{range .TodayRanking}}
           <tr class="clickable"
-              onclick="location.href='/pref/{{.PrefCode}}/'"
+              onclick="location.href='/pref/{{.PrefCode}}/index.html'"
               data-count="{{.Count}}"
               data-ratio="0"
               data-int="{{intensityLevel .Intensity}}">

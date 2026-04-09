@@ -74,6 +74,26 @@ terraform apply
 terraform state list
 ```
 
+### 即時反映（初回以外の実行）
+```sh
+aws lambda invoke \
+  --function-name jishinranking-batch \
+  --log-type Tail \
+  --payload '{}' \
+  /tmp/lambda_out.json \
+  --query 'LogResult' --output text | base64 -d
+cat /tmp/lambda_out.json
+```
+### 即時反映（初回実行）
+```sh
+aws lambda invoke \
+  --function-name jishinranking-initialize \
+  --log-type Tail \
+  --payload '{}' \
+  /tmp/lambda_out.json \
+  --query 'LogResult' --output text | base64 -d
+cat /tmp/lambda_out.json
+```
 ### 注意点
 個人運用のためロックは不要
 ただし同時に複数ターミナルやCIから terraform apply を走らせないよう注意
