@@ -74,6 +74,8 @@
     .kv { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 14px; }
     @media (max-width: 620px) { .kv { grid-template-columns: 1fr; } }
     .kv-item { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; background: var(--bg-sub); }
+    .kv-item.clickable { cursor: pointer; transition: background .15s, border-color .15s; }
+    .kv-item.clickable:hover { background: #f1f5f9; border-color: #cbd5e1; }
     .kv-item .label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
     .kv-item .value { font-size: 20px; font-weight: 800; letter-spacing: .02em; line-height: 1.3; }
     .kv-item .value small { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 4px; }
@@ -147,6 +149,11 @@
     .empty-notice { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
     .heading-link { color: inherit; text-decoration: none; }
     .heading-link:hover { text-decoration: underline; color: var(--accent); }
+    .score-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .score-bar {
+      height: 6px; border-radius: 3px;
+      background: var(--accent); opacity: 0.55; flex-shrink: 0;
+    }
     .more-link {
       margin-top: 12px; padding-top: 10px;
       border-top: 1px solid var(--border);
@@ -233,43 +240,43 @@
           <div class="value">{{.WeekTotalCount}}<small>件</small></div>
           <div class="hint">集計期間: {{.ReportPeriod}}</div>
         </div>
+        {{if .WeekScoreRanking}}{{with index .WeekScoreRanking 0}}
+        <div class="kv-item clickable" onclick="location.href='/pref/{{.PrefCode}}/index.html'">
+          <div class="label">今週 地震スコアトップ</div>
+          <div class="value">{{.PrefName}}<small>{{printf "%.1f" .WeekScore}}</small></div>
+          <div class="hint">{{.WeekCount}}回（7日間）</div>
+        </div>
+        {{end}}{{else}}
         <div class="kv-item">
           <div class="label">今週 地震スコアトップ</div>
-          {{- if .WeekScoreRanking}}
-          {{- with index .WeekScoreRanking 0}}
-          <div class="value"><a href="/pref/{{.PrefCode}}/index.html">{{.PrefName}}</a><small>{{printf "%.1f" .WeekScore}}</small></div>
-          <div class="hint">{{.WeekCount}}回（7日間）</div>
-          {{- end}}
-          {{- else}}
           <div class="value">-</div>
-          {{- end}}
         </div>
+        {{end}}
+        {{if .SurgeRanking}}{{with index .SurgeRanking 0}}
+        <div class="kv-item clickable" onclick="location.href='/pref/{{.PrefCode}}/index.html'">
+          <div class="label">急上昇トップ</div>
+          <div class="value"><span class="red">{{.PrefName}}</span><small>{{printf "%.1f" .Score}}</small></div>
+          <div class="hint">24h {{.TodayCount}}回 / 7日平均 {{printf "%.1f" .WeekAvg}}回</div>
+        </div>
+        {{end}}{{else}}
         <div class="kv-item">
           <div class="label">急上昇トップ</div>
-          {{- if .SurgeRanking}}
-          {{- with index .SurgeRanking 0}}
-          <div class="value"><span class="red"><a href="/pref/{{.PrefCode}}/index.html">{{.PrefName}}</a></span><small>{{printf "%.1f" .Score}}</small></div>
-          <div class="hint">24h {{.TodayCount}}回 / 7日平均 {{printf "%.1f" .WeekAvg}}回</div>
-          {{- end}}
-          {{- else}}
           <div class="value">-</div>
           <div class="hint">急上昇都道府県なし</div>
-          {{- end}}
         </div>
+        {{end}}
       </div>
       <div class="btn-row">
-        <a class="btn primary" href="#heatmap">今週の地震スコアマップを見る</a>
-        <a class="btn" href="#recent">最新の地震を確認</a>
-        <a class="btn" href="#weekly">週間推移グラフ</a>
+        <a class="btn primary" href="/pref/week_score/index.html">今週の都道府県別地震スコアを見る</a>
       </div>
     </section>
 
     <section class="card mt" aria-labelledby="sec-week-score">
       <div class="section-title">
         <h2 id="sec-week-score"><a class="heading-link" href="/pref/week_score/index.html">今週の都道府県別地震スコア ランキング</a></h2>
-        <div class="meta">指数減衰スコア（τ=7日）降順・上位10件</div>
+        <div class="meta">指数減衰スコア（τ=7日）降順・上余5件 / <a href="/score.html" style="color:var(--muted)">スコアとは？</a></div>
       </div>
-      {{if .WeekScoreRanking}}
+      {{if .WeekScoreRankingTop5}}
       <table aria-label="今週の都道府県別地震スコア ランキング">
         <thead>
           <tr>
@@ -282,17 +289,27 @@
           </tr>
         </thead>
         <tbody>
-          {{range .WeekScoreRanking}}
+          {{range .WeekScoreRankingTop5}}
           <tr
             class="{{if eq .Rank 1}}rank-gold{{else if eq .Rank 2}}rank-silver{{else if eq .Rank 3}}rank-bronze{{end}} clickable"
-            onclick="location.href='/pref/week_score/index.html'">
+            onclick="location.href='/pref/{{.PrefCode}}/index.html'">
             <td class="rank">{{.Rank}}</td>
             <td>
-              <a href="/pref/{{.PrefCode}}/index.html">{{.PrefName}}</a>
+              {{.PrefName}}
               {{if .IsSurge}}<span class="badge-surge">↑急上昇</span>{{end}}
             </td>
-            <td class="metric">{{printf "%.1f" .WeekScore}}</td>
-            <td class="col-sp-hide">{{printf "%.2f" .ShortScore}}</td>
+            <td class="metric">
+              <div class="score-bar-wrap">
+                <span>{{printf "%.1f" .WeekScore}}</span>
+                <div class="score-bar" style="width:{{scoreBarWidth .WeekScore $.MaxWeekScore}}px;"></div>
+              </div>
+            </td>
+            <td class="col-sp-hide">
+              <div class="score-bar-wrap">
+                <span>{{printf "%.2f" .ShortScore}}</span>
+                <div class="score-bar" style="width:{{scoreBarWidth .ShortScore $.MaxShortScore}}px;background:#4096d8;"></div>
+              </div>
+            </td>
             <td class="col-sp-hide" style="text-align:center">{{printf "%.2f" .Ratio}}</td>
             <td class="col-sp-hide" style="text-align:center">{{.WeekCount}}</td>
           </tr>

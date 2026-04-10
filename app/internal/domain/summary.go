@@ -29,8 +29,9 @@ func intensityAtLeast(intensity, min string) bool {
 }
 
 // BuildSummary は集計データから約200文字の日本語サマリーを生成する。
-// weekPrefectureRanking は回/1000km²の降順ソート済みであることを前提とする。
+// weekScoreRanking は WeekScore 降順ソート済みであることを前提とする。
 func BuildSummary(
+	weekScoreRanking WeekScoreRecordList,
 	weekPrefectureRanking RankingRecordList,
 	surgeRanking SurgeRecordList,
 	latestEarthquakes EarthquakeRecordList,
@@ -38,26 +39,20 @@ func BuildSummary(
 	jst := time.FixedZone("JST", 9*60*60)
 	var parts []string
 
-	// 1. 地震の多さ（回/1000km²）トップ3都道府県を連記
-	activeRanking := make(RankingRecordList, 0, len(weekPrefectureRanking))
-	for _, r := range weekPrefectureRanking {
-		if r.Ratio > 0 {
-			activeRanking = append(activeRanking, r)
-		}
-	}
-	if len(activeRanking) > 0 {
-		top := activeRanking[0]
+	// 1. 都道府県別地震スコア上位3都道府県を連記
+	if len(weekScoreRanking) > 0 {
+		top := weekScoreRanking[0]
 		sentence := fmt.Sprintf(
-			"面積あたりの地震の多さ（回/1000km²）で見ると%s（%.1f回・%d回）が首位",
-			top.PrefName, top.Ratio, top.Count,
+			`今週の都道府県別地震スコア<a href="/score.html" title="地震スコアとは" style="margin-left:4px;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:999px;background:rgba(107,114,128,0.15);border:1px solid rgba(107,114,128,0.35);font-size:10px;font-weight:700;color:#6b7280;text-decoration:none;vertical-align:middle;line-height:1;">?</a>では%s（スコア%.1f・%d回）が最も高く`,
+			top.PrefName, top.WeekScore, top.WeekCount,
 		)
-		if len(activeRanking) >= 2 {
-			r2 := activeRanking[1]
-			sentence += fmt.Sprintf("、次いで%s（%.1f回）", r2.PrefName, r2.Ratio)
+		if len(weekScoreRanking) >= 2 {
+			r2 := weekScoreRanking[1]
+			sentence += fmt.Sprintf("、次いで%s（%.1f）", r2.PrefName, r2.WeekScore)
 		}
-		if len(activeRanking) >= 3 {
-			r3 := activeRanking[2]
-			sentence += fmt.Sprintf("・%s（%.1f回）", r3.PrefName, r3.Ratio)
+		if len(weekScoreRanking) >= 3 {
+			r3 := weekScoreRanking[2]
+			sentence += fmt.Sprintf("・%s（%.1f）", r3.PrefName, r3.WeekScore)
 		}
 		parts = append(parts, sentence+"と続きます。")
 	}

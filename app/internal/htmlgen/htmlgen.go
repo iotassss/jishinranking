@@ -25,6 +25,7 @@ type SimpleHTMLGenerator struct {
 	prefTmpl        *template.Template
 	prefRankingTmpl *template.Template
 	weekScoreTmpl   *template.Template
+	scoreTmpl       *template.Template
 }
 
 // ---- hourly chart helpers (散布図) ----
@@ -219,6 +220,16 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 		"mul":              func(a, b float64) float64 { return a * b },
 		"intensityDisplay": domain.IntensityDisplay,
 		"intensityClass":   domain.IntensityPillClassFor,
+		"scoreBarWidth": func(score, maxScore float64) int {
+			if maxScore <= 0 {
+				return 0
+			}
+			w := int(score / maxScore * 80)
+			if w < 2 {
+				w = 2
+			}
+			return w
+		},
 	}
 	tmpl, err := template.New("index.html").Funcs(funcMap).ParseFiles(basePath, tmplPath)
 	if err != nil {
@@ -340,7 +351,14 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 		panic(fmt.Sprintf("week_score template parse error: %v", err))
 	}
 
-	return &SimpleHTMLGenerator{tmpl: tmpl, detailTmpl: detailTmpl, aboutTmpl: aboutTmpl, historyTmpl: historyTmpl, prefTmpl: prefTmpl, prefRankingTmpl: prefRankingTmpl, weekScoreTmpl: weekScoreTmpl}
+	// score.html
+	scoreTmplPath := filepath.Join(templatePath, "score.html")
+	scoreTmpl, err := template.New("score.html").ParseFiles(basePath, scoreTmplPath)
+	if err != nil {
+		panic(fmt.Sprintf("score template parse error: %v", err))
+	}
+
+	return &SimpleHTMLGenerator{tmpl: tmpl, detailTmpl: detailTmpl, aboutTmpl: aboutTmpl, historyTmpl: historyTmpl, prefTmpl: prefTmpl, prefRankingTmpl: prefRankingTmpl, weekScoreTmpl: weekScoreTmpl, scoreTmpl: scoreTmpl}
 }
 
 // Generate: 地震イベントJSONからHTMLランキング表を生成
@@ -363,11 +381,35 @@ func (g *SimpleHTMLGenerator) Generate(
 		"SurgeRanking":           displayData.SurgeRanking,
 		"WeekScoreRanking":       displayData.WeekScoreRanking,
 		"WeekScoreRankingAll":    displayData.WeekScoreRankingAll,
-		"Summary":                displayData.Summary,
+		"Summary":                template.HTML(displayData.Summary),
 		"ReportPeriod":           from.Format("2006-01-02") + " ～ " + to.Format("2006-01-02"),
 		"Now":                    now.Format(time.RFC3339),
 		"HourlyChartData":        makeHourlyChartData(displayData.HourlyEarthquake),
 		"WeekTotalCount":         displayData.WeekReportCount,
+		"WeekScoreRankingTop5": func() domain.WeekScoreRecordList {
+			if len(displayData.WeekScoreRanking) > 5 {
+				return displayData.WeekScoreRanking[:5]
+			}
+			return displayData.WeekScoreRanking
+		}(),
+		"MaxWeekScore": func() float64 {
+			var m float64
+			for _, r := range displayData.WeekScoreRanking {
+				if r.WeekScore > m {
+					m = r.WeekScore
+				}
+			}
+			return m
+		}(),
+		"MaxShortScore": func() float64 {
+			var m float64
+			for _, r := range displayData.WeekScoreRanking {
+				if r.ShortScore > m {
+					m = r.ShortScore
+				}
+			}
+			return m
+		}(),
 	}
 	if err := g.tmpl.Execute(&buf, dataMap); err != nil {
 		return "", fmt.Errorf("template execute failed: %w", err)
@@ -450,6 +492,18 @@ func (g *SimpleHTMLGenerator) GenerateHistory(
 	}
 	if err := g.historyTmpl.Execute(&buf, dataMap); err != nil {
 		return "", fmt.Errorf("history template execute failed (tab=%s): %w", tab, err)
+	}
+	return domain.PublishedHTML(buf.String()), nil
+}
+
+// GenerateScore は地震スコア解説ページのHTMLを生成する。
+func (g *SimpleHTMLGenerator) GenerateScore() (domain.PublishedHTML, error) {
+	var buf bytes.Buffer
+	dataMap := map[string]interface{}{
+		"BrandSub": "都道府県別に地震をランキング＆可視化",
+	}
+	if err := g.scoreTmpl.Execute(&buf, dataMap); err != nil {
+		return "", fmt.Errorf("score template execute failed: %w", err)
 	}
 	return domain.PublishedHTML(buf.String()), nil
 }

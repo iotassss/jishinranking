@@ -38,6 +38,8 @@
     .note-box dl { margin: 6px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; }
     .note-box dt { font-weight: 700; color: var(--text-sub); white-space: nowrap; }
     .note-box dd { margin: 0; }
+    .note-box a { color: #c0392b; }
+    .note-box a:hover { color: #922b21; text-decoration: underline; }
 
     /* 急上昇バッジ */
     .badge-surge {
@@ -103,6 +105,7 @@
     <!-- スコアの説明 -->
     <div class="note-box">
       各スコアは震度に重みを付けた地震イベントを指数減衰で合算した値です。直近の地震ほど高く寄与します。
+      地震別の急上昇ランキングは<a href="/score.html">地震スコアページ</a>もご覧ください。
       <dl>
         <dt>今週スコア (G_long)</dt><dd>時定数 τ=7日。1週間の活動量を示すランキング基準。</dd>
         <dt>短期スコア (G_short)</dt><dd>時定数 τ=1.5日。今日中心の直近活動を示す。</dd>

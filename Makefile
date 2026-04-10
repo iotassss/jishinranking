@@ -24,18 +24,6 @@ build-app:
 	rm -rf app/build
 	rm build/linux/bootstrap
 
-build-init-app:
-	cd app && \
-	mkdir -p build/linux/init_app && \
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o build/linux/init_app/bootstrap ./cmd/init/main.go && \
-	zip -j build/linux/init_app/initapp.zip build/linux/init_app/bootstrap && \
-	cd internal && zip -r ../build/linux/init_app/initapp.zip template/ --exclude '*.bak'
-	mkdir -p build
-	rm -rf build/linux/init_app
-	mv app/build/linux/init_app/ build/linux/init_app/
-	rm -rf app/build
-	rm build/linux/init_app/bootstrap
-
 build-init-local-app:
 	cd app && \
 	go run ./cmd/sample/main.go -init

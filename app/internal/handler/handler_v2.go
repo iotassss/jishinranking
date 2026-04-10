@@ -155,11 +155,15 @@ func (h *Handler) ProcessV2(
 	hourlyEarthquake := domain.MakeHourlyEarthquakeData(thisWeekReports, now)
 
 	// ==============================
+	// 都道府県別地震スコアランキング
+	// ==============================
+	weekScoreRanking := domain.MakeWeekScoreRecordList(allMonthEarthquakes, now, 20.0, 2.0, 10)
+	weekScoreRankingAll := domain.MakeWeekScoreRecordList(allMonthEarthquakes, now, 20.0, 2.0, 47)
+
+	// ==============================
 	// サマリー生成
 	// ==============================
-	// weekPrefectureRanking は回/1000km²降順ソート済みのため先頭が最高密度都道府県
-
-	summary := domain.BuildSummary(weekPrefectureRanking, surgeRanking, latestEarthquakes)
+	summary := domain.BuildSummary(weekScoreRanking, weekPrefectureRanking, surgeRanking, latestEarthquakes)
 
 	// ==============================
 	// HTML生成・保存処理
@@ -174,8 +178,8 @@ func (h *Handler) ProcessV2(
 		TodayPrefectureRanking: todayPrefectureRanking,
 		WeekPrefectureRanking:  weekPrefectureRanking,
 		SurgeRanking:           surgeRanking,
-		WeekScoreRanking:       domain.MakeWeekScoreRecordList(allMonthEarthquakes, now, 20.0, 2.0, 10),
-		WeekScoreRankingAll:    domain.MakeWeekScoreRecordList(allMonthEarthquakes, now, 20.0, 2.0, 47),
+		WeekScoreRanking:       weekScoreRanking,
+		WeekScoreRankingAll:    weekScoreRankingAll,
 		HourlyEarthquake:       hourlyEarthquake,
 		Summary:                summary,
 		WeekReportCount:        len(thisWeekReports),
@@ -228,6 +232,18 @@ func (h *Handler) ProcessV2(
 		return fmt.Errorf("about HTML save failed: %w", err)
 	}
 	slog.Info("About page generated")
+
+	// ==============================
+	// score ページ生成・保存
+	// ==============================
+	scoreHTML, err := h.htmlGenerator.GenerateScore()
+	if err != nil {
+		return fmt.Errorf("score HTML generation failed: %w", err)
+	}
+	if err := h.htmlRepo.Save(ctx, "score.html", scoreHTML); err != nil {
+		return fmt.Errorf("score HTML save failed: %w", err)
+	}
+	slog.Info("Score page generated")
 
 	// ==============================
 	// 地震履歴ページ生成・保存 (/eq/6h/, /eq/today/, /eq/week/, /eq/month/)
@@ -334,8 +350,7 @@ func (h *Handler) ProcessV2(
 	// ==============================
 	// 今週の都道府県別地震スコアページ生成・保存 (/pref/week_score/)
 	// ==============================
-	weekScoreRanking := domain.MakeWeekScoreRecordList(allMonthEarthquakes, now, 20.0, 2.0, 47)
-	weekScoreHTML, err := h.htmlGenerator.GenerateWeekScore(weekScoreRanking, 20.0, 2.0, now)
+	weekScoreHTML, err := h.htmlGenerator.GenerateWeekScore(weekScoreRankingAll, 20.0, 2.0, now)
 	if err != nil {
 		slog.Warn("week score HTML generation failed", "err", err)
 	} else if err := h.htmlRepo.Save(ctx, "pref/week_score/index.html", weekScoreHTML); err != nil {
