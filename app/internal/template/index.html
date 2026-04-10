@@ -243,7 +243,7 @@
         {{if .WeekScoreRanking}}{{with index .WeekScoreRanking 0}}
         <div class="kv-item clickable" onclick="location.href='/pref/{{.PrefCode}}/index.html'">
           <div class="label">今週 地震スコアトップ</div>
-          <div class="value">{{.PrefName}}<small>{{printf "%.1f" .WeekScore}}</small></div>
+          <div class="value"><img src="/pref_flag/{{.PrefCode}}.svg" width="20" height="13" alt="" style="vertical-align:middle;margin-right:5px;border-radius:2px;">{{.PrefName}}<small>{{printf "%.1f" .WeekScore}}</small></div>
           <div class="hint">{{.WeekCount}}回（7日間）</div>
         </div>
         {{end}}{{else}}
@@ -255,7 +255,7 @@
         {{if .SurgeRanking}}{{with index .SurgeRanking 0}}
         <div class="kv-item clickable" onclick="location.href='/pref/{{.PrefCode}}/index.html'">
           <div class="label">急上昇トップ</div>
-          <div class="value"><span class="red">{{.PrefName}}</span><small>{{printf "%.1f" .Score}}</small></div>
+          <div class="value"><img src="/pref_flag/{{.PrefCode}}.svg" width="20" height="13" alt="" style="vertical-align:middle;margin-right:5px;border-radius:2px;"><span class="red">{{.PrefName}}</span><small>{{printf "%.1f" .Score}}</small></div>
           <div class="hint">24h {{.TodayCount}}回 / 7日平均 {{printf "%.1f" .WeekAvg}}回</div>
         </div>
         {{end}}{{else}}
@@ -295,7 +295,7 @@
             onclick="location.href='/pref/{{.PrefCode}}/index.html'">
             <td class="rank">{{.Rank}}</td>
             <td>
-              {{.PrefName}}
+              <img src="/pref_flag/{{.PrefCode}}.svg" width="24" height="16" alt="" style="vertical-align:middle;margin-right:6px;border-radius:2px;">{{.PrefName}}
               {{if .IsSurge}}<span class="badge-surge">↑急上昇</span>{{end}}
             </td>
             <td class="metric">

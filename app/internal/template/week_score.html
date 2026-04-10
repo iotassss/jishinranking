@@ -124,7 +124,7 @@
               onclick="location.href='/pref/{{.PrefCode}}/index.html'">
             <td class="rank-cell">{{.Rank}}</td>
             <td>
-              {{.PrefName}}
+              <img src="/pref_flag/{{.PrefCode}}.svg" width="24" height="16" alt="" style="vertical-align:middle;margin-right:6px;border-radius:2px;">{{.PrefName}}
               {{if .IsSurge}}<span class="badge-surge">↑急上昇</span>{{end}}
             </td>
             <td class="metric">

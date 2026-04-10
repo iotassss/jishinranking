@@ -147,7 +147,7 @@
               data-count="{{.Count}}"
               data-ratio="{{printf "%.6f" (index $.ScoreMap .PrefCode)}}"
               data-int="{{intensityLevel .Intensity}}">
-            <td>{{.PrefName}}</td>
+            <td><img src="/pref_flag/{{.PrefCode}}.svg" width="24" height="16" alt="" style="vertical-align:middle;margin-right:6px;border-radius:2px;">{{.PrefName}}</td>
             <td>{{.Count}}</td>
             <td class="metric">{{printf "%.1f" (index $.ScoreMap .PrefCode)}}</td>
             <td>{{intensityDisplay .Intensity}}</td>
@@ -161,7 +161,7 @@
               data-count="{{.Count}}"
               data-ratio="0"
               data-int="{{intensityLevel .Intensity}}">
-            <td>{{.PrefName}}</td>
+            <td><img src="/pref_flag/{{.PrefCode}}.svg" width="24" height="16" alt="" style="vertical-align:middle;margin-right:6px;border-radius:2px;">{{.PrefName}}</td>
             <td>{{.Count}}</td>
             <td class="metric" style="color:var(--muted);">—</td>
             <td>{{intensityDisplay .Intensity}}</td>

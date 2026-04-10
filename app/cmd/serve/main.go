@@ -55,6 +55,9 @@ func main() {
 	fmt.Printf("🌐 MinIO プロキシ: %s/%s\n", minioEndpoint, htmlBucketID)
 	fmt.Printf("   http://localhost%s\n\n", *addr)
 
+	// /pref_flag/ は static/ ディレクトリからローカル配信
+	http.Handle("/pref_flag/", http.StripPrefix("/pref_flag/", http.FileServer(http.Dir("../static/pref_flag"))))
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// trailing slash (except root "/") → 301 redirect to explicit index.html
 		if r.URL.Path != "/" && strings.HasSuffix(r.URL.Path, "/") {
