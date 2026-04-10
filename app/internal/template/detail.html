@@ -40,10 +40,12 @@
 
     /* eq-main card（M＋震源） */
     .eq-main {
-      display: flex; align-items: stretch; margin-top: 12px;
+      display: flex; flex-direction: column; margin-top: 12px;
       border: 1px solid var(--border); border-radius: 14px;
-      background: #fff; overflow: hidden;
+      background: #fff; overflow: hidden; padding: 0;
     }
+    .eq-main-row { display: flex; align-items: stretch; }
+    .eq-main-map { border-top: 1px solid var(--border); }
     .eq-main-mag {
       flex: 0 0 auto; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
@@ -75,7 +77,7 @@
     }
 
     @media (max-width: 600px) {
-      .eq-main { flex-direction: column; }
+      .eq-main-row { flex-direction: column; }
       .eq-main-divider { width: 100%; height: 1px; }
       .eq-main-mag,
       .eq-main-epicenter {
@@ -140,17 +142,8 @@
     tr.clickable:hover td { background: var(--bg-sub); }
 
     /* 地図 */
-    .mapbox {
-      border: 1px solid var(--border); border-radius: 14px;
-      overflow: hidden; background: var(--map-bg); box-shadow: var(--shadow);
-    }
-    .maphead {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 12px; background: #fff;
-      border-bottom: 1px solid var(--border);
-      font-size: 12px; color: var(--muted); font-weight: 800;
-    }
-    .maparea { height: 240px; }
+    .maparea { height: 360px; }
+    @media (max-width: 600px) { .maparea { height: 240px; } }
     .maparea-placeholder {
       height: 240px; display: grid; place-items: center;
       color: var(--muted); font-size: 13px;
@@ -166,9 +159,7 @@
     <div class="page-title">
       <div>
         <h2>地震詳細</h2>
-        <!-- <div style="font-size:12px;color:var(--muted);margin-top:4px;">
-          気象庁「震源・震度に関する情報」をもとに集計。
-        </div> -->
+        <p style="margin:4px 0 0;font-size:13px;color:var(--muted);">震源・震度・観測地域など気象庁発表情報をもとに表示しています</p>
       </div>
       <div class="meta">
         EventID: {{.EventID}}<br />
@@ -176,10 +167,9 @@
       </div>
     </div>
 
-    <!-- Hero -->
-    <section class="hero" aria-label="地震の要点">
-      <!-- M + 震源カード -->
-      <div class="eq-main">
+    <!-- eq-main（独立セクション） -->
+    <div class="card eq-main" style="margin-top:16px;" aria-label="地震の要点">
+      <div class="eq-main-row">
         <div class="eq-main-mag">
           <div class="eq-main-label">最大震度</div>
           <div class="eq-main-num">{{if ne .MaxIntensity "-"}}{{intensityDisplay .MaxIntensity}}{{else}}―{{end}}</div>
@@ -195,8 +185,20 @@
           <div class="eq-main-place">{{.Hypocenter}}</div>
         </div>
       </div>
+      <div class="eq-main-map">
+        {{if .CoordinateKnown}}
+        <div class="maparea" id="eq-map"></div>
+        {{else}}
+        <div class="maparea-placeholder">座標データなし</div>
+        {{end}}
+      </div>
+    </div>
 
-      <div class="kpi-sub"></div>
+    <!-- Hero -->
+    <section class="hero" style="margin-top:12px;" aria-label="地震の詳細">
+      <div class="section-title" style="margin-bottom:10px;">
+        <h3>地震の詳細</h3>
+      </div>
 
       <!-- facts -->
       <div class="facts">
@@ -218,9 +220,8 @@
       </div>
     </section>
 
-    <div class="grid" style="margin-top:16px;">
-      <!-- 観測地域テーブル -->
-      <section class="card" aria-label="観測地域（最大震度）">
+    <!-- 観測地域テーブル -->
+    <section class="card" style="margin-top:16px;" aria-label="観測地域（最大震度）">
         <div class="section-title">
           <h3>観測地域（最大震度）</h3>
           <div class="right">都道府県 → 地域</div>
@@ -238,7 +239,7 @@
           <tbody>
             {{range .ObservedPrefs}}
             <tr class="clickable" onclick="location.href='/pref/{{.Code}}/index.html'">
-              <td><a href="/pref/{{.Code}}/index.html">{{.Name}}</a></td>
+              <td><img src="/pref_flag/{{.Code}}.svg" width="20" height="13" alt="" style="vertical-align:middle;margin-right:5px;border-radius:2px;"><a href="/pref/{{.Code}}/index.html">{{.Name}}</a></td>
               <td class="center"><span class="pill {{intensityClass .MaxInt}}">震度{{intensityDisplay .MaxInt}}</span></td>
               <td>{{joinStrings .AreaNames "・"}}</td>
             </tr>
@@ -248,29 +249,7 @@
         {{else}}
         <p style="color:var(--muted);font-size:13px;">観測データなし</p>
         {{end}}
-      </section>
-
-      <!-- 地図 -->
-      <section class="card" aria-label="震源位置">
-        <div class="section-title">
-          <h3>震源位置</h3>
-        </div>
-
-        <div class="mapbox">
-          <div class="maphead">
-            <div>震源：{{.Hypocenter}}</div>
-            {{if ne .MaxIntensity "-"}}
-            <div>最大震度：<span class="pill {{intensityClass .MaxIntensity}}" style="padding:4px 10px;">{{intensityDisplay .MaxIntensity}}</span></div>
-            {{end}}
-          </div>
-          {{if .CoordinateKnown}}
-          <div class="maparea" id="eq-map"></div>
-          {{else}}
-          <div class="maparea-placeholder">座標データなし</div>
-          {{end}}
-        </div>
-      </section>
-    </div>
+    </section>
 
     <!-- 関連リンク（一時コメントアウト） -->
     <!--
