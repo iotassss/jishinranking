@@ -13,11 +13,6 @@
     /* ===== pref.html 固有スタイル ===== */
     main { padding: 18px 0 48px; }
 
-    /* パンくず */
-    .breadcrumb { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
-    .breadcrumb a { color: var(--muted); }
-    .breadcrumb a:hover { color: var(--text); text-decoration: underline; }
-
     /* ページタイトル */
     .page-title {
       display: flex; align-items: flex-start; justify-content: space-between;
@@ -105,7 +100,6 @@
     @media (max-width: 480px) {
       .brand-sub { display: none; }
       .card { padding: 14px 12px; }
-      .breadcrumb { font-size: 11px; }
       .page-title { flex-direction: column; gap: 6px; }
       .page-title h2 { font-size: 18px; }
       .page-title .meta { text-align: left; white-space: normal; }
@@ -138,11 +132,6 @@
   {{template "common_header" .}}
 
   <main class="container">
-
-    <!-- パンくず -->
-    <nav class="breadcrumb" aria-label="パンくず">
-      <a href="/">ホーム</a> &rsaquo; <a href="/all">47都道府県</a> &rsaquo; {{.PrefName}}
-    </nav>
 
     <!-- ページタイトル -->
     <div class="page-title">
