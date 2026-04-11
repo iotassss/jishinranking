@@ -17,6 +17,41 @@ type EarthquakeEvent struct {
 	Pref string `json:"pref"`
 }
 
+// weekEQPoint は今週地震マップ用の震源ポイント
+type weekEQPoint struct {
+	Lat     float64 `json:"lat"`
+	Lng     float64 `json:"lng"`
+	Mag     float64 `json:"mag"`
+	Int     string  `json:"int"`
+	Place   string  `json:"place"`
+	EventID string  `json:"eid"`
+	Time    string  `json:"time"`
+}
+
+func makeWeekEQsJSON(eqs domain.EarthquakeRecordList) template.JS {
+	jst := time.FixedZone("JST", 9*60*60)
+	pts := make([]weekEQPoint, 0, len(eqs))
+	for _, eq := range eqs {
+		if !eq.CoordinateKnown {
+			continue
+		}
+		pts = append(pts, weekEQPoint{
+			Lat:     eq.Latitude,
+			Lng:     eq.Longitude,
+			Mag:     eq.Magnitude,
+			Int:     eq.MaxIntensity,
+			Place:   eq.Hypocenter,
+			EventID: eq.EventID,
+			Time:    eq.OccurredAt.In(jst).Format("2006-01-02 15:04"),
+		})
+	}
+	b, err := json.Marshal(pts)
+	if err != nil {
+		return template.JS("[]")
+	}
+	return template.JS(b)
+}
+
 type SimpleHTMLGenerator struct {
 	tmpl            *template.Template
 	detailTmpl      *template.Template
@@ -386,6 +421,7 @@ func (g *SimpleHTMLGenerator) Generate(
 		"Now":                    now.Format(time.RFC3339),
 		"HourlyChartData":        makeHourlyChartData(displayData.HourlyEarthquake),
 		"WeekTotalCount":         displayData.WeekReportCount,
+		"WeekEQsJSON":            makeWeekEQsJSON(displayData.WeekAllEarthquakes),
 		"WeekScoreRankingTop5": func() domain.WeekScoreRecordList {
 			if len(displayData.WeekScoreRanking) > 5 {
 				return displayData.WeekScoreRanking[:5]

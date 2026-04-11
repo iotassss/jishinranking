@@ -182,8 +182,10 @@
       display: inline-block; margin-right: 4px; padding: 2px 7px;
       border-radius: 999px; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700;
     }
+    .eq-dot-clickable { cursor: pointer; }
   </style>
 
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script>window.__NativeMap = window.Map;</script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
@@ -347,6 +349,16 @@
         data-score-{{.PrefCode}}="{{printf "%.4f" .WeekScore}}"
         {{- end}}
       ></div>
+    </section>
+
+    <section id="week-eq-map" class="card mt" aria-labelledby="sec-week-eq-map">
+      <div class="section-title">
+        <h2 id="sec-week-eq-map">今週の地震 震源マップ（過去7日間）</h2>
+        <div class="meta">座標既知の地震のみ表示</div>
+      </div>
+      <p style="margin:0 0 10px;font-size:13px;color:var(--text-sub)">
+        過去7日間に発生したすべての地震の震源地を地図上に表示しています。円の大きさはマグニチュード、色は最大震度に対応します。クリックで詳細ページへ移動できます。</p>
+      <div id="week-eq-leaflet-map" style="height:420px;border-radius:8px;overflow:hidden;"></div>
     </section>
 
     <section id="weekly" class="card mt" aria-labelledby="sec-weekly">
@@ -690,6 +702,71 @@
           }
         }
       }).catch(function(err) { console.error("GeoJSON load error:", err); });
+    })();
+  </script>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    (function() {
+      var data = {{.WeekEQsJSON}};
+      var mapEl = document.getElementById('week-eq-leaflet-map');
+      if (!mapEl || !data || !data.length) return;
+
+      var map = L.map('week-eq-leaflet-map').setView([36.5, 137.0], 5);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 18
+      }).addTo(map);
+
+      function intColor(s) {
+        switch (s) {
+          case '7':  return '#7b0000';
+          case '6+': return '#b91c1c';
+          case '6-': return '#dc2626';
+          case '5+': return '#ea580c';
+          case '5-': return '#f97316';
+          case '4':  return '#ca8a04';
+          case '3':  return '#3b82f6';
+          case '2':  return '#93c5fd';
+          case '1':  return '#bfdbfe';
+          default:   return '#94a3b8';
+        }
+      }
+      function intDisplay(s) {
+        if (s === '5-') return '5弱';
+        if (s === '5+') return '5強';
+        if (s === '6-') return '6弱';
+        if (s === '6+') return '6強';
+        return s;
+      }
+
+      var bounds = [];
+      data.forEach(function(eq) {
+        var r = Math.max(4, Math.min(18, (eq.mag - 1) * 2.8 + 3));
+        var color = intColor(eq.int);
+        var clickable = !!eq.eid;
+        var m = L.circleMarker([eq.lat, eq.lng], {
+          radius: r,
+          color: color,
+          fillColor: color,
+          fillOpacity: 0.65,
+          weight: 1.2,
+          className: clickable ? 'eq-dot-clickable' : ''
+        });
+        var label = '<b>' + eq.place + '</b>　M' + eq.mag.toFixed(1);
+        if (eq.int !== '-') label += '　震度' + intDisplay(eq.int);
+        label += '<br><span style="font-size:11px;color:#aaa">' + eq.time + '</span>';
+        m.bindTooltip(label, { direction: 'top', sticky: false });
+        if (clickable) {
+          m.on('click', function() { window.location.href = '/eq/' + eq.eid + '/index.html'; });
+        }
+        m.addTo(map);
+        bounds.push([eq.lat, eq.lng]);
+      });
+
+      if (bounds.length) {
+        try { map.fitBounds(bounds, { padding: [30, 30], maxZoom: 8 }); } catch(e) {}
+      }
     })();
   </script>
 

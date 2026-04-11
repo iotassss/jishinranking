@@ -144,6 +144,7 @@ func (h *Handler) ProcessV2(
 	// 判定: 急上昇倍率 ≥ 2.0 AND 短期スコア ≥ 20.0
 
 	allMonthEarthquakes := thisMonthReports.FilterByTelegramCode(domain.TelegramCodeEarthquakeDetail).AllEarthquakesInPeriod(now, 30*24*time.Hour)
+	weekAllEarthquakes := thisWeekReports.FilterByTelegramCode(domain.TelegramCodeEarthquakeDetail).AllEarthquakesInPeriod(now, 7*24*time.Hour)
 	surgeRanking := domain.MakeSurgeRecordList(allMonthEarthquakes, now, 20.0, 2.0, 10)
 
 	// ==============================
@@ -174,6 +175,7 @@ func (h *Handler) ProcessV2(
 		LatestEarthquakes:      latestEarthquakes,
 		TodayBigEarthquakes:    todayBigEarthquakes,
 		WeekBigEarthquakes:     weekBigEarthquakes,
+		WeekAllEarthquakes:     weekAllEarthquakes,
 		MonthBigEarthquakes:    monthBigEarthquakes,
 		TodayPrefectureRanking: todayPrefectureRanking,
 		WeekPrefectureRanking:  weekPrefectureRanking,

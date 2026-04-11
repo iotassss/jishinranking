@@ -45,7 +45,37 @@
       background: #fff; overflow: hidden; padding: 0;
     }
     .eq-main-row { display: flex; align-items: stretch; }
-    .eq-main-map { border-top: 1px solid var(--border); }
+    .eq-main-map { }
+    .eq-main-body {
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+    }
+    .eq-main-details {
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+    }
+    .eq-main-details .facts {
+      margin-top: 0;
+      border-top: none;
+      flex: 1;
+    }
+    .eq-main-details .btn-row {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    @media (max-width: 760px) {
+      .eq-main-body { grid-template-columns: 1fr; }
+      .eq-main-details {
+        border-left: none;
+        border-top: 1px solid var(--border);
+        padding: 12px 16px 4px;
+      }
+      .eq-main-details .btn-row { border-top: none; }
+    }
     .eq-main-mag {
       flex: 0 0 auto; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
@@ -70,10 +100,13 @@
       color: var(--text-sub);
     }
     .eq-main-divider { width: 1px; background: var(--border); flex-shrink: 0; }
-    .eq-main-epicenter { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 14px 30px; min-width: 0; }
+    .eq-main-epicenter { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 14px 24px; min-width: 0; }
     .eq-main-place {
       font-size: 20px; font-weight: 900;
       letter-spacing: 0.01em; line-height: 1.2; overflow-wrap: break-word;
+    }
+    .eq-main-time {
+      font-size: 12px; color: var(--muted); margin-top: 6px;
     }
 
     @media (max-width: 600px) {
@@ -106,15 +139,15 @@
       border-bottom: 1px solid var(--border);
     }
     .fact {
-      display: flex; align-items: flex-start; gap: 8px;
-      font-size: 12px; color: var(--text-sub);
-      padding: 7px 0; border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 13px; color: var(--text-sub);
+      padding: 9px 0; border-bottom: 1px solid var(--border);
+      line-height: 1.5;
     }
     .fact:last-child { border-bottom: none; }
-    .fact span { color: var(--muted); flex: 0 0 5.5em; white-space: nowrap; }
+    .fact span { color: var(--muted); flex: 0 0 6.5em; white-space: nowrap; font-size: 12px; padding-top: 1px; }
     .fact span::after { content: ": "; }
     .fact b { color: var(--text); font-weight: 700; }
-    @media (max-width: 640px) { .fact b { font-size: 13px; line-height: 1.5; } }
 
     /* グリッド */
     .grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; }
@@ -142,10 +175,10 @@
     tr.clickable:hover td { background: var(--bg-sub); }
 
     /* 地図 */
-    .maparea { height: 360px; }
-    @media (max-width: 600px) { .maparea { height: 240px; } }
+    .maparea { height: 440px; }
+    @media (max-width: 760px) { .maparea { height: 280px; } }
     .maparea-placeholder {
-      height: 240px; display: grid; place-items: center;
+      height: 220px; display: grid; place-items: center;
       color: var(--muted); font-size: 13px;
     }
   </style>
@@ -168,7 +201,7 @@
     </div>
 
     <!-- eq-main（独立セクション） -->
-    <div class="card eq-main" style="margin-top:16px;" aria-label="地震の要点">
+    <section class="card eq-main" style="margin-top:16px;" aria-label="地震の要点">
       <div class="eq-main-row">
         <div class="eq-main-mag">
           <div class="eq-main-label">最大震度</div>
@@ -183,25 +216,19 @@
         <div class="eq-main-epicenter">
           <div class="eq-main-label">震源</div>
           <div class="eq-main-place">{{.Hypocenter}}</div>
+          <div class="eq-main-time">{{fmtTime .OccurredAt "2006-01-02 15:04"}} JST</div>
         </div>
       </div>
-      <div class="eq-main-map">
-        {{if .CoordinateKnown}}
-        <div class="maparea" id="eq-map"></div>
-        {{else}}
-        <div class="maparea-placeholder">座標データなし</div>
-        {{end}}
-      </div>
-    </div>
-
-    <!-- Hero -->
-    <section class="hero" style="margin-top:12px;" aria-label="地震の詳細">
-      <div class="section-title" style="margin-bottom:10px;">
-        <h3>地震の詳細</h3>
-      </div>
-
-      <!-- facts -->
-      <div class="facts">
+      <div class="eq-main-body">
+        <div class="eq-main-map">
+          {{if .CoordinateKnown}}
+          <div class="maparea" id="eq-map"></div>
+          {{else}}
+          <div class="maparea-placeholder">座標データなし</div>
+          {{end}}
+        </div>
+        <div class="eq-main-details">
+          <div class="facts">
         <div class="fact"><span>発生時刻</span><b>{{fmtTime .OccurredAt "2006-01-02 15:04"}}</b></div>
         <div class="fact"><span>震源の深さ</span><b>{{if .CoordinateKnown}}{{.Depth}} km{{else}}不明{{end}}</b></div>
         <div class="fact"><span>ステータス</span><b>{{.Status}}</b></div>
@@ -210,14 +237,19 @@
         <div class="fact"><span>見出し</span><b>「{{.HeadlineText}}」</b></div>
         {{end}}
         {{if .ObservedPrefs}}
-        <div class="fact"><span>観測都県</span><b>{{with index .ObservedPrefs 0}}<a href="/pref/{{.Code}}/index.html">{{.Name}}</a>（震度{{intensityDisplay .MaxInt}}）{{end}}{{if gt (len .ObservedPrefs) 1}}ほか{{add (len .ObservedPrefs) -1}}都県{{end}}</b></div>
+        <div class="fact"><span>観測都県</span><b>{{with index .ObservedPrefs 0}}<a
+              href="/pref/{{.Code}}/index.html">{{.Name}}</a>（震度{{intensityDisplay .MaxInt}}）{{end}}{{if gt (len
+            .ObservedPrefs) 1}}ほか{{add (len .ObservedPrefs) -1}}都県{{end}}</b></div>
         {{end}}
-        <div class="fact"><span>データ出典</span><b><a href="https://xml.kishou.go.jp/xmlpull.html" target="_blank" rel="noopener noreferrer">気象庁 防災情報XML（VXSE53）</a></b></div>
-      </div>
+        <div class="fact"><span>データ出典</span><b><a href="https://xml.kishou.go.jp/xmlpull.html" target="_blank"
+              rel="noopener noreferrer">気象庁 防災情報XML（VXSE53）</a></b></div>
+          </div><!-- /.facts -->
 
-      <div class="btn-row">
-        <a class="btn" href="/">ホームへ戻る</a>
-      </div>
+          <div class="btn-row">
+            <a class="btn" href="/">ホームへ戻る</a>
+          </div>
+        </div><!-- /.eq-main-details -->
+      </div><!-- /.eq-main-body -->
     </section>
 
     <!-- 観測地域テーブル -->
