@@ -1,4 +1,4 @@
-.PHONY: build build-app build-init-app serve copy-static
+.PHONY: build build-app build-init-app serve copy-static gentestdata makepages makepagesinit resetlocal
 
 # static/ の静的アセットを output/ にコピーする
 copy-static:
@@ -24,6 +24,19 @@ build-app:
 	rm -rf app/build
 	rm build/linux/bootstrap
 
-build-init-local-app:
+# テストデータ生成: json生成 → MinIO へアップロード
+# 事前に mc alias set local http://localhost:9000 minioadmin minioadmin が必要
+gentestdata:
+	cd app && go run ./cmd/gendata/ > ../tmp/$$(date -u +%Y%m%dT%H%M%SZ).json
+	mc rm --recursive --force local/jishinranking-data
+	mc cp "$$(printf "%s\n" /Users/iota/Workspace/jishinranking/tmp/[0-9]*T*.json | sort | tail -n 1)" local/jishinranking-data/
+
+makepages:
+	cd app && \
+	go run ./cmd/sample/main.go
+
+makepagesinit:
 	cd app && \
 	go run ./cmd/sample/main.go -init
+
+resetlocal: gentestdata makepages

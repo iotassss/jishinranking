@@ -13,7 +13,7 @@ type WeekScoreRecord struct {
 	WeekScore  float64 `json:"week_score"`  // G_long（τ=7日の震度重み付き減衰スコア）
 	ShortScore float64 `json:"short_score"` // G_short（τ=1.5日の短期スコア）
 	Ratio      float64 `json:"ratio"`       // 急上昇倍率 = G_short / (normalizedLong + ε)
-	IsSurge    bool    `json:"is_surge"`    // 急上昇フラグ（minShortScore かつ minRatio を超えた場合 true）
+	IsSurge    bool    `json:"is_surge"`    // 急上昇フラグ（minRatio を超えた場合 true）
 	WeekCount  int     `json:"week_count"`  // 過去7日以内の地震件数
 }
 
@@ -39,7 +39,7 @@ func (w WeekScoreRecordList) AssignRanks() {
 
 // MakeWeekScoreRecordList は過去1週間の震度重み付き減衰スコアで都道府県をランキングする。
 // 急上昇フィルタは適用せず地震活動があった全都道府県を対象とするが、
-// minShortScore と minRatio を満たす都道府県は IsSurge=true でマークする。
+// minRatio を満たす都道府県は IsSurge=true でマークする（minShortScore は使用しない）。
 func MakeWeekScoreRecordList(
 	allEarthquakes EarthquakeRecordList,
 	now time.Time,
@@ -54,7 +54,7 @@ func MakeWeekScoreRecordList(
 	entries := buildPrefScores(allEarthquakes, now)
 	list := make(WeekScoreRecordList, 0, len(entries))
 	for _, e := range entries {
-		isSurge := e.ShortScore >= minShortScore && e.Ratio >= minRatio
+		isSurge := e.Ratio >= minRatio
 		list = append(list, WeekScoreRecord{
 			PrefCode:   e.PrefCode,
 			PrefName:   e.PrefName,

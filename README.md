@@ -121,5 +121,13 @@ docker run -d --name minio \
   minio/minio server /data --console-address ":9001"
 ```
 
+## ローカル環境での動作確認
+```sh
+make gentestdata
+make makepages
+make serve
+```
+
+
 ## TODO
 - cloudflare workersから非公開s3バケットにアクセスできるようにする

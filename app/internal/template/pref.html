@@ -220,7 +220,7 @@
         <canvas id="hourly-chart" aria-label="{{.PrefName}}の地震発生推移（過去7日間）" role="img"></canvas>
       </div>
       <p style="margin:8px 0 0;font-size:12px;color:var(--muted);">
-        ※ 縦軸はマグニチュード。色の濃さは{{.PrefName}}での観測震度を示します。
+        ※ 縦軸は{{.PrefName}}での観測震度。色の濃さは観測震度を示します。
       </p>
     </section>
 
@@ -329,6 +329,8 @@
           scales: {
             x: {
               type: "linear",
+              min: {{.WeekFromMS}},
+              max: {{.WeekToMS}},
               ticks: {
                 maxTicksLimit: 14,
                 maxRotation: 45,
@@ -344,10 +346,17 @@
               }
             },
             y: {
-              beginAtZero: false,
+              beginAtZero: true,
               min: 0,
-              title: { display: true, text: "マグニチュード" },
-              ticks: { stepSize: 1 }
+              max: 9,
+              title: { display: true, text: "震度" },
+              ticks: {
+                stepSize: 1,
+                callback: function(value) {
+                  const labels = ["-", "1", "2", "3", "4", "5弱", "5強", "6弱", "6強", "7"];
+                  return labels[value] !== undefined ? labels[value] : value;
+                }
+              }
             }
           },
           plugins: {
@@ -355,12 +364,14 @@
             tooltip: {
               callbacks: {
                 label: function(item) {
+                  const intLabels = ["-", "1", "2", "3", "4", "5弱", "5強", "6弱", "6強", "7"];
+                  const intStr = intLabels[item.parsed.y] !== undefined ? intLabels[item.parsed.y] : item.parsed.y;
                   const d = new Date(item.parsed.x + 9 * 3600 * 1000);
                   const M = d.getUTCMonth() + 1;
                   const D = d.getUTCDate();
                   const H = String(d.getUTCHours()).padStart(2, "0");
                   const Min = String(d.getUTCMinutes()).padStart(2, "0");
-                  return "M" + item.parsed.y.toFixed(1) + "  " + M + "/" + D + " " + H + ":" + Min + " JST";
+                  return "震度" + intStr + "  " + M + "/" + D + " " + H + ":" + Min + " JST";
                 }
               }
             }

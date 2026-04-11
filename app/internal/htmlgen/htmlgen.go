@@ -176,8 +176,8 @@ func makePrefScatterChartData(epicenters []domain.EpicenterPoint) template.JS {
 	colors := make([]string, n)
 
 	for i, ep := range epicenters {
-		pts[i] = scatterPointJSON{X: ep.OccurredAt.UnixMilli(), Y: ep.Magnitude}
 		level := domain.IntensityLevel(ep.PrefMaxInt)
+		pts[i] = scatterPointJSON{X: ep.OccurredAt.UnixMilli(), Y: float64(level)}
 		if level < 0 {
 			level = 0
 		} else if level >= len(intensityStyleMap) {
@@ -614,6 +614,8 @@ func (g *SimpleHTMLGenerator) GeneratePref(data domain.PrefPageData) (domain.Pub
 		"UpdatedAt":             data.UpdatedAt,
 		"WeekFrom":              data.WeekFrom,
 		"WeekTo":                data.WeekTo,
+		"WeekFromMS":            data.WeekFrom.UnixMilli(),
+		"WeekToMS":              data.WeekTo.UnixMilli(),
 	}
 	if err := g.prefTmpl.Execute(&buf, dataMap); err != nil {
 		return "", fmt.Errorf("pref template execute failed (pref=%s): %w", data.PrefCode, err)
