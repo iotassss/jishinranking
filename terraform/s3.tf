@@ -56,3 +56,17 @@ resource "aws_s3_object" "static_japan_geojson" {
   content_type = "application/json"
   source_hash  = filemd5("../static/japan.geojson")
 }
+
+# =========================
+# 都道府県旗 SVG (01.svg〜47.svg)
+# =========================
+
+resource "aws_s3_object" "pref_flag" {
+  for_each = toset([for i in range(1, 48) : format("%02d", i)])
+
+  bucket       = aws_s3_bucket.jishinranking_html.id
+  key          = "pref_flag/${each.key}.svg"
+  source       = "../static/pref_flag/${each.key}.svg"
+  content_type = "image/svg+xml"
+  source_hash  = filemd5("../static/pref_flag/${each.key}.svg")
+}

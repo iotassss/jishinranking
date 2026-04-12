@@ -8,7 +8,7 @@
 //
 // 使用方法:
 //
-//	go run ./cmd/gendata > tmp/$(date -u +%Y%m%dT%H%M%SZ).json
+//	go run ./cmd/gendata > tmp/testdata/$(date -u +%Y%m%dT%H%M%SZ).json
 package main
 
 import (

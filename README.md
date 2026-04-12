@@ -1,69 +1,30 @@
 # 地震ランキング
 
-## app（Lambda 用ビルド）
+## 🎯 Summary
+地震ランキングは、地震の規模や影響をランキング形式で表示するサービスです。
 
-Lambda の Go runtime (`go1.x`) は非推奨のため、**カスタムランタイム（provided.al2）** としてデプロイする。
+### docs/
+- にあるドキュメントには、地震ランキングの概要や設計、運用に関する情報が記載されている。
 
-### build（Lambda 用バイナリ & テンプレートファイル）
+### app/
+- 地震ランキングのアプリケーションコードが含まれている。
 
-Lambda の実行環境は Amazon Linux2（linux/amd64）のため、以下のコマンドでビルドし、zip 化する。
+### terraform/
+- AWSリソースのインフラストラクチャコードが含まれている。
 
-**テンプレートファイル（例: `app/internal/template/index.tmpl`）をGoバイナリにembedせず外部ファイルとして参照している場合、Lambdaデプロイ用zip（app.zip）に必ず含めてください。**
+## 🚀 本番環境デプロイ
 
+### 1. application build
 ```sh
-# プロジェクトルートで実行
-cd app
-GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o build/linux/bootstrap cmd/main.go
-
-# Lambda は "bootstrap" という名前の実行ファイルを要求する
-# テンプレートファイルも一緒にzipに含める
-zip -j build/linux/app.zip build/linux/bootstrap internal/template/index.tmpl
+make build
 ```
 
-#### Goスクリプトでのテンプレートファイル指定例
-Lambda実行時はzip内のルートがカレントディレクトリとなるため、Goコードではzip内のパス構成に合わせてファイルパスを指定してください。
-
-```go
-tmpl, err := template.ParseFiles("internal/template/index.tmpl")
-```
-
-テンプレートファイルをembedしている場合はこの手順は不要です。
-
-## terraform
-
-### 準備
-
-Terraformは以下の環境変数を自動的に読み取って使用するため、あらかじめ設定しておく。
-```sh
-export AWS_ACCESS_KEY_ID=xxxx
-export AWS_SECRET_ACCESS_KEY=yyyy
-export AWS_SESSION_TOKEN=zzzz   # MFA や一時クレデンシャルの場合のみ
-export AWS_REGION=ap-northeast-1
-export CLOUDFLARE_API_TOKEN=aaaa
-export TF_VAR_cloudflare_account_id=bbbb
-export TF_VAR_cloudflare_zone_id=cccc
-```
-対話形式で設定する場合は以下のスクリプトを実行する。
+### 2. リソース反映
 
 ```sh
-echo "AWS_ACCESS_KEY_ID:"
-read -s ACCESS_KEY
-
-echo "AWS_SECRET_ACCESS_KEY:"
-read -s SECRET_KEY
-
-export AWS_ACCESS_KEY_ID=$ACCESS_KEY
-export AWS_SECRET_ACCESS_KEY=$SECRET_KEY
-export AWS_REGION=ap-northeast-1
-export TF_VAR_worker_aws_access_key_id="$AWS_ACCESS_KEY_ID"
-export TF_VAR_worker_aws_secret_access_key="$AWS_SECRET_ACCESS_KEY"
-```
-※ 入力内容は画面に表示されません
-※ この設定は現在のターミナルセッションでのみ有効です
-
-### 基本的な操作
-
-```sh
+# ~/.aws/credentials, ~/.aws/config のprofileを使用する
+export AWS_PROFILE=worker
+cd terraform
 # 初期化
 terraform init
 # 計画確認
@@ -74,7 +35,7 @@ terraform apply
 terraform state list
 ```
 
-### 即時反映（初回以外の実行）
+### 3. 即時反映（初回以外の実行）
 ```sh
 aws lambda invoke \
   --function-name jishinranking-batch \
@@ -84,7 +45,8 @@ aws lambda invoke \
   --query 'LogResult' --output text | base64 -d
 cat /tmp/lambda_out.json
 ```
-### 即時反映（初回実行）
+
+### 3.5. 即時反映（初回実行）
 ```sh
 aws lambda invoke \
   --function-name jishinranking-initialize \
@@ -94,6 +56,7 @@ aws lambda invoke \
   --query 'LogResult' --output text | base64 -d
 cat /tmp/lambda_out.json
 ```
+
 ### 注意点
 個人運用のためロックは不要
 ただし同時に複数ターミナルやCIから terraform apply を走らせないよう注意
@@ -106,12 +69,9 @@ terraform state rm aws_s3_bucket.jishinranking_data
 terraform destroy
 ```
 
-```sh
-# ローカル実行
-DATA_BUCKET="jishinranking-com" HTML_KEY="public/html/index.html" go run app/cmd/main.go
-```
+## 💻 ローカル実行
 
-## S3モック
+### 1. S3モック起動
 ```sh
 docker run -d --name minio \
   -p 9000:9000 -p 9001:9001 \
@@ -121,13 +81,13 @@ docker run -d --name minio \
   minio/minio server /data --console-address ":9001"
 ```
 
-## ローカル環境での動作確認
+### 2. ローカル環境での動作確認
 ```sh
-make gentestdata
-make makepages
+# 基本的にこれを実行すれば問題ない
 make serve
+
+# テストデータ生成だけ行う場合はこれを実行するが、make serveに内包されているため通常は不要
+make gentestdata
+# テンプレートファイルをローカルでビルドして出力する場合はこれを実行するが、make serveに内包されているため通常は不要
+make makepages
 ```
-
-
-## TODO
-- cloudflare workersから非公開s3バケットにアクセスできるようにする
