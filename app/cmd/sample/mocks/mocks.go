@@ -27,6 +27,9 @@ type MockHTMLRepo struct{}
 func (m *MockHTMLRepo) Save(ctx context.Context, key string, html string) error {
 	return nil
 }
+func (m *MockHTMLRepo) SaveRaw(ctx context.Context, key string, content []byte, contentType string) error {
+	return nil
+}
 
 type MockHTMLGenerator struct{}
 

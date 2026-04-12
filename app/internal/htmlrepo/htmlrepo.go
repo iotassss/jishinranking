@@ -37,6 +37,20 @@ func (r *S3HTMLRepo) Save(ctx context.Context, key string, html domain.Published
 	return nil
 }
 
+// SaveRaw はkeyに任意のバイト列をcontentTypeとして書き込む
+func (r *S3HTMLRepo) SaveRaw(ctx context.Context, key string, content []byte, contentType string) error {
+	_, err := r.Client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:      aws.String(r.BucketName),
+		Key:         aws.String(key),
+		Body:        bytes.NewReader(content),
+		ContentType: aws.String(contentType),
+	})
+	if err != nil {
+		return fmt.Errorf("S3 PutObject failed: %w", err)
+	}
+	return nil
+}
+
 func (r *S3HTMLRepo) Get(ctx context.Context, key string) (domain.PublishedHTML, error) {
 	resp, err := r.Client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(r.BucketName),

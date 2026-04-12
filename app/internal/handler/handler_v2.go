@@ -2,6 +2,7 @@ package handler
 
 // 原則依存するパッケージは標準ライブラリとdomainのみとする
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log/slog"
@@ -385,5 +386,91 @@ func (h *Handler) ProcessV2(
 		slog.Info("Week score page generated")
 	}
 
+	// ==============================
+	// sitemap.xml 生成・保存
+	// ==============================
+	sitemapXML := buildSitemap(detailReports, now)
+	if err := h.htmlRepo.SaveRaw(ctx, "sitemap.xml", sitemapXML, "application/xml; charset=utf-8"); err != nil {
+		slog.Warn("sitemap.xml save failed", "err", err)
+	} else {
+		slog.Info("sitemap.xml generated")
+	}
+
+	// ==============================
+	// robots.txt 生成・保存
+	// ==============================
+	robotsTxt := []byte("User-agent: *\nAllow: /\nSitemap: https://jishinranking.com/sitemap.xml\n")
+	if err := h.htmlRepo.SaveRaw(ctx, "robots.txt", robotsTxt, "text/plain; charset=utf-8"); err != nil {
+		slog.Warn("robots.txt save failed", "err", err)
+	} else {
+		slog.Info("robots.txt generated")
+	}
+
 	return nil
+}
+
+// buildSitemap は静的ページ・都道府県ページ・地震詳細ページを含む sitemap.xml を生成する。
+func buildSitemap(detailReports domain.ReportList, now time.Time) []byte {
+	const base = "https://jishinranking.com"
+	nowStr := now.UTC().Format("2006-01-02")
+
+	type urlEntry struct {
+		loc        string
+		lastmod    string
+		changefreq string
+		priority   string
+	}
+
+	entries := []urlEntry{
+		{base + "/", nowStr, "hourly", "1.0"},
+		{base + "/about.html", nowStr, "monthly", "0.5"},
+		{base + "/score.html", nowStr, "weekly", "0.6"},
+		{base + "/eq/week/", nowStr, "hourly", "0.8"},
+		{base + "/eq/today/", nowStr, "hourly", "0.8"},
+		{base + "/eq/month/", nowStr, "daily", "0.7"},
+		{base + "/eq/6h/", nowStr, "hourly", "0.7"},
+		{base + "/pref/ranking/", nowStr, "hourly", "0.8"},
+		{base + "/pref/week_score/", nowStr, "hourly", "0.7"},
+		{base + "/privacypolicy.html", nowStr, "yearly", "0.3"},
+		{base + "/contact.html", nowStr, "yearly", "0.3"},
+	}
+
+	// 都道府県別ページ（01〜47）
+	for _, code := range domain.PrefCodeList {
+		entries = append(entries, urlEntry{
+			loc:        fmt.Sprintf("%s/pref/%s/", base, code),
+			lastmod:    nowStr,
+			changefreq: "hourly",
+			priority:   "0.7",
+		})
+	}
+
+	// 地震詳細ページ（過去30日分）
+	detailOnly := detailReports.FilterByTelegramCode(domain.TelegramCodeEarthquakeDetail)
+	for _, report := range detailOnly {
+		detail, ok := domain.MakeEarthquakeDetail(report)
+		if !ok {
+			continue
+		}
+		entries = append(entries, urlEntry{
+			loc:        fmt.Sprintf("%s/eq/%s/", base, detail.EventID),
+			lastmod:    detail.OccurredAt.UTC().Format("2006-01-02"),
+			changefreq: "never",
+			priority:   "0.4",
+		})
+	}
+
+	var buf bytes.Buffer
+	buf.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
+	buf.WriteString(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` + "\n")
+	for _, e := range entries {
+		buf.WriteString("  <url>\n")
+		buf.WriteString("    <loc>" + e.loc + "</loc>\n")
+		buf.WriteString("    <lastmod>" + e.lastmod + "</lastmod>\n")
+		buf.WriteString("    <changefreq>" + e.changefreq + "</changefreq>\n")
+		buf.WriteString("    <priority>" + e.priority + "</priority>\n")
+		buf.WriteString("  </url>\n")
+	}
+	buf.WriteString("</urlset>\n")
+	return buf.Bytes()
 }

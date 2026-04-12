@@ -57,6 +57,14 @@ resource "aws_s3_object" "static_japan_geojson" {
   source_hash  = filemd5("../static/japan.geojson")
 }
 
+resource "aws_s3_object" "static_github_icon" {
+  bucket       = aws_s3_bucket.jishinranking_html.id
+  key          = "GitHub_Invertocat_Black.svg"
+  source       = "../static/GitHub_Invertocat_Black.svg"
+  content_type = "image/svg+xml"
+  source_hash  = filemd5("../static/GitHub_Invertocat_Black.svg")
+}
+
 # =========================
 # 都道府県旗 SVG (01.svg〜47.svg)
 # =========================

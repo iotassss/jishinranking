@@ -29,6 +29,7 @@ type DataRepo interface {
 type HTMLRepo interface {
 	Save(ctx context.Context, key string, html domain.PublishedHTML) error
 	Get(ctx context.Context, key string) (domain.PublishedHTML, error)
+	SaveRaw(ctx context.Context, key string, content []byte, contentType string) error
 }
 
 // 配信用HTMLを生成する
