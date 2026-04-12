@@ -248,6 +248,30 @@ func (h *Handler) ProcessV2(
 	slog.Info("Score page generated")
 
 	// ==============================
+	// privacypolicy ページ生成・保存
+	// ==============================
+	privacyPolicyHTML, err := h.htmlGenerator.GeneratePrivacyPolicy()
+	if err != nil {
+		return fmt.Errorf("privacypolicy HTML generation failed: %w", err)
+	}
+	if err := h.htmlRepo.Save(ctx, "privacypolicy.html", privacyPolicyHTML); err != nil {
+		return fmt.Errorf("privacypolicy HTML save failed: %w", err)
+	}
+	slog.Info("PrivacyPolicy page generated")
+
+	// ==============================
+	// contact ページ生成・保存
+	// ==============================
+	contactHTML, err := h.htmlGenerator.GenerateContact()
+	if err != nil {
+		return fmt.Errorf("contact HTML generation failed: %w", err)
+	}
+	if err := h.htmlRepo.Save(ctx, "contact.html", contactHTML); err != nil {
+		return fmt.Errorf("contact HTML save failed: %w", err)
+	}
+	slog.Info("Contact page generated")
+
+	// ==============================
 	// 地震履歴ページ生成・保存 (/eq/6h/, /eq/today/, /eq/week/, /eq/month/)
 	// ==============================
 	// VXSE53（地震詳細電文）のみを使用してイベントを一意に特定する。

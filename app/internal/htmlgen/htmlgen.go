@@ -53,14 +53,16 @@ func makeWeekEQsJSON(eqs domain.EarthquakeRecordList) template.JS {
 }
 
 type SimpleHTMLGenerator struct {
-	tmpl            *template.Template
-	detailTmpl      *template.Template
-	aboutTmpl       *template.Template
-	historyTmpl     *template.Template
-	prefTmpl        *template.Template
-	prefRankingTmpl *template.Template
-	weekScoreTmpl   *template.Template
-	scoreTmpl       *template.Template
+	tmpl              *template.Template
+	detailTmpl        *template.Template
+	aboutTmpl         *template.Template
+	historyTmpl       *template.Template
+	prefTmpl          *template.Template
+	prefRankingTmpl   *template.Template
+	weekScoreTmpl     *template.Template
+	scoreTmpl         *template.Template
+	privacyPolicyTmpl *template.Template
+	contactTmpl       *template.Template
 }
 
 // ---- hourly chart helpers (散布図) ----
@@ -393,7 +395,21 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 		panic(fmt.Sprintf("score template parse error: %v", err))
 	}
 
-	return &SimpleHTMLGenerator{tmpl: tmpl, detailTmpl: detailTmpl, aboutTmpl: aboutTmpl, historyTmpl: historyTmpl, prefTmpl: prefTmpl, prefRankingTmpl: prefRankingTmpl, weekScoreTmpl: weekScoreTmpl, scoreTmpl: scoreTmpl}
+	// privacypolicy.html
+	privacyPolicyTmplPath := filepath.Join(templatePath, "privacypolicy.html")
+	privacyPolicyTmpl, err := template.New("privacypolicy.html").ParseFiles(basePath, privacyPolicyTmplPath)
+	if err != nil {
+		panic(fmt.Sprintf("privacypolicy template parse error: %v", err))
+	}
+
+	// contact.html
+	contactTmplPath := filepath.Join(templatePath, "contact.html")
+	contactTmpl, err := template.New("contact.html").ParseFiles(basePath, contactTmplPath)
+	if err != nil {
+		panic(fmt.Sprintf("contact template parse error: %v", err))
+	}
+
+	return &SimpleHTMLGenerator{tmpl: tmpl, detailTmpl: detailTmpl, aboutTmpl: aboutTmpl, historyTmpl: historyTmpl, prefTmpl: prefTmpl, prefRankingTmpl: prefRankingTmpl, weekScoreTmpl: weekScoreTmpl, scoreTmpl: scoreTmpl, privacyPolicyTmpl: privacyPolicyTmpl, contactTmpl: contactTmpl}
 }
 
 // Generate: 地震イベントJSONからHTMLランキング表を生成
@@ -552,6 +568,30 @@ func (g *SimpleHTMLGenerator) GenerateAbout() (domain.PublishedHTML, error) {
 	}
 	if err := g.aboutTmpl.Execute(&buf, dataMap); err != nil {
 		return "", fmt.Errorf("about template execute failed: %w", err)
+	}
+	return domain.PublishedHTML(buf.String()), nil
+}
+
+// GeneratePrivacyPolicy はプライバシーポリシーページのHTMLを生成する。
+func (g *SimpleHTMLGenerator) GeneratePrivacyPolicy() (domain.PublishedHTML, error) {
+	var buf bytes.Buffer
+	dataMap := map[string]interface{}{
+		"BrandSub": "都道府県別に地震をランキング＆可視化",
+	}
+	if err := g.privacyPolicyTmpl.Execute(&buf, dataMap); err != nil {
+		return "", fmt.Errorf("privacypolicy template execute failed: %w", err)
+	}
+	return domain.PublishedHTML(buf.String()), nil
+}
+
+// GenerateContact はお問い合わせページのHTMLを生成する。
+func (g *SimpleHTMLGenerator) GenerateContact() (domain.PublishedHTML, error) {
+	var buf bytes.Buffer
+	dataMap := map[string]interface{}{
+		"BrandSub": "都道府県別に地震をランキング＆可視化",
+	}
+	if err := g.contactTmpl.Execute(&buf, dataMap); err != nil {
+		return "", fmt.Errorf("contact template execute failed: %w", err)
 	}
 	return domain.PublishedHTML(buf.String()), nil
 }

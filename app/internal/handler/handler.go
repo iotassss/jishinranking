@@ -37,6 +37,8 @@ type HTMLGenerator interface {
 	GenerateDetail(detail domain.EarthquakeDetail) (domain.PublishedHTML, error)
 	GenerateAbout() (domain.PublishedHTML, error)
 	GenerateScore() (domain.PublishedHTML, error)
+	GeneratePrivacyPolicy() (domain.PublishedHTML, error)
+	GenerateContact() (domain.PublishedHTML, error)
 	GenerateHistory(tab string, earthquakes domain.EarthquakeRecordList, counts map[string]int, now time.Time) (domain.PublishedHTML, error)
 	GeneratePref(data domain.PrefPageData) (domain.PublishedHTML, error)
 	GeneratePrefRanking(todayRanking domain.RankingRecordList, weekRanking domain.RankingRecordList, weekScoreRanking domain.WeekScoreRecordList, now time.Time) (domain.PublishedHTML, error)

@@ -26,15 +26,15 @@
     .page-lead { font-size: 14px; color: var(--muted); margin: 0 0 28px; }
 
     /* カードのパディングを about 用に上書き */
-    .card { padding: 24px 28px; }
-    .card + .card { margin-top: 16px; }
+    .card { padding: 28px 0; background: none; border: none; box-shadow: none; border-radius: 0; }
+    .card + .card { margin-top: 0; border-top: 1px solid var(--border); }
 
     .section-anchor { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; }
     .section-anchor .icon {
       width: 32px; height: 32px; border-radius: 9px;
       display: grid; place-items: center; font-size: 16px; flex: 0 0 auto;
     }
-    .section-anchor h2 { margin: 0; font-size: 16px; font-weight: 800; }
+    .section-anchor h2 { margin: 0; font-size: 19px; font-weight: 800; }
 
     .body-text { color: var(--text-sub); font-size: 14px; line-height: 1.9; margin: 0; }
     .body-text + .body-text { margin-top: 10px; }
@@ -106,6 +106,66 @@
       </div>
     </section>
 
+    <!-- サイト運営者情報 -->
+    <section class="card" id="operator">
+      <div class="section-anchor">
+        <div class="icon">👤</div>
+        <h2>サイト運営者情報</h2>
+      </div>
+      <div class="def-list">
+        <div class="def-row">
+          <div class="def-term">運営者</div>
+          <div class="def-desc">個人（非公式サイト）</div>
+        </div>
+        <div class="def-row">
+          <div class="def-term">サイト名</div>
+          <div class="def-desc">地震ランキング</div>
+        </div>
+        <div class="def-row">
+          <div class="def-term">公開開始</div>
+          <div class="def-desc">2025年</div>
+        </div>
+        <div class="def-row">
+          <div class="def-term">お問い合わせ</div>
+          <div class="def-desc"><a href="/contact.html">お問い合わせフォーム</a></div>
+        </div>
+        <div class="def-row">
+          <div class="def-term">プライバシーポリシー</div>
+          <div class="def-desc"><a href="/privacypolicy.html">プライバシーポリシーページ</a></div>
+        </div>
+      </div>
+      <p class="body-text" style="margin-top:14px;">
+        本サイトは個人が趣味・学習目的で運営する非営利サイトです。気象庁・各自治体・報道機関との関係はありません。
+      </p>
+    </section>
+
+    <!-- データの二次利用について -->
+    <section class="card" id="data-reuse">
+      <div class="section-anchor">
+        <div class="icon">📊</div>
+        <h2>データの二次利用について</h2>
+      </div>
+      <p class="body-text">
+        本サイトが表示する地震データは、
+        <a href="https://xml.kishou.go.jp/xmlpull.html" target="_blank" rel="noopener noreferrer">気象庁 防災情報XMLフォーマット形式電文</a>
+        を独自に加工・集計したものです。
+        元データの利用にあたっては、
+        <a href="https://www.jma.go.jp/jma/kishou/info/coment.html" target="_blank" rel="noopener noreferrer">気象庁の著作権・利用規約</a>
+        に従ってください。
+      </p>
+      <p class="body-text" style="margin-top:10px;">
+        本サイト独自の集計値（スコア・ランキング等）については以下の条件で二次利用を許可します。
+      </p>
+      <div class="disclaimer-box" style="margin-top:12px;">
+        <ul>
+          <li><strong>出典の明記</strong>：「地震ランキング（jishinranking.com）」を出典として明記してください。</li>
+          <li><strong>非商用利用</strong>：商業目的での利用はお断りしています。ご希望の場合は<a href="/contact.html">お問い合わせ</a>ください。</li>
+          <li><strong>正確性の保証なし</strong>：本サイトのデータに誤りが含まれる可能性があります。利用はご自身の責任で行ってください。</li>
+          <li><strong>禁止事項</strong>：本サイトのHTMLをスクレイピングして大量に自動取得する行為、サーバーに負荷をかける行為はお断りしています。</li>
+        </ul>
+      </div>
+    </section>
+
     <!-- 免責事項 -->
     <section class="card" id="disclaimer">
       <div class="section-anchor">
@@ -134,6 +194,12 @@
         <li><a href="https://www.nhk.or.jp/saigai/index.html" target="_blank" rel="noopener noreferrer">NHK 災害・防災情報</a></li>
       </ul>
     </section>
+
+    <div class="btn-row mt" style="margin-top:20px;">
+      <a class="btn" href="/">← トップへ戻る</a>
+      <a class="btn" href="/privacypolicy.html">プライバシーポリシー</a>
+      <a class="btn" href="/contact.html">お問い合わせ</a>
+    </div>
   </main>
 
   {{template "common_footer" .}}

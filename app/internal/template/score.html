@@ -32,7 +32,7 @@
       width: 32px; height: 32px; border-radius: 9px;
       display: grid; place-items: center; font-size: 16px; flex: 0 0 auto;
     }
-    .section-anchor h2 { margin: 0; font-size: 16px; font-weight: 800; }
+    .section-anchor h2 { margin: 0; font-size: 19px; font-weight: 800; }
 
     .body-text { color: var(--text-sub); font-size: 14px; line-height: 1.9; margin: 0; }
     .body-text + .body-text { margin-top: 10px; }
@@ -95,6 +95,7 @@
       background: rgba(215,0,15,.10); color: #d7000f;
       border: 1px solid rgba(215,0,15,.25); white-space: nowrap; vertical-align: middle;
     }
+    @media (max-width: 600px) { .badge-surge-text { display: none; } }
   </style>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
@@ -236,7 +237,7 @@
         </dl>
       </div>
       <p class="body-text" style="margin-top:14px">
-        以下の条件を両方満たす都道府県に <span class="badge-surge">↑急上昇</span> バッジを表示します。
+        以下の条件を両方満たす都道府県に <span class="badge-surge">↑<span class="badge-surge-text">急上昇</span></span> バッジを表示します。
       </p>
       <div class="formula-block" style="margin-top:10px">
         <div class="katex-block">$$R \geq R_{\text{th}} \quad\land\quad G_{\text{short}} \geq G_{\min}$$</div>
@@ -265,7 +266,7 @@
           <div class="flow-num">2</div>
           <div class="flow-body">
             <strong>急上昇バッジで異変をキャッチ</strong>
-            <p><span class="badge-surge">↑急上昇</span> が付いている都道府県は、普段より地震が急増しています。直近の状況変化を素早く知りたいときに便利です。</p>
+            <p><span class="badge-surge">↑<span class="badge-surge-text">急上昇</span></span> が付いている都道府県は、普段より地震が急増しています。直近の状況変化を素早く知りたいときに便利です。</p>
           </div>
         </div>
         <div class="flow-item">

@@ -44,12 +44,13 @@
       background: rgba(215,0,15,.10); color: #d7000f;
       border: 1px solid rgba(215,0,15,.25); white-space: nowrap; vertical-align: middle;
     }
+    @media (max-width: 600px) { .badge-surge-text { display: none; } }
 
     /* テーブル */
     .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
-    th, td { padding: 9px 10px; border-bottom: 1px solid var(--border); text-align: left; }
-    th { background: var(--bg-sub); color: var(--text-sub); font-weight: 700; font-size: 12px; white-space: nowrap; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px; }
+    th, td { padding: 9px 10px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+    th { background: var(--bg-sub); color: var(--text-sub); font-weight: 700; font-size: 12px; }
     tr:last-child td { border-bottom: none; }
     td.metric { font-weight: 700; }
     tr.rank-gold   td { background: rgba(255,200,0,.13); }
@@ -125,7 +126,7 @@
             <td class="rank-cell">{{.Rank}}</td>
             <td>
               <img src="/pref_flag/{{.PrefCode}}.svg" width="24" height="16" alt="" style="vertical-align:middle;margin-right:6px;border-radius:2px;">{{.PrefName}}
-              {{if .IsSurge}}<span class="badge-surge">↑急上昇</span>{{end}}
+              {{if .IsSurge}}<span class="badge-surge">↑<span class="badge-surge-text">急上昇</span></span>{{end}}
             </td>
             <td class="metric">
               <div class="score-bar-wrap">
