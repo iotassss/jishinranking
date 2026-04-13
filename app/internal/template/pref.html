@@ -188,10 +188,21 @@
       </div>
 
       <div class="compare-note" style="margin-top:14px;">
-        今週の地震スコアは <b>{{printf "%.1f" .WeekScore}}</b> で全国{{if gt .WeekScoreRank 0}}{{.WeekScoreRank}}位{{else}}圏外{{end}}（発生回数: <b>{{.WeekCount}}回</b>）。
-        本日（24h）は <b>{{.TodayCount}}回</b>、7日平均は <b>{{printf "%.1f" .WeekAvg}}回/日</b>。
+        今週（{{fmtTime .WeekFrom "1/2"}}〜{{fmtTime .WeekTo "1/2"}}）の{{.PrefName}}では、
+        {{if gt .WeekCount 0}}震度1以上の地震が <b>{{.WeekCount}}回</b> 観測されました（1日平均 {{printf "%.1f" .WeekAvg}}回）。
+        地震スコアは
+        {{if ge .WeekScore 100.0}}<b style="color:var(--accent)">{{printf "%.1f" .WeekScore}}</b>{{else if ge .WeekScore 40.0}}<b style="color:var(--s2-fg)">{{printf "%.1f" .WeekScore}}</b>{{else if ge .WeekScore 10.0}}<b>{{printf "%.1f" .WeekScore}}</b>{{else}}<b style="color:var(--s1-fg)">{{printf "%.1f" .WeekScore}}</b>{{end}}{{if gt .WeekScoreRank 0}}（全国 {{.WeekScoreRank}}位 / 47都道府県）{{end}}。
+        {{else}}今週は震度1以上の地震の記録はありませんでした。
+        {{end}}
         {{if ne .MaxIntensity "-"}}
-          今週の最大震度は <span class="red">震度{{intensityDisplay .MaxIntensity}}</span>（{{fmtTime .MaxIntensityAt "1月2日 15:04"}}）。
+          今週最も大きな揺れは
+          <span class="pill {{intensityClass .MaxIntensity}}" style="font-size:13px;padding:2px 9px;">震度{{intensityDisplay .MaxIntensity}}</span>
+          で、{{fmtTime .MaxIntensityAt "1月2日 15:04"}} に記録されました。
+        {{end}}
+        {{if gt .SurgeScore 0.0}}
+          <br><span style="color:var(--accent);font-weight:900;">⚡ 急上昇中</span>：本日（24h）は <b>{{.TodayCount}}回</b>、週平均比 <b style="color:var(--accent)">{{printf "%.1f" .SurgeScore}}倍</b> のペースです{{if gt .SurgeRank 0}}（急上昇ランキング全国 <b>{{.SurgeRank}}位</b>）{{end}}。
+        {{else if gt .WeekCount 0}}
+          本日（24h）は <b>{{.TodayCount}}回</b> 観測されています。
         {{end}}
       </div>
     </section>
@@ -219,8 +230,8 @@
       <div class="chart-container">
         <canvas id="hourly-chart" aria-label="{{.PrefName}}の地震発生推移（過去7日間）" role="img"></canvas>
       </div>
-      <p style="margin:8px 0 0;font-size:12px;color:var(--muted);">
-        ※ 縦軸は{{.PrefName}}での観測震度。色の濃さは観測震度を示します。
+      <p style="margin:8px 0 0;font-size:13px;color:var(--text-sub);line-height:1.7;">
+        横軸は日時（過去7日間）、縦軸は{{.PrefName}}での観測震度（1〜7）を示します。×印が大きく濃いほど震度の大きな地震です。同じ地震でも震源からの距離によって観測震度は異なるため、ここでは{{.PrefName}}での観測震度を使用しています。
       </p>
     </section>
 
@@ -230,6 +241,9 @@
         <h3 id="sec-recent">最近の地震（{{.PrefName}}が観測された地震）</h3>
         <div class="meta">過去7日間・新しい順</div>
       </div>
+      <p style="margin:0 0 12px;font-size:13px;color:var(--text-sub);line-height:1.7;">
+        過去7日間に{{.PrefName}}が震度1以上を観測した地震の一覧です。震度の大きい順に並んでいます。各行をクリックすると震源・観測地域の詳細ページへ移動できます。
+      </p>
 
       {{if .RecentEarthquakes}}
       <div class="event-list">
@@ -283,9 +297,9 @@
         </div>
       </div>
 
-      <div class="compare-note" style="font-size:12px;">
-        急上昇倍率が <b>2.0</b> 以上かつ短期スコアが <b>20.0</b> 以上の場合にランキングに残載されます。
-        現在の{{.PrefName}}は条件を満たしています。
+      <div class="compare-note" style="font-size:13px;line-height:1.8;">
+        <b>急上昇スコア</b>とは、直近24時間の地震頻度が週平均比でどの程度増加しているかを示す指標です（算出式：短期スコア × log(1 + 急上昇倍率)）。スコアが高い場合、群発地震や余震活動の活発化が起きている可能性があります。急上昇倍率が <b>2.0</b> 以上かつ短期スコアが <b>20.0</b> 以上の都道府県がランキングに掲載されます。<br>
+        現在の{{.PrefName}}はこの条件を満たしており、地震活動が通常より活発な状態です。緊急地震速報に注意するとともに、<a href="https://www.jma.go.jp/index.html" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">気象庁の最新情報</a>をご確認ください。
       </div>
     </section>
     {{end}}
@@ -295,6 +309,9 @@
       <div class="section-title">
         <h3 id="sec-cta">次に見る</h3>
       </div>
+      <p style="margin:0 0 12px;font-size:13px;color:var(--text-sub);line-height:1.7;">
+        {{.PrefName}}の地震状況を全国と比較したい場合は「全国ランキング」へ。個別の地震の詳細（震源・観測地域・マグニチュード）は「今週の地震履歴」から確認できます。
+      </p>
       <div class="btn-row">
         <a class="btn primary" href="/">全国ランキングへ</a>
         <a class="btn" href="/#heatmap">ヒートマップへ</a>
