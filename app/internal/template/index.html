@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>地震ランキング｜今週の都道府県別 地震スコアランキング</title>
+  <title>地震ランキング｜今週もっとも揺れた都道府県は？</title>
   <meta name="description" content="気象庁の防災情報XMLをもとに、過去1週間の地震発生状況（回数・最大震度・地震スコア）を都道府県別にランキング形式で可視化します。" />
   <meta name="robots" content="index,follow,max-image-preview:large" />
   <link rel="canonical" href="https://jishinranking.com/index.html" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="地震ランキング｜今週の都道府県別 地震スコアランキング" />
+  <meta property="og:title" content="地震ランキング｜今週もっとも揺れた都道府県は？" />
   <meta property="og:description" content="気象庁防災情報XMLをもとに集計。都道府県別の地震スコア・発生回数・最大震度をランキングと地図で可視化。" />
   <meta property="og:url" content="https://jishinranking.com/" />
   <meta property="og:site_name" content="地震ランキング" />
@@ -744,16 +744,16 @@
 
       function intColor(s) {
         switch (s) {
-          case '7':  return '#7b0000';
-          case '6+': return '#b91c1c';
-          case '6-': return '#dc2626';
-          case '5+': return '#ea580c';
-          case '5-': return '#f97316';
-          case '4':  return '#ca8a04';
-          case '3':  return '#3b82f6';
-          case '2':  return '#93c5fd';
-          case '1':  return '#bfdbfe';
-          default:   return '#94a3b8';
+          case '7':  return '#cc0000';
+          case '6+': return '#d41818';
+          case '6-': return '#dc3030';
+          case '5+': return '#e44848';
+          case '5-': return '#ec6060';
+          case '4':  return '#f07878';
+          case '3':  return '#f38888';
+          case '2':  return '#f69898';
+          case '1':  return '#f8a8a8';
+          default:   return '#f8a8a8';
         }
       }
       function intDisplay(s) {
@@ -771,7 +771,7 @@
         var clickable = !!eq.eid;
         var m = L.circleMarker([eq.lat, eq.lng], {
           radius: r,
-          color: color,
+          color: '#a00000',
           fillColor: color,
           fillOpacity: 0.65,
           weight: 1.2,
