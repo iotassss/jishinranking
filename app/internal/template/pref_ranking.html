@@ -143,7 +143,7 @@
         <tbody id="tbody-week">
           {{range .WeekRanking}}
           <tr class="clickable"
-              onclick="location.href='/pref/{{.PrefCode}}/index.html'"
+              onclick="location.href='/pref/{{prefSlug .PrefCode}}.html'"
               data-count="{{.Count}}"
               data-ratio="{{printf "%.6f" (index $.ScoreMap .PrefCode)}}"
               data-int="{{intensityLevel .Intensity}}">
@@ -157,7 +157,7 @@
         <tbody id="tbody-today" class="hidden">
           {{range .TodayRanking}}
           <tr class="clickable"
-              onclick="location.href='/pref/{{.PrefCode}}/index.html'"
+              onclick="location.href='/pref/{{prefSlug .PrefCode}}.html'"
               data-count="{{.Count}}"
               data-ratio="0"
               data-int="{{intensityLevel .Intensity}}">

@@ -52,6 +52,20 @@ func makeWeekEQsJSON(eqs domain.EarthquakeRecordList) template.JS {
 	return template.JS(b)
 }
 
+// makePrefSlugMapJS は都道府県コード → スラグのマッピングを JSON として返す。
+// index.html の JavaScript から地図クリック時のURL生成に使用する。
+func makePrefSlugMapJS() template.JS {
+	m := make(map[string]string, 47)
+	for _, code := range domain.PrefCodeList {
+		m[code] = domain.PrefSlug(code)
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return template.JS("{}")
+	}
+	return template.JS(b)
+}
+
 type SimpleHTMLGenerator struct {
 	tmpl              *template.Template
 	detailTmpl        *template.Template
@@ -257,6 +271,7 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 		"mul":              func(a, b float64) float64 { return a * b },
 		"intensityDisplay": domain.IntensityDisplay,
 		"intensityClass":   domain.IntensityPillClassFor,
+		"prefSlug":         domain.PrefSlug,
 		"scoreBarWidth": func(score, maxScore float64) int {
 			if maxScore <= 0 {
 				return 0
@@ -293,6 +308,7 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 		},
 		"prefName":   func(p domain.PrefIntensityDetail) string { return p.Name },
 		"prefMaxInt": func(p domain.PrefIntensityDetail) string { return p.MaxInt },
+		"prefSlug":   domain.PrefSlug,
 	}
 	detailTmplPath := filepath.Join(templatePath, "detail.html")
 	detailTmpl, err := template.New("detail.html").Funcs(detailFuncMap).ParseFiles(basePath, detailTmplPath)
@@ -359,6 +375,7 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 		},
 		"intensityDisplay": domain.IntensityDisplay,
 		"intensityLevel":   domain.IntensityLevel,
+		"prefSlug":         domain.PrefSlug,
 	}
 	prefRankingTmplPath := filepath.Join(templatePath, "pref_ranking.html")
 	prefRankingTmpl, err := template.New("pref_ranking.html").Funcs(prefRankingFuncMap).ParseFiles(basePath, prefRankingTmplPath)
@@ -371,6 +388,7 @@ func NewSimpleHTMLGenerator(templatePath string) *SimpleHTMLGenerator {
 		"fmtTime": func(t time.Time, layout string) string {
 			return t.In(jst).Format(layout)
 		},
+		"prefSlug": domain.PrefSlug,
 		"scoreBarWidth": func(score, maxScore float64) int {
 			if maxScore <= 0 {
 				return 0
@@ -438,6 +456,7 @@ func (g *SimpleHTMLGenerator) Generate(
 		"HourlyChartData":        makeHourlyChartData(displayData.HourlyEarthquake),
 		"WeekTotalCount":         displayData.WeekReportCount,
 		"WeekEQsJSON":            makeWeekEQsJSON(displayData.WeekAllEarthquakes),
+		"PrefSlugMapJS":          makePrefSlugMapJS(),
 		"WeekScoreRankingTop5": func() domain.WeekScoreRecordList {
 			if len(displayData.WeekScoreRanking) > 5 {
 				return displayData.WeekScoreRanking[:5]
@@ -668,6 +687,7 @@ func (g *SimpleHTMLGenerator) GeneratePref(data domain.PrefPageData) (domain.Pub
 	dataMap := map[string]interface{}{
 		"BrandSub":              data.PrefName + "の地震情報",
 		"PrefCode":              data.PrefCode,
+		"PrefSlug":              data.PrefSlug,
 		"PrefName":              data.PrefName,
 		"WeekRank":              data.WeekRank,
 		"WeekCount":             data.WeekCount,

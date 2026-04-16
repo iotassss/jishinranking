@@ -9,6 +9,7 @@ import (
 type PrefPageData struct {
 	// 基本情報
 	PrefCode string
+	PrefSlug string // URLスラグ（例: "iwate"）
 	PrefName string
 
 	// 週間サマリー
@@ -199,6 +200,7 @@ func MakePrefPageData(
 
 	return PrefPageData{
 		PrefCode:          prefCode,
+		PrefSlug:          PrefSlug(prefCode),
 		PrefName:          prefName,
 		WeekRank:          weekRank,
 		WeekCount:         weekCount,

@@ -323,7 +323,7 @@ func (h *Handler) ProcessV2(
 	}
 
 	// ==============================
-	// 都道府県別ページ生成・保存 (/pref/01/ 〜 /pref/47/)
+	// 都道府県別ページ生成・保存 (/pref/hokkaido.html 〜 /pref/okinawa.html)
 	// ==============================
 
 	// 全国平均密度を計算（全都道府県の密度平均）
@@ -353,7 +353,7 @@ func (h *Handler) ProcessV2(
 			slog.Warn("pref HTML generation failed", "prefCode", prefCode, "err", err)
 			continue
 		}
-		prefKey := fmt.Sprintf("pref/%s/index.html", prefCode)
+		prefKey := fmt.Sprintf("pref/%s.html", domain.PrefSlug(prefCode))
 		if err := h.htmlRepo.Save(ctx, prefKey, prefHTML); err != nil {
 			slog.Warn("pref HTML save failed", "prefCode", prefCode, "err", err)
 			continue
@@ -435,10 +435,10 @@ func buildSitemap(detailReports domain.ReportList, now time.Time) []byte {
 		{base + "/contact.html", nowStr, "yearly", "0.3"},
 	}
 
-	// 都道府県別ページ（01〜47）
+	// 都道府県別ページ（都道府県スラグ）
 	for _, code := range domain.PrefCodeList {
 		entries = append(entries, urlEntry{
-			loc:        fmt.Sprintf("%s/pref/%s/", base, code),
+			loc:        fmt.Sprintf("%s/pref/%s.html", base, domain.PrefSlug(code)),
 			lastmod:    nowStr,
 			changefreq: "hourly",
 			priority:   "0.7",

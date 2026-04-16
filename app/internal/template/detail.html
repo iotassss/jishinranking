@@ -238,7 +238,7 @@
         {{end}}
         {{if .ObservedPrefs}}
         <div class="fact"><span>観測都県</span><b>{{with index .ObservedPrefs 0}}<a
-              href="/pref/{{.Code}}/index.html">{{.Name}}</a>（震度{{intensityDisplay .MaxInt}}）{{end}}{{if gt (len
+              href="/pref/{{prefSlug .Code}}.html">{{.Name}}</a>（震度{{intensityDisplay .MaxInt}}）{{end}}{{if gt (len
             .ObservedPrefs) 1}}ほか{{add (len .ObservedPrefs) -1}}都県{{end}}</b></div>
         {{end}}
         <div class="fact"><span>データ出典</span><b><a href="https://xml.kishou.go.jp/xmlpull.html" target="_blank"
@@ -270,8 +270,8 @@
           </thead>
           <tbody>
             {{range .ObservedPrefs}}
-            <tr class="clickable" onclick="location.href='/pref/{{.Code}}/index.html'">
-              <td><img src="/pref_flag/{{.Code}}.svg" width="20" height="13" alt="" style="vertical-align:middle;margin-right:5px;border-radius:2px;"><a href="/pref/{{.Code}}/index.html">{{.Name}}</a></td>
+            <tr class="clickable" onclick="location.href='/pref/{{prefSlug .Code}}.html'">
+              <td><img src="/pref_flag/{{.Code}}.svg" width="20" height="13" alt="" style="vertical-align:middle;margin-right:5px;border-radius:2px;"><a href="/pref/{{prefSlug .Code}}.html">{{.Name}}</a></td>
               <td class="center"><span class="pill {{intensityClass .MaxInt}}">震度{{intensityDisplay .MaxInt}}</span></td>
               <td>{{joinStrings .AreaNames "・"}}</td>
             </tr>

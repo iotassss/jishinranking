@@ -6,7 +6,7 @@
   <title>{{.PrefName}}の地震情報｜地震ランキング</title>
   <meta name="description" content="{{.PrefName}}の地震発生状況（回数・最大震度・週間推移）をまとめて確認できます。気象庁防災情報XMLをもとに自動集計。" />
   <meta name="robots" content="index,follow" />
-  <link rel="canonical" href="https://jishinranking.com/pref/{{.PrefCode}}/index.html" />
+  <link rel="canonical" href="https://jishinranking.com/pref/{{.PrefSlug}}.html" />
   <link rel="icon" href="/jishinranking_32px.png?v=1" type="image/png" />
   {{template "base_css" .}}
   <style>
@@ -18,7 +18,7 @@
       display: flex; align-items: flex-start; justify-content: space-between;
       gap: 12px; margin: 0 0 16px;
     }
-    .page-title h2 { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: .01em; }
+    .page-title h1 { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: .01em; }
     .page-title .meta { text-align: right; font-size: 12px; color: var(--muted); }
 
     /* セクションタイトル */
@@ -99,7 +99,7 @@
     @media (max-width: 480px) {
       .card { padding: 14px 12px; }
       .page-title { flex-direction: column; gap: 6px; }
-      .page-title h2 { font-size: 18px; }
+      .page-title h1 { font-size: 18px; }
       .page-title .meta { text-align: left; white-space: normal; }
       .section-title { flex-wrap: wrap; gap: 2px 12px; }
       .section-title .meta { white-space: normal; font-size: 11px; }
@@ -134,7 +134,7 @@
     <!-- ページタイトル -->
     <div class="page-title">
       <div>
-        <h2><img src="/pref_flag/{{.PrefCode}}.svg" width="32" height="21" alt="" style="vertical-align:middle;margin-right:8px;border-radius:2px;">{{.PrefName}}の地震情報</h2>
+        <h1><img src="/pref_flag/{{.PrefCode}}.svg" width="32" height="21" alt="" style="vertical-align:middle;margin-right:8px;border-radius:2px;">{{.PrefName}}の地震情報</h1>
         <p style="margin:4px 0 0;font-size:13px;color:var(--muted);">
           今週の発生状況・週間推移・最近の地震をまとめて確認できます
         </p>

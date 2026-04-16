@@ -238,3 +238,63 @@ func ConvertPrefectureJishinDataMapToAreaNormalizedRankingRecordList(prefMap map
 
 	return rankingList
 }
+
+// prefSlugMap は都道府県コード → URLスラグ（英字小文字）のマッピング。
+var prefSlugMap = map[string]string{
+	Hokkaido:  "hokkaido",
+	Aomori:    "aomori",
+	Iwate:     "iwate",
+	Miyagi:    "miyagi",
+	Akita:     "akita",
+	Yamagata:  "yamagata",
+	Fukushima: "fukushima",
+	Ibaraki:   "ibaraki",
+	Tochigi:   "tochigi",
+	Gunma:     "gunma",
+	Saitama:   "saitama",
+	Chiba:     "chiba",
+	Tokyo:     "tokyo",
+	Kanagawa:  "kanagawa",
+	Niigata:   "niigata",
+	Toyama:    "toyama",
+	Ishikawa:  "ishikawa",
+	Fukui:     "fukui",
+	Yamanashi: "yamanashi",
+	Nagano:    "nagano",
+	Gifu:      "gifu",
+	Shizuoka:  "shizuoka",
+	Aichi:     "aichi",
+	Mie:       "mie",
+	Shiga:     "shiga",
+	Kyoto:     "kyoto",
+	Osaka:     "osaka",
+	Hyogo:     "hyogo",
+	Nara:      "nara",
+	Wakayama:  "wakayama",
+	Tottori:   "tottori",
+	Shimane:   "shimane",
+	Okayama:   "okayama",
+	Hiroshima: "hiroshima",
+	Yamaguchi: "yamaguchi",
+	Tokushima: "tokushima",
+	Kagawa:    "kagawa",
+	Ehime:     "ehime",
+	Kochi:     "kochi",
+	Fukuoka:   "fukuoka",
+	Saga:      "saga",
+	Nagasaki:  "nagasaki",
+	Kumamoto:  "kumamoto",
+	Oita:      "oita",
+	Miyazaki:  "miyazaki",
+	Kagoshima: "kagoshima",
+	Okinawa:   "okinawa",
+}
+
+// PrefSlug は都道府県コードに対応するURLスラグを返す（例: "03" → "iwate"）。
+// 未知のコードの場合はコードをそのまま返す。
+func PrefSlug(code string) string {
+	if slug, ok := prefSlugMap[code]; ok {
+		return slug
+	}
+	return code
+}

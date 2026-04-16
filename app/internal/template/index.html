@@ -254,8 +254,7 @@
           <div class="hint">集計期間: {{.ReportPeriod}}</div>
         </div>
         {{if .WeekScoreRanking}}{{with index .WeekScoreRanking 0}}
-        <div class="kv-item clickable" onclick="location.href='/pref/{{.PrefCode}}/index.html'">
-          <div class="label">今週 地震スコアトップ</div>
+        <div class="kv-item clickable" onclick="location.href='/pref/{{prefSlug .PrefCode}}.html'">
           <div class="value"><img src="/pref_flag/{{.PrefCode}}.svg" width="20" height="13" alt="" style="vertical-align:middle;margin-right:5px;border-radius:2px;">{{.PrefName}}<small>{{printf "%.1f" .WeekScore}}</small></div>
           <div class="hint">{{.WeekCount}}回（7日間）</div>
         </div>
@@ -266,7 +265,7 @@
         </div>
         {{end}}
         {{if .SurgeRanking}}{{with index .SurgeRanking 0}}
-        <div class="kv-item clickable" onclick="location.href='/pref/{{.PrefCode}}/index.html'">
+        <div class="kv-item clickable" onclick="location.href='/pref/{{prefSlug .PrefCode}}.html'">
           <div class="label">急上昇トップ</div>
           <div class="value"><img src="/pref_flag/{{.PrefCode}}.svg" width="20" height="13" alt="" style="vertical-align:middle;margin-right:5px;border-radius:2px;"><span class="red">{{.PrefName}}</span><small>{{printf "%.1f" .Score}}</small></div>
           <div class="hint">24h {{.TodayCount}}回 / 7日平均 {{printf "%.1f" .WeekAvg}}回</div>
@@ -307,7 +306,7 @@
           {{range .WeekScoreRankingTop5}}
           <tr
             class="{{if eq .Rank 1}}rank-gold{{else if eq .Rank 2}}rank-silver{{else if eq .Rank 3}}rank-bronze{{end}} clickable"
-            onclick="location.href='/pref/{{.PrefCode}}/index.html'">
+            onclick="location.href='/pref/{{prefSlug .PrefCode}}.html'">
             <td class="rank">{{.Rank}}</td>
             <td>
               <img src="/pref_flag/{{.PrefCode}}.svg" width="24" height="16" alt="" style="vertical-align:middle;margin-right:6px;border-radius:2px;">{{.PrefName}}
@@ -384,7 +383,7 @@
           </div>
           {{if .ObservedPrefs}}
           <div class="ev-right">
-            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{$p.Code}}/index.html" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
+            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{prefSlug $p.Code}}.html" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
           </div>
           {{end}}
         </div>
@@ -413,7 +412,7 @@
           </div>
           {{if .ObservedPrefs}}
           <div class="ev-right">
-            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{$p.Code}}/index.html" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
+            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{prefSlug $p.Code}}.html" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
           </div>
           {{end}}
         </div>
@@ -442,7 +441,7 @@
           </div>
           {{if .ObservedPrefs}}
           <div class="ev-right">
-            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{$p.Code}}/index.html" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
+            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{prefSlug $p.Code}}.html" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
           </div>
           {{end}}
         </div>
@@ -471,7 +470,7 @@
           </div>
           {{if .ObservedPrefs}}
           <div class="ev-right">
-            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{$p.Code}}/index.html" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
+            {{range $i, $p := .ObservedPrefs}}{{if lt $i 4}}<a class="ev-pref-item" href="/pref/{{prefSlug $p.Code}}.html" onclick="event.stopPropagation()">{{$p.Name}}（{{intensityDisplay $p.MaxInt}}）</a>{{end}}{{end}}
           </div>
           {{end}}
         </div>
@@ -502,7 +501,7 @@
           <tr class="{{if eq .Rank 1}}rank-gold{{else if eq .Rank 2}}rank-silver{{else if eq .Rank 3}}rank-bronze{{end}} clickable" onclick="location.href='/pref/week_score/index.html'">
             <td class="rank">{{.Rank}}</td>
             <td>
-              <a href="/pref/{{.PrefCode}}/index.html">{{.PrefName}}</a>
+              <a href="/pref/{{prefSlug .PrefCode}}.html">{{.PrefName}}</a>
               {{if .IsSurge}}<span class="badge-surge">↑急上昇</span>{{end}}
             </td>
             <td class="metric">{{printf "%.1f" .WeekScore}}</td>
@@ -560,6 +559,7 @@
       const hoverColors = ["#fecdd3","#fda4af","#f87171","#ef4444","#dc2626","#991b1b"];
 
       const scores = {}, names = {};
+      const prefSlugMap = {{.PrefSlugMapJS}};
       let maxScore = 0;
       for (let i = 1; i <= 47; i++) {
         const code = String(i).padStart(2, "0");
@@ -662,7 +662,8 @@
             const code = String(d.properties.id).padStart(2, "0");
             const name = names[code] || d.properties.nam_ja || "";
             const s    = scores[code] || 0;
-            const url  = "/pref/" + code + "/index.html";
+            const slug = prefSlugMap[code] || code;
+            const url  = "/pref/" + slug + ".html";
             popupName.text(name);
             const scoreColor = s >= 100 ? "var(--accent)" : s >= 40 ? "var(--s2-fg)" : s > 0 ? "var(--text)" : "var(--muted)";
             popupScore.html("地震スコア: <b style='color:" + scoreColor + "'>" + (s > 0 ? s.toFixed(1) : "—") + "</b>");
